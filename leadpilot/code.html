@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>LeadPilot AI - Lead Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "outline-variant": "#bfc8cd",
+              "on-surface": "#1a1c1e",
+              "on-primary-fixed": "#001f2a",
+              "inverse-surface": "#2f3033",
+              "secondary-fixed": "#d0e6f3",
+              "surface-container-low": "#f4f3f6",
+              "surface-variant": "#e2e2e5",
+              "surface-tint": "#016684",
+              "inverse-primary": "#87d0f2",
+              "tertiary-container": "#885116",
+              "on-error": "#ffffff",
+              "error-container": "#ffdad6",
+              "surface-bright": "#faf9fc",
+              "on-tertiary-fixed": "#2d1600",
+              "primary-container": "#006684",
+              "tertiary-fixed-dim": "#ffb876",
+              "secondary-container": "#d0e6f3",
+              "tertiary-fixed": "#ffdcc0",
+              "tertiary": "#6b3a00",
+              "on-surface-variant": "#3f484d",
+              "secondary": "#4d616c",
+              "primary-fixed-dim": "#87d0f2",
+              "on-tertiary": "#ffffff",
+              "on-primary-container": "#a2e1ff",
+              "surface-container-highest": "#e2e2e5",
+              "on-primary-fixed-variant": "#004d64",
+              "surface-container": "#eeedf1",
+              "on-background": "#1a1c1e",
+              "surface-container-high": "#e8e8eb",
+              "primary": "#004d64",
+              "on-primary": "#ffffff",
+              "inverse-on-surface": "#f1f0f4",
+              "on-secondary-fixed": "#081e27",
+              "on-secondary-container": "#536772",
+              "error": "#ba1a1a",
+              "secondary-fixed-dim": "#b4cad6",
+              "on-secondary-fixed-variant": "#364954",
+              "on-secondary": "#ffffff",
+              "on-error-container": "#93000a",
+              "on-tertiary-container": "#ffcfa6",
+              "on-tertiary-fixed-variant": "#6b3b00",
+              "primary-fixed": "#bee9ff",
+              "surface-dim": "#dadadd",
+              "outline": "#70787e",
+              "surface": "#faf9fc",
+              "surface-container-lowest": "#ffffff",
+              "background": "#faf9fc"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, .font-headline { font-family: 'Manrope', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface">
+<!-- SideNavBar -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-slate-100 dark:bg-slate-900 flex flex-col p-4 gap-2 z-50">
+<div class="mb-8 px-4 py-2">
+<h1 class="text-xl font-bold font-headline text-cyan-900 dark:text-cyan-50">LeadPilot AI</h1>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Elite Management</p>
+</div>
+<nav class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-cyan-800 dark:hover:text-cyan-300 transition-colors hover:bg-slate-200/50 dark:hover:bg-slate-800/50" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="text-sm font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-cyan-900 dark:text-cyan-50 font-semibold bg-white dark:bg-slate-800 rounded-lg shadow-sm scale-[0.98] transition-all duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="text-sm font-medium">Leads</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-cyan-800 dark:hover:text-cyan-300 transition-colors hover:bg-slate-200/50 dark:hover:bg-slate-800/50" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="text-sm font-medium">Settings</span>
+</a>
+</nav>
+<div class="mt-auto p-4 bg-surface-container-low rounded-xl">
+<div class="flex items-center gap-3 mb-3">
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container text-xs font-bold">JD</div>
+<div>
+<p class="text-xs font-bold text-on-surface">John Doe</p>
+<p class="text-[10px] text-on-surface-variant">Admin Plan</p>
+</div>
+</div>
+<button class="w-full py-2 bg-primary text-white text-xs font-bold rounded-xl shadow-sm hover:opacity-90 transition-all">
+                Upgrade Pro
+            </button>
+</div>
+</aside>
+<!-- TopNavBar -->
+<header class="sticky top-0 z-40 w-full ml-64 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-800/50 shadow-sm dark:shadow-none">
+<div class="flex justify-between items-center h-16 px-8 max-w-[calc(100%-16rem)]">
+<div class="flex items-center flex-1 max-w-md">
+<div class="relative w-full">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg" data-icon="search">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-slate-100/50 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Search leads, properties, or agents..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<button class="relative text-slate-500 hover:text-primary transition-all active:scale-95">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-error rounded-full border-2 border-white"></span>
+</button>
+<button class="text-slate-500 hover:text-primary transition-all active:scale-95">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+</button>
+<div class="h-8 w-px bg-slate-200 mx-2"></div>
+<div class="flex items-center gap-3">
+<img alt="User Profile" class="w-8 h-8 rounded-full object-cover ring-2 ring-primary/10" data-alt="professional headshot of a middle-aged male executive with a friendly smile in a corporate setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDa0DlV6rAZdUYkDoexc4KBhZkxoumj_l1KYwovl-_Q984zmcJlhEybIZ5USAA4SpVoX8KGt27vEMAyLD0WJEM7jrUSTwNB3iiU3i__TlcRHNn6SAIjDI98KmQAYFDiGAsKTVlqiJ8AmvuCU4JeF4DMI81uK1AaD0aqf8UW_meQHEnFaDKCH-S1Al0n_arq7WqvAL0mn6T7364RFfRdmk6Lg1RVV3KhvScDFWV0xnR8ye5zIh-6lFrOg0lcfoRsLTJy725thVJeoQ"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="ml-64 p-12 min-h-screen">
+<header class="mb-12 flex justify-between items-end">
+<div>
+<h1 class="text-4xl font-extrabold font-headline text-on-surface tracking-tight mb-2">Leads</h1>
+<p class="text-on-surface-variant font-body">Manage your editorial-grade real estate opportunities.</p>
+</div>
+<button class="px-6 py-3 bg-gradient-to-br from-primary to-primary-container text-white font-bold rounded-xl flex items-center gap-2 hover:opacity-90 transition-all">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+                Add New Lead
+            </button>
+</header>
+<!-- Stats Overview (Asymmetric Grid) -->
+<div class="grid grid-cols-12 gap-6 mb-16">
+<div class="col-span-12 md:col-span-7 bg-surface-container-lowest p-8 rounded-xl shadow-sm border border-outline-variant/10">
+<p class="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-6">Lead Velocity</p>
+<div class="flex items-end gap-1 h-32">
+<div class="flex-1 bg-primary/10 h-[40%] rounded-t-lg"></div>
+<div class="flex-1 bg-primary/10 h-[60%] rounded-t-lg"></div>
+<div class="flex-1 bg-primary/20 h-[55%] rounded-t-lg"></div>
+<div class="flex-1 bg-primary/40 h-[85%] rounded-t-lg"></div>
+<div class="flex-1 bg-primary/30 h-[70%] rounded-t-lg"></div>
+<div class="flex-1 bg-primary h-full rounded-t-lg"></div>
+<div class="flex-1 bg-primary/60 h-[75%] rounded-t-lg"></div>
+</div>
+<div class="mt-4 flex justify-between text-[10px] font-bold text-on-surface-variant uppercase tracking-tighter">
+<span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+</div>
+</div>
+<div class="col-span-12 md:col-span-5 bg-primary p-8 rounded-xl text-white overflow-hidden relative">
+<div class="relative z-10">
+<p class="text-xs font-bold uppercase tracking-widest opacity-70 mb-2">Pipeline Value</p>
+<h2 class="text-5xl font-extrabold font-headline mb-4">$4.2M</h2>
+<div class="flex items-center gap-2 text-primary-fixed font-bold text-sm">
+<span class="material-symbols-outlined text-sm" data-icon="trending_up">trending_up</span>
+<span>+12.5% from last month</span>
+</div>
+</div>
+<!-- Abstract decorative element -->
+<div class="absolute -right-12 -bottom-12 w-48 h-48 bg-white/10 rounded-full blur-3xl"></div>
+</div>
+</div>
+<!-- Leads Table Container -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+<div class="p-6 border-b border-surface-container-high flex justify-between items-center">
+<div class="flex gap-4">
+<button class="px-4 py-2 text-sm font-bold bg-surface-container text-on-surface rounded-lg">All Leads</button>
+<button class="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors">Hot</button>
+<button class="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors">Archived</button>
+</div>
+<button class="p-2 hover:bg-surface-container-low rounded-lg transition-all">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="filter_list">filter_list</span>
+</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low/50">
+<th class="px-8 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-widest">Name</th>
+<th class="px-6 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-widest">Phone</th>
+<th class="px-6 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-widest">Budget</th>
+<th class="px-6 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-widest">Location</th>
+<th class="px-6 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-widest">Status</th>
+<th class="px-6 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-widest">Created At</th>
+<th class="px-8 py-4"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-high">
+<!-- Row 1 -->
+<tr class="group hover:bg-surface-container-low/30 transition-colors">
+<td class="px-8 py-6">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-xl bg-secondary-container flex items-center justify-center text-on-secondary-container font-bold">EM</div>
+<div>
+<p class="font-bold text-on-surface leading-none">Eleanor Maxwell</p>
+<p class="text-xs text-on-surface-variant mt-1">eleanor.m@example.com</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-6 text-sm text-on-surface font-medium">(555) 123-4567</td>
+<td class="px-6 py-6 text-sm text-on-surface font-bold">$850,000</td>
+<td class="px-6 py-6 text-sm text-on-surface-variant">Beverly Hills, CA</td>
+<td class="px-6 py-6">
+<div class="relative inline-block">
+<select class="appearance-none bg-primary/10 text-on-primary-fixed-variant text-[11px] font-bold px-4 py-1.5 rounded-full pr-8 border-none focus:ring-1 focus:ring-primary cursor-pointer transition-all">
+<option selected="" value="new">New</option>
+<option value="contacted">Contacted</option>
+<option value="followup">Follow-up</option>
+<option value="closed">Closed</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-sm pointer-events-none" data-icon="expand_more">expand_more</span>
+</div>
+</td>
+<td class="px-6 py-6 text-sm text-on-surface-variant">Oct 24, 2023</td>
+<td class="px-8 py-6 text-right">
+<button class="text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="group hover:bg-surface-container-low/30 transition-colors">
+<td class="px-8 py-6">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-xl bg-tertiary-fixed flex items-center justify-center text-on-tertiary-fixed-variant font-bold">JR</div>
+<div>
+<p class="font-bold text-on-surface leading-none">Julian Rivera</p>
+<p class="text-xs text-on-surface-variant mt-1">jrivera@tech.io</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-6 text-sm text-on-surface font-medium">(555) 987-6543</td>
+<td class="px-6 py-6 text-sm text-on-surface font-bold">$1,200,000</td>
+<td class="px-6 py-6 text-sm text-on-surface-variant">Austin, TX</td>
+<td class="px-6 py-6">
+<div class="relative inline-block">
+<select class="appearance-none bg-secondary-fixed text-on-secondary-fixed-variant text-[11px] font-bold px-4 py-1.5 rounded-full pr-8 border-none focus:ring-1 focus:ring-primary cursor-pointer transition-all">
+<option value="new">New</option>
+<option selected="" value="contacted">Contacted</option>
+<option value="followup">Follow-up</option>
+<option value="closed">Closed</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-sm pointer-events-none" data-icon="expand_more">expand_more</span>
+</div>
+</td>
+<td class="px-6 py-6 text-sm text-on-surface-variant">Oct 22, 2023</td>
+<td class="px-8 py-6 text-right">
+<button class="text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="group hover:bg-surface-container-low/30 transition-colors">
+<td class="px-8 py-6">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-xl bg-primary-fixed flex items-center justify-center text-on-primary-fixed-variant font-bold">SP</div>
+<div>
+<p class="font-bold text-on-surface leading-none">Sarah Porter</p>
+<p class="text-xs text-on-surface-variant mt-1">sarah.p@design.com</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-6 text-sm text-on-surface font-medium">(555) 444-3322</td>
+<td class="px-6 py-6 text-sm text-on-surface font-bold">$550,000</td>
+<td class="px-6 py-6 text-sm text-on-surface-variant">Seattle, WA</td>
+<td class="px-6 py-6">
+<div class="relative inline-block">
+<select class="appearance-none bg-tertiary-fixed text-on-tertiary-fixed-variant text-[11px] font-bold px-4 py-1.5 rounded-full pr-8 border-none focus:ring-1 focus:ring-primary cursor-pointer transition-all">
+<option value="new">New</option>
+<option value="contacted">Contacted</option>
+<option selected="" value="followup">Follow-up</option>
+<option value="closed">Closed</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-sm pointer-events-none" data-icon="expand_more">expand_more</span>
+</div>
+</td>
+<td class="px-6 py-6 text-sm text-on-surface-variant">Oct 21, 2023</td>
+<td class="px-8 py-6 text-right">
+<button class="text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="group hover:bg-surface-container-low/30 transition-colors">
+<td class="px-8 py-6">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-xl bg-surface-container-highest flex items-center justify-center text-on-surface font-bold">MB</div>
+<div>
+<p class="font-bold text-on-surface leading-none">Marcus Bennett</p>
+<p class="text-xs text-on-surface-variant mt-1">mbennett@realty.net</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-6 text-sm text-on-surface font-medium">(555) 222-1111</td>
+<td class="px-6 py-6 text-sm text-on-surface font-bold">$2,450,000</td>
+<td class="px-6 py-6 text-sm text-on-surface-variant">Miami, FL</td>
+<td class="px-6 py-6">
+<div class="relative inline-block">
+<select class="appearance-none bg-on-surface/5 text-on-surface text-[11px] font-bold px-4 py-1.5 rounded-full pr-8 border-none focus:ring-1 focus:ring-primary cursor-pointer transition-all">
+<option value="new">New</option>
+<option value="contacted">Contacted</option>
+<option value="followup">Follow-up</option>
+<option selected="" value="closed">Closed</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-sm pointer-events-none" data-icon="expand_more">expand_more</span>
+</div>
+</td>
+<td class="px-6 py-6 text-sm text-on-surface-variant">Oct 19, 2023</td>
+<td class="px-8 py-6 text-right">
+<button class="text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-6 bg-surface-container-low/20 flex justify-between items-center text-sm font-medium text-on-surface-variant">
+<p>Showing 4 of 128 leads</p>
+<div class="flex gap-2">
+<button class="px-4 py-2 hover:bg-surface-container rounded-lg transition-all">Previous</button>
+<button class="px-4 py-2 bg-primary text-white rounded-lg shadow-sm">Next</button>
+</div>
+</div>
+</div>
+<!-- Property Preview Bento (Decorative) -->
+<div class="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8">
+<div class="relative rounded-xl overflow-hidden aspect-[4/5] group shadow-sm">
+<img alt="Luxury Villa" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" data-alt="ultra-modern luxury villa with glass walls and a infinity pool at dusk with warm interior lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA2kwKTK1qYPEaEGn9a5UH12pcKJPGCC92LSy0DR90DqFyaq6dzkXeyR1qYHtGyAj7LsMei8rpTiewp3zQbkkPzeTrshf4vAAJVMIR4C3CwXVMAcA62ljnaRZQNoJyElfr10If9SIs2Fk4ncPKbkx6b2-Wsoi3kax11YeZr9McYCj0HX4UrI2dS-uA2-o5s1mQRS-6szkC2fejrOASPBh10ewPqU3UkK18SUweG5eYuKAURVBimAWBpgUTbM6E05nGTdZAFSs1mtA"/>
+<div class="absolute inset-0 bg-gradient-to-t from-on-surface/80 to-transparent"></div>
+<div class="absolute bottom-6 left-6 right-6">
+<p class="text-xs font-bold uppercase tracking-widest text-primary-fixed mb-1">New Listing</p>
+<h3 class="text-xl font-bold font-headline text-white">The Glass Pavilion</h3>
+<p class="text-sm text-white/70">Bel Air, CA • $12.5M</p>
+</div>
+</div>
+<div class="md:col-span-2 bg-surface-container-low rounded-xl p-10 flex flex-col justify-center">
+<h3 class="text-3xl font-extrabold font-headline text-on-surface mb-6 leading-tight">Elite Portfolio Insights<br/>Delivered Daily.</h3>
+<p class="text-on-surface-variant font-body text-lg mb-8 max-w-md">Our AI-driven algorithms analyze market sentiment to prioritize leads that are most likely to close this quarter.</p>
+<div class="flex gap-12">
+<div>
+<p class="text-4xl font-extrabold font-headline text-primary">94%</p>
+<p class="text-xs font-bold uppercase tracking-widest text-on-surface-variant mt-2">Accuracy</p>
+</div>
+<div>
+<p class="text-4xl font-extrabold font-headline text-primary">3.2x</p>
+<p class="text-xs font-bold uppercase tracking-widest text-on-surface-variant mt-2">ROI Increase</p>
+</div>
+<div>
+<p class="text-4xl font-extrabold font-headline text-primary">12ms</p>
+<p class="text-xs font-bold uppercase tracking-widest text-on-surface-variant mt-2">Latency</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>
