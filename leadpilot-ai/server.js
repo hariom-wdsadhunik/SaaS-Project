@@ -1,11 +1,14 @@
 require("dotenv").config();
 const express = require("express");
 const bodyParser = require("body-parser");
+const cors = require("cors");
 const webhookRoutes = require("./routes/webhook");
 const leadsRoutes = require("./routes/leads");
 
 const app = express();
+app.use(cors());
 app.use(bodyParser.json());
+app.use(express.static("public"));
 
 app.use("/webhook", webhookRoutes);
 app.use("/leads", leadsRoutes);
