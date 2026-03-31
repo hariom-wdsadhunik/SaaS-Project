@@ -13,8 +13,13 @@ app.use(express.static("public"));
 app.use("/webhook", webhookRoutes);
 app.use("/leads", leadsRoutes);
 
+// Serve dashboard from leadpilot-ui
 app.get("/", (req, res) => {
-  res.send("Server is running 🚀");
+  res.sendFile(__dirname + "/leadpilot-ui/code.html");
+});
+
+app.get("/dashboard", (req, res) => {
+  res.sendFile(__dirname + "/leadpilot-ui/code.html");
 });
 
 const PORT = process.env.PORT || 3000;
