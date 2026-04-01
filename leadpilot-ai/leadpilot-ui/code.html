@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 
-<html class="light" lang="en"><head>
+<html lang="en"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>LeadPilot AI - Lead Management</title>
@@ -73,30 +73,82 @@
       }
     </script>
 <style>
-        body { font-family: 'Inter', sans-serif; }
+        body { 
+          font-family: 'Inter', sans-serif;
+          background-color: #faf9fc;
+          color: #1a1c1e;
+        }
+        
+        body.dark {
+          background-color: #0f172a;
+          color: #e2e8f0;
+        }
+        
+        body.dark .card,
+        body.dark .table,
+        body.dark aside,
+        body.dark header,
+        body.dark main {
+          background-color: #1e293b;
+          color: #e2e8f0;
+        }
+        
+        body.dark input,
+        body.dark select {
+          background-color: #334155;
+          color: #fff;
+          border: 1px solid #475569;
+        }
+        
+        body.dark button:not(.bg-primary):not(.bg-error) {
+          background-color: #2563eb;
+          color: #fff;
+        }
+        
+        body.dark table {
+          background-color: #1e293b;
+        }
+        
+        body.dark th,
+        body.dark td {
+          color: #e2e8f0;
+        }
+        
+        body.dark .bg-surface,
+        body.dark .bg-surface-container,
+        body.dark .bg-surface-container-low,
+        body.dark .bg-surface-container-lowest {
+          background-color: #1e293b;
+        }
+        
+        body.dark .text-on-surface,
+        body.dark .text-on-surface-variant {
+          color: #e2e8f0;
+        }
+        
         h1, h2, h3, .font-headline { font-family: 'Manrope', sans-serif; }
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
     </style>
 </head>
-<body class="bg-surface text-on-surface">
+<body>
 <!-- SideNavBar -->
-<aside class="h-screen w-64 fixed left-0 top-0 bg-slate-100 dark:bg-slate-900 flex flex-col p-4 gap-2 z-50">
+<aside class="h-screen w-64 fixed left-0 top-0 bg-surface-container-low flex flex-col p-4 gap-2 z-50 border-r border-outline-variant">
 <div class="mb-8 px-4 py-2">
-<h1 class="text-xl font-bold font-headline text-cyan-900 dark:text-cyan-50">LeadPilot AI</h1>
-<p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Elite Management</p>
+<h1 class="text-xl font-bold font-headline text-primary">LeadPilot AI</h1>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Elite Management</p>
 </div>
 <nav class="flex flex-col gap-1">
-<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-cyan-800 dark:hover:text-cyan-300 transition-colors hover:bg-slate-200/50 dark:hover:bg-slate-800/50" href="#">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-primary transition-colors hover:bg-surface-container-high/50 rounded-lg" href="#">
 <span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
 <span class="text-sm font-medium">Dashboard</span>
 </a>
-<a class="flex items-center gap-3 px-4 py-3 text-cyan-900 dark:text-cyan-50 font-semibold bg-white dark:bg-slate-800 rounded-lg shadow-sm scale-[0.98] transition-all duration-150" href="#">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface font-semibold bg-surface-container rounded-lg shadow-sm scale-[0.98] transition-all duration-150" href="#">
 <span class="material-symbols-outlined" data-icon="group">group</span>
 <span class="text-sm font-medium">Leads</span>
 </a>
-<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-cyan-800 dark:hover:text-cyan-300 transition-colors hover:bg-slate-200/50 dark:hover:bg-slate-800/50" href="#">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-primary transition-colors hover:bg-surface-container-high/50 rounded-lg" href="#">
 <span class="material-symbols-outlined" data-icon="settings">settings</span>
 <span class="text-sm font-medium">Settings</span>
 </a>
@@ -115,23 +167,26 @@
 </div>
 </aside>
 <!-- TopNavBar -->
-<header class="sticky top-0 z-40 w-full ml-64 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-800/50 shadow-sm dark:shadow-none">
+<header class="sticky top-0 z-40 w-full ml-64 bg-surface/80 backdrop-blur-md border-b border-outline-variant/50 shadow-sm">
 <div class="flex justify-between items-center h-16 px-8 max-w-[calc(100%-16rem)]">
 <div class="flex items-center flex-1 max-w-md">
 <div class="relative w-full">
-<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg" data-icon="search">search</span>
-<input class="w-full pl-10 pr-4 py-2 bg-slate-100/50 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Search leads, properties, or agents..." type="text"/>
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg" data-icon="search">search</span>
+<input id="searchInput" class="w-full pl-10 pr-4 py-2 bg-surface-container border-none rounded-xl text-sm text-on-surface placeholder-on-surface-variant focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Search leads, properties, or agents..." type="text" oninput="searchLeads(this.value)"/>
 </div>
 </div>
 <div class="flex items-center gap-6">
-<button class="relative text-slate-500 hover:text-primary transition-all active:scale-95">
+<button class="relative text-on-surface-variant hover:text-primary transition-all active:scale-95">
 <span class="material-symbols-outlined" data-icon="notifications">notifications</span>
-<span class="absolute top-0 right-0 w-2 h-2 bg-error rounded-full border-2 border-white"></span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-error rounded-full border-2 border-surface"></span>
 </button>
-<button class="text-slate-500 hover:text-primary transition-all active:scale-95">
+<button class="text-on-surface-variant hover:text-primary transition-all active:scale-95">
 <span class="material-symbols-outlined" data-icon="help">help</span>
 </button>
-<div class="h-8 w-px bg-slate-200 mx-2"></div>
+<button id="themeToggle" onclick="toggleTheme()" class="text-sm font-medium text-on-surface-variant hover:text-primary transition-all active:scale-95 px-3 py-1 rounded-lg hover:bg-surface-container" title="Toggle Dark/Light Mode">
+🌙 Dark
+</button>
+<div class="h-8 w-px bg-outline-variant mx-2"></div>
 <div class="flex items-center gap-3">
 <img alt="User Profile" class="w-8 h-8 rounded-full object-cover ring-2 ring-primary/10" data-alt="professional headshot of a middle-aged male executive with a friendly smile in a corporate setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDa0DlV6rAZdUYkDoexc4KBhZkxoumj_l1KYwovl-_Q984zmcJlhEybIZ5USAA4SpVoX8KGt27vEMAyLD0WJEM7jrUSTwNB3iiU3i__TlcRHNn6SAIjDI98KmQAYFDiGAsKTVlqiJ8AmvuCU4JeF4DMI81uK1AaD0aqf8UW_meQHEnFaDKCH-S1Al0n_arq7WqvAL0mn6T7364RFfRdmk6Lg1RVV3KhvScDFWV0xnR8ye5zIh-6lFrOg0lcfoRsLTJy725thVJeoQ"/>
 </div>
@@ -139,13 +194,13 @@
 </div>
 </header>
 <!-- Main Canvas -->
-<main class="ml-64 p-12 min-h-screen">
+<main class="ml-64 p-12 min-h-screen bg-surface text-on-surface">
 <header class="mb-12 flex justify-between items-end">
 <div>
 <h1 class="text-4xl font-extrabold font-headline text-on-surface tracking-tight mb-2">Leads</h1>
 <p class="text-on-surface-variant font-body">Manage your editorial-grade real estate opportunities.</p>
 </div>
-<button class="px-6 py-3 bg-gradient-to-br from-primary to-primary-container text-white font-bold rounded-xl flex items-center gap-2 hover:opacity-90 transition-all">
+<button onclick="addLead()" class="px-6 py-3 bg-gradient-to-br from-primary to-primary-container text-white font-bold rounded-xl flex items-center gap-2 hover:opacity-90 transition-all cursor-pointer">
 <span class="material-symbols-outlined text-sm" data-icon="add">add</span>
                 Add New Lead
             </button>
@@ -184,9 +239,11 @@
 <div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
 <div class="p-6 border-b border-surface-container-high flex justify-between items-center">
 <div class="flex gap-4">
-<button class="px-4 py-2 text-sm font-bold bg-surface-container text-on-surface rounded-lg">All Leads</button>
-<button class="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors">Hot</button>
-<button class="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors">Archived</button>
+<button onclick="filterByStatus('all')" class="px-4 py-2 text-sm font-bold bg-surface-container text-on-surface rounded-lg hover:bg-primary/10 transition-colors">All Leads</button>
+<button onclick="filterByStatus('new')" class="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors">New</button>
+<button onclick="filterByStatus('contacted')" class="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors">Contacted</button>
+<button onclick="filterByStatus('follow-up')" class="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors">Follow-up</button>
+<button onclick="filterByStatus('closed')" class="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors">Closed</button>
 </div>
 <button class="p-2 hover:bg-surface-container-low rounded-lg transition-all">
 <span class="material-symbols-outlined text-on-surface-variant" data-icon="filter_list">filter_list</span>
@@ -375,5 +432,119 @@ fetchLeads();
 
 // Refresh leads every 10 seconds
 setInterval(fetchLeads, 10000);
+
+// Store all leads for search
+let allLeads = [];
+
+// Search leads
+function searchLeads(query) {
+  if (!query) {
+    renderLeads(allLeads);
+    return;
+  }
+  
+  const filtered = allLeads.filter((lead) => {
+    return (
+      lead.phone?.includes(query) ||
+      lead.location?.toLowerCase().includes(query.toLowerCase()) ||
+      lead.message?.toLowerCase().includes(query.toLowerCase()) ||
+      lead.budget?.toLowerCase().includes(query.toLowerCase())
+    );
+  });
+
+  renderLeads(filtered);
+}
+
+// Override fetchLeads to store allLeads
+const originalFetchLeads = fetchLeads;
+fetchLeads = async function() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/leads`);
+    if (!response.ok) throw new Error('Failed to fetch leads');
+    allLeads = await response.json();
+    renderLeads(allLeads);
+  } catch (error) {
+    console.error('Error fetching leads:', error);
+    document.querySelector('tbody').innerHTML = `
+      <tr><td colspan="7" class="px-8 py-6 text-center text-on-surface-variant">
+        Error loading leads. Make sure the server is running.
+      </td></tr>
+    `;
+  }
+};
+
+// Add new lead manually
+async function addLead() {
+  const phone = prompt("Enter phone number:");
+  if (!phone) return;
+  
+  const message = prompt("Enter requirement (e.g., '2BHK in Mumbai under 80L'):");
+  if (!message) return;
+
+  try {
+    await fetch(`${API_BASE_URL}/webhook`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        entry: [{
+          changes: [{
+            value: {
+              messages: [{
+                from: phone,
+                text: { body: message }
+              }]
+            }
+          }]
+        }]
+      })
+    });
+
+    fetchLeads(); // refresh the list
+  } catch (error) {
+    console.error('Error adding lead:', error);
+    alert('Failed to add lead. Please try again.');
+  }
+}
+
+// Filter leads by status
+function filterByStatus(status) {
+  if (status === "all") {
+    renderLeads(allLeads);
+    return;
+  }
+
+  const filtered = allLeads.filter(l => l.status === status);
+  renderLeads(filtered);
+}
+
+// Dark/Light Mode Toggle
+function toggleTheme() {
+  const body = document.body;
+  body.classList.toggle("dark");
+
+  const isDark = body.classList.contains("dark");
+
+  // save preference
+  localStorage.setItem("theme", isDark ? "dark" : "light");
+
+  // update button text
+  document.getElementById("themeToggle").innerText = isDark
+    ? "☀️ Light"
+    : "🌙 Dark";
+}
+
+// Load saved theme on page load
+function loadTheme() {
+  const savedTheme = localStorage.getItem("theme");
+
+  if (savedTheme === "dark") {
+    document.body.classList.add("dark");
+    document.getElementById("themeToggle").innerText = "☀️ Light";
+  }
+}
+
+loadTheme();
 </script>
 </body></html>
