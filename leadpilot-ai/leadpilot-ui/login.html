@@ -146,8 +146,8 @@
         <!-- Demo Credentials -->
         <div class="mt-6 p-4 bg-blue-50 rounded-xl">
             <p class="text-xs text-blue-700 font-medium mb-2"><i class="fas fa-info-circle mr-1"></i> Demo Credentials:</p>
-            <p class="text-xs text-blue-600">Email: demo@leadpilot.ai</p>
-            <p class="text-xs text-blue-600">Password: demo123</p>
+            <p class="text-xs text-blue-600">Email: admin@leadpilot.ai</p>
+            <p class="text-xs text-blue-600">Password: admin123</p>
         </div>
     </div>
 
@@ -178,19 +178,37 @@
 
             try {
                 // For demo, check demo credentials
-                if (email === 'demo@leadpilot.ai' && password === 'demo123') {
+                if ((email === 'demo@leadpilot.ai' && password === 'demo123') || 
+                    (email === 'admin@leadpilot.ai' && password === 'admin123')) {
                     // Create demo token
                     const demoToken = 'demo_token_' + Date.now();
                     const demoUser = {
                         id: 'demo',
-                        email: 'demo@leadpilot.ai',
-                        name: 'Demo User',
+                        email: email,
+                        name: 'Admin User',
                         role: 'admin'
                     };
                     
                     localStorage.setItem('token', demoToken);
                     localStorage.setItem('user', JSON.stringify(demoUser));
                     
+                    window.location.href = '/dashboard';
+                    return;
+                }
+
+                // Check localStorage demo users first
+                const demoUsers = JSON.parse(localStorage.getItem('demo_users') || '[]');
+                const demoUser = demoUsers.find(u => u.email === email);
+                if (demoUser) {
+                    // In real app, verify password hash. For demo, accept any password
+                    const demoToken = 'demo_token_' + Date.now();
+                    localStorage.setItem('token', demoToken);
+                    localStorage.setItem('user', JSON.stringify({
+                        id: demoUser.id,
+                        email: demoUser.email,
+                        name: demoUser.name,
+                        role: demoUser.role
+                    }));
                     window.location.href = '/dashboard';
                     return;
                 }
@@ -220,6 +238,8 @@
                 }
             } catch (error) {
                 console.error('Login error:', error);
+                
+                // If API fails, show error
                 document.getElementById('errorText').textContent = error.message || 'Invalid email or password';
                 errorDiv.classList.remove('hidden');
                 

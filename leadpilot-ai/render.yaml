@@ -3,6 +3,7 @@ services:
     name: leadpilot-ai
     runtime: node
     plan: free
+    rootDir: leadpilot-ai
     buildCommand: npm install
     startCommand: node server.js
     envVars:

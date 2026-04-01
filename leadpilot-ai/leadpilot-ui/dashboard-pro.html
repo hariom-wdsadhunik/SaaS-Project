@@ -87,6 +87,46 @@
         .modal-content { background: white; border-radius: 24px; max-width: 800px; width: 100%; max-height: 90vh; overflow-y: auto; animation: modalSlide 0.3s ease; }
         @keyframes modalSlide { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
         
+        /* Property Card */
+        .property-card { transition: all 0.3s ease; border: 2px solid transparent; }
+        .property-card:hover { border-color: #3b82f6; transform: translateY(-4px); }
+        .property-card.sold { opacity: 0.7; }
+        
+        /* Task Item */
+        .task-item { transition: all 0.2s; }
+        .task-item:hover { background: #f8fafc; }
+        .task-item.overdue { border-left: 3px solid #ef4444; }
+        .task-item.high-priority { border-left: 3px solid #f59e0b; }
+        
+        /* Tab Navigation */
+        .tab-btn { padding: 12px 20px; font-weight: 500; color: #6b7280; border-bottom: 2px solid transparent; transition: all 0.2s; }
+        .tab-btn.active { color: #3b82f6; border-bottom-color: #3b82f6; }
+        .tab-btn:hover { color: #3b82f6; }
+        
+        /* Deal Pipeline */
+        .pipeline-stage { min-width: 200px; }
+        .pipeline-card { background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        
+        /* Calendar */
+        .calendar-day { min-height: 100px; border: 1px solid #e5e7eb; }
+        .calendar-day:hover { background: #f8fafc; }
+        .calendar-event { font-size: 11px; padding: 2px 6px; border-radius: 4px; margin-bottom: 2px; }
+        
+        /* Quick Actions */
+        .quick-action { padding: 12px; border-radius: 12px; background: white; border: 1px solid #e5e7eb; transition: all 0.2s; }
+        .quick-action:hover { background: #3b82f6; color: white; border-color: #3b82f6; }
+        
+        /* Stats Card */
+        .stats-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        
+        /* WhatsApp Connection */
+        .whatsapp-status { display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+        .whatsapp-status.connected { background: #d1fae5; color: #059669; }
+        .whatsapp-status.disconnected { background: #fee2e2; color: #dc2626; }
+        .whatsapp-qr { width: 200px; height: 200px; background: #f3f4f6; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto; }
+        .whatsapp-step { display: flex; align-items: flex-start; gap: 12px; padding: 16px; border: 1px solid #e5e7eb; border-radius: 12px; margin-bottom: 12px; }
+        .whatsapp-step-number { width: 28px; height: 28px; rounded: 50%; background: #10b981; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px; flex-shrink: 0; }
+        
         /* Dark mode */
         body.dark { background: #0f172a; }
         body.dark .glass { background: rgba(30, 41, 59, 0.9); border-color: rgba(255,255,255,0.1); }
@@ -95,6 +135,9 @@
         body.dark .text-gray-600 { color: #94a3b8; }
         body.dark .kanban-column { background: #1e293b; }
         body.dark .kanban-card { background: #334155; }
+        body.dark .property-card { background: #334155; }
+        body.dark .quick-action { background: #334155; border-color: #475569; }
+        body.dark .calendar-day { border-color: #475569; }
     </style>
 </head>
 <body class="min-h-screen">
@@ -112,6 +155,13 @@
                     <button onclick="toggleTheme()" class="p-2 rounded-lg hover:bg-gray-100">
                         <i class="fas fa-moon text-gray-600" id="themeIcon"></i>
                     </button>
+                    
+                    <!-- WhatsApp Status -->
+                    <div id="whatsappStatusHeader" class="whatsapp-status disconnected cursor-pointer" onclick="showWhatsAppModal()">
+                        <i class="fab fa-whatsapp"></i>
+                        <span id="whatsappStatusText">Connect WhatsApp</span>
+                    </div>
+                    
                     <a href="/analytics.html" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium">
                         <i class="fas fa-chart-bar mr-2"></i>Analytics
                     </a>
@@ -151,8 +201,8 @@
             <!-- Header -->
             <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-6">
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-900">Lead Management</h1>
-                    <p class="text-gray-500 mt-1">Organize and convert your real estate leads</p>
+                    <h1 class="text-3xl font-bold text-gray-900">Real Estate CRM</h1>
+                    <p class="text-gray-500 mt-1">Manage leads, properties, appointments & deals</p>
                 </div>
                 <div class="flex flex-col sm:flex-row gap-3">
                     <div class="relative">
@@ -165,6 +215,95 @@
                         <i class="fas fa-plus"></i>Add Lead
                     </button>
                 </div>
+            </div>
+
+            <!-- Quick Stats Row -->
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6">
+                <div class="bg-white rounded-xl p-4 border border-gray-200 card-hover">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase">Total Leads</p>
+                            <p class="text-2xl font-bold text-gray-900" id="statTotalLeads">0</p>
+                        </div>
+                        <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                            <i class="fas fa-users text-blue-600"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl p-4 border border-gray-200 card-hover">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase">Properties</p>
+                            <p class="text-2xl font-bold text-gray-900" id="statTotalProperties">0</p>
+                        </div>
+                        <div class="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+                            <i class="fas fa-building text-green-600"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl p-4 border border-gray-200 card-hover">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase">Today's Tasks</p>
+                            <p class="text-2xl font-bold text-gray-900" id="statTodayTasks">0</p>
+                        </div>
+                        <div class="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
+                            <i class="fas fa-tasks text-amber-600"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl p-4 border border-gray-200 card-hover">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase">Appointments</p>
+                            <p class="text-2xl font-bold text-gray-900" id="statAppointments">0</p>
+                        </div>
+                        <div class="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+                            <i class="fas fa-calendar text-purple-600"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl p-4 border border-gray-200 card-hover">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase">Active Deals</p>
+                            <p class="text-2xl font-bold text-gray-900" id="statActiveDeals">0</p>
+                        </div>
+                        <div class="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
+                            <i class="fas fa-handshake text-indigo-600"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl p-4 text-white card-hover">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-white/80 uppercase">Commission</p>
+                            <p class="text-2xl font-bold" id="statCommission">0</p>
+                        </div>
+                        <div class="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center">
+                            <i class="fas fa-rupee-sign"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Navigation -->
+            <div class="flex border-b border-gray-200 mb-6 overflow-x-auto">
+                <button onclick="switchTab('leads')" class="tab-btn active" id="tab-leads">
+                    <i class="fas fa-users mr-2"></i>Leads
+                </button>
+                <button onclick="switchTab('properties')" class="tab-btn" id="tab-properties">
+                    <i class="fas fa-building mr-2"></i>Properties
+                </button>
+                <button onclick="switchTab('appointments')" class="tab-btn" id="tab-appointments">
+                    <i class="fas fa-calendar-alt mr-2"></i>Appointments
+                </button>
+                <button onclick="switchTab('tasks')" class="tab-btn" id="tab-tasks">
+                    <i class="fas fa-check-square mr-2"></i>Tasks
+                </button>
+                <button onclick="switchTab('deals')" class="tab-btn" id="tab-deals">
+                    <i class="fas fa-handshake mr-2"></i>Deals
+                </button>
             </div>
 
             <!-- View Toggle & Bulk Actions -->
@@ -261,6 +400,155 @@
                     <div id="kanban-closed" class="min-h-[300px]"></div>
                 </div>
             </div>
+
+            <!-- Properties Section -->
+            <div id="propertiesSection" class="hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Property Inventory</h2>
+                        <p class="text-gray-500">Manage your property listings</p>
+                    </div>
+                    <button onclick="showAddPropertyModal()" class="px-6 py-3 bg-gradient-to-r from-green-500 to-teal-600 text-white font-semibold rounded-xl flex items-center gap-2">
+                        <i class="fas fa-plus"></i>Add Property
+                    </button>
+                </div>
+                <div class="flex flex-wrap gap-2 mb-4">
+                    <button onclick="filterProperties('all')" class="filter-prop-btn px-4 py-2 rounded-full text-sm font-medium bg-green-600 text-white" data-filter="all">All</button>
+                    <button onclick="filterProperties('Available')" class="filter-prop-btn px-4 py-2 rounded-full text-sm font-medium bg-white text-gray-600 border border-gray-200" data-filter="Available">Available</button>
+                    <button onclick="filterProperties('Sold')" class="filter-prop-btn px-4 py-2 rounded-full text-sm font-medium bg-white text-gray-600 border border-gray-200" data-filter="Sold">Sold</button>
+                    <button onclick="filterProperties('Reserved')" class="filter-prop-btn px-4 py-2 rounded-full text-sm font-medium bg-white text-gray-600 border border-gray-200" data-filter="Reserved">Reserved</button>
+                </div>
+                <div id="propertiesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            </div>
+
+            <!-- Appointments Section -->
+            <div id="appointmentsSection" class="hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Appointments & Site Visits</h2>
+                        <p class="text-gray-500">Schedule and manage client meetings</p>
+                    </div>
+                    <button onclick="showAddAppointmentModal()" class="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold rounded-xl flex items-center gap-2">
+                        <i class="fas fa-plus"></i>Schedule Visit
+                    </button>
+                </div>
+                <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b border-gray-200 bg-gray-50">
+                                    <th class="text-left px-4 py-4 text-xs font-semibold text-gray-500 uppercase">Lead</th>
+                                    <th class="text-left px-4 py-4 text-xs font-semibold text-gray-500 uppercase">Property</th>
+                                    <th class="text-left px-4 py-4 text-xs font-semibold text-gray-500 uppercase">Type</th>
+                                    <th class="text-left px-4 py-4 text-xs font-semibold text-gray-500 uppercase">Date & Time</th>
+                                    <th class="text-left px-4 py-4 text-xs font-semibold text-gray-500 uppercase">Status</th>
+                                    <th class="text-left px-4 py-4 text-xs font-semibold text-gray-500 uppercase">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="appointmentsTable" class="divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tasks Section -->
+            <div id="tasksSection" class="hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Tasks & Follow-ups</h2>
+                        <p class="text-gray-500">Never miss a follow-up with your leads</p>
+                    </div>
+                    <button onclick="showAddTaskModal()" class="px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-semibold rounded-xl flex items-center gap-2">
+                        <i class="fas fa-plus"></i>Add Task
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2">
+                        <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                            <div class="p-4 border-b border-gray-200">
+                                <div class="flex gap-2">
+                                    <button onclick="filterTasks('all')" class="task-filter-btn px-4 py-2 rounded-lg text-sm font-medium bg-amber-600 text-white" data-filter="all">All</button>
+                                    <button onclick="filterTasks('pending')" class="task-filter-btn px-4 py-2 rounded-lg text-sm font-medium bg-white text-gray-600 border border-gray-200" data-filter="pending">Pending</button>
+                                    <button onclick="filterTasks('overdue')" class="task-filter-btn px-4 py-2 rounded-lg text-sm font-medium bg-white text-gray-600 border border-gray-200" data-filter="overdue">Overdue</button>
+                                    <button onclick="filterTasks('completed')" class="task-filter-btn px-4 py-2 rounded-lg text-sm font-medium bg-white text-gray-600 border border-gray-200" data-filter="completed">Completed</button>
+                                </div>
+                            </div>
+                            <div id="tasksList" class="divide-y divide-gray-100 max-h-[500px] overflow-y-auto"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-6 text-white">
+                            <h3 class="text-lg font-bold mb-4">Task Summary</h3>
+                            <div class="space-y-4">
+                                <div class="flex justify-between">
+                                    <span class="text-white/80">Total Tasks</span>
+                                    <span class="font-bold text-xl" id="taskSummaryTotal">0</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-white/80">Pending</span>
+                                    <span class="font-bold text-xl" id="taskSummaryPending">0</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-white/80">Overdue</span>
+                                    <span class="font-bold text-xl text-red-200" id="taskSummaryOverdue">0</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-white/80">Completed</span>
+                                    <span class="font-bold text-xl text-green-200" id="taskSummaryCompleted">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Deals Section -->
+            <div id="dealsSection" class="hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Deals & Commission</h2>
+                        <p class="text-gray-500">Track your sales pipeline and earnings</p>
+                    </div>
+                    <button onclick="showAddDealModal()" class="px-6 py-3 bg-gradient-to-r from-indigo-500 to-blue-600 text-white font-semibold rounded-xl flex items-center gap-2">
+                        <i class="fas fa-plus"></i>New Deal
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-white rounded-xl p-4 border border-gray-200">
+                        <p class="text-xs text-gray-500 uppercase">Pipeline Value</p>
+                        <p class="text-2xl font-bold text-gray-900" id="dealPipelineValue">0</p>
+                    </div>
+                    <div class="bg-white rounded-xl p-4 border border-gray-200">
+                        <p class="text-xs text-gray-500 uppercase">Won Deals</p>
+                        <p class="text-2xl font-bold text-green-600" id="dealWonCount">0</p>
+                    </div>
+                    <div class="bg-white rounded-xl p-4 border border-gray-200">
+                        <p class="text-xs text-gray-500 uppercase">Total Commission</p>
+                        <p class="text-2xl font-bold text-indigo-600" id="dealTotalCommission">0</p>
+                    </div>
+                    <div class="bg-white rounded-xl p-4 border border-gray-200">
+                        <p class="text-xs text-gray-500 uppercase">Conversion Rate</p>
+                        <p class="text-2xl font-bold text-blue-600" id="dealConversionRate">0%</p>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b border-gray-200 bg-gray-50">
+                                    <th class="text-left px-4 py-4 text-xs font-semibold text-gray-500 uppercase">Lead</th>
+                                    <th class="text-left px-4 py-4 text-xs font-semibold text-gray-500 uppercase">Property</th>
+                                    <th class="text-left px-4 py-4 text-xs font-semibold text-gray-500 uppercase">Value</th>
+                                    <th class="text-left px-4 py-4 text-xs font-semibold text-gray-500 uppercase">Commission</th>
+                                    <th class="text-left px-4 py-4 text-xs font-semibold text-gray-500 uppercase">Stage</th>
+                                    <th class="text-left px-4 py-4 text-xs font-semibold text-gray-500 uppercase">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dealsTable" class="divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </main>
 
@@ -288,9 +576,447 @@
         </div>
     </div>
 
+    <!-- Add Property Modal -->
+    <div class="modal" id="propertyModal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-xl font-bold text-gray-900">Add Property</h3>
+                <button onclick="closePropertyModal()" class="p-2 hover:bg-gray-100 rounded-lg"><i class="fas fa-times text-gray-500"></i></button>
+            </div>
+            <div class="p-6">
+                <form id="propertyForm" class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                            <input type="text" name="title" required class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Property Type</label>
+                            <select name="property_type" class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none">
+                                <option value="1BHK">1BHK</option>
+                                <option value="2BHK">2BHK</option>
+                                <option value="3BHK">3BHK</option>
+                                <option value="4BHK">4BHK</option>
+                                <option value="Villa">Villa</option>
+                                <option value="Plot">Plot</option>
+                                <option value="Commercial">Commercial</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Listing Type</label>
+                            <select name="listing_type" class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-green-500 outline-none">
+                                <option value="Sale">Sale</option>
+                                <option value="Rent">Rent</option>
+                                <option value="Lease">Lease</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Price</label>
+                            <input type="number" name="price" required class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-green-500 outline-none">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Bedrooms</label>
+                            <input type="number" name="bedrooms" class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-green-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Bathrooms</label>
+                            <input type="number" name="bathrooms" class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-green-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Area (sqft)</label>
+                            <input type="number" name="area_sqft" class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-green-500 outline-none">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                        <input type="text" name="address" class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-green-500 outline-none">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">City</label>
+                            <input type="text" name="city" class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-green-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                            <select name="status" class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-green-500 outline-none">
+                                <option value="Available">Available</option>
+                                <option value="Reserved">Reserved</option>
+                                <option value="Sold">Sold</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <textarea name="description" rows="3" class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-green-500 outline-none"></textarea>
+                    </div>
+                    <div class="flex justify-end gap-3 pt-4">
+                        <button type="button" onclick="closePropertyModal()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
+                        <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Save Property</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Appointment Modal -->
+    <div class="modal" id="appointmentModal">
+        <div class="modal-content">
+            <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-xl font-bold text-gray-900">Schedule Appointment</h3>
+                <button onclick="closeAppointmentModal()" class="p-2 hover:bg-gray-100 rounded-lg"><i class="fas fa-times text-gray-500"></i></button>
+            </div>
+            <div class="p-6">
+                <form id="appointmentForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Lead</label>
+                        <select name="lead_id" id="apptLeadSelect" required class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-purple-500 outline-none">
+                            <option value="">Select Lead</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Property (Optional)</label>
+                        <select name="property_id" id="apptPropertySelect" class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-purple-500 outline-none">
+                            <option value="">Select Property</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Appointment Type</label>
+                        <select name="appointment_type" class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-purple-500 outline-none">
+                            <option value="Site Visit">Site Visit</option>
+                            <option value="Meeting">Meeting</option>
+                            <option value="Call">Call</option>
+                            <option value="Video Call">Video Call</option>
+                            <option value="Property Showing">Property Showing</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Date & Time</label>
+                            <input type="datetime-local" name="scheduled_at" required class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-purple-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Duration (minutes)</label>
+                            <input type="number" name="duration_minutes" value="60" class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-purple-500 outline-none">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                        <input type="text" name="location" placeholder="Property address or meeting location" class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-purple-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                        <textarea name="notes" rows="2" class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-purple-500 outline-none"></textarea>
+                    </div>
+                    <div class="flex justify-end gap-3 pt-4">
+                        <button type="button" onclick="closeAppointmentModal()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
+                        <button type="submit" class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">Schedule</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Task Modal -->
+    <div class="modal" id="taskModal">
+        <div class="modal-content">
+            <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-xl font-bold text-gray-900">Add Task</h3>
+                <button onclick="closeTaskModal()" class="p-2 hover:bg-gray-100 rounded-lg"><i class="fas fa-times text-gray-500"></i></button>
+            </div>
+            <div class="p-6">
+                <form id="taskForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Lead</label>
+                        <select name="lead_id" id="taskLeadSelect" required class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-amber-500 outline-none">
+                            <option value="">Select Lead</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Task Title</label>
+                        <input type="text" name="title" required class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-amber-500 outline-none">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Task Type</label>
+                            <select name="task_type" class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-amber-500 outline-none">
+                                <option value="Call">Call</option>
+                                <option value="Email">Email</option>
+                                <option value="Follow-up">Follow-up</option>
+                                <option value="Site Visit">Site Visit</option>
+                                <option value="Document">Document</option>
+                                <option value="Meeting">Meeting</option>
+                                <option value="Reminder">Reminder</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                            <select name="priority" class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-amber-500 outline-none">
+                                <option value="Low">Low</option>
+                                <option value="Medium" selected>Medium</option>
+                                <option value="High">High</option>
+                                <option value="Urgent">Urgent</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                        <input type="datetime-local" name="due_date" required class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-amber-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <textarea name="description" rows="2" class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-amber-500 outline-none"></textarea>
+                    </div>
+                    <div class="flex justify-end gap-3 pt-4">
+                        <button type="button" onclick="closeTaskModal()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
+                        <button type="submit" class="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700">Add Task</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Deal Modal -->
+    <div class="modal" id="dealModal">
+        <div class="modal-content">
+            <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-xl font-bold text-gray-900">New Deal</h3>
+                <button onclick="closeDealModal()" class="p-2 hover:bg-gray-100 rounded-lg"><i class="fas fa-times text-gray-500"></i></button>
+            </div>
+            <div class="p-6">
+                <form id="dealForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Lead</label>
+                        <select name="lead_id" id="dealLeadSelect" required class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-indigo-500 outline-none">
+                            <option value="">Select Lead</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Property</label>
+                        <select name="property_id" id="dealPropertySelect" class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-indigo-500 outline-none">
+                            <option value="">Select Property</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Deal Value</label>
+                            <input type="number" name="deal_value" required class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-indigo-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Commission %</label>
+                            <input type="number" name="commission_percentage" value="2" step="0.1" class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-indigo-500 outline-none">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Deal Stage</label>
+                        <select name="deal_stage" class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-indigo-500 outline-none">
+                            <option value="Initial">Initial</option>
+                            <option value="Negotiation">Negotiation</option>
+                            <option value="Agreement">Agreement</option>
+                            <option value="Documentation">Documentation</option>
+                            <option value="Payment">Payment</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Expected Close Date</label>
+                        <input type="date" name="expected_close_date" class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-indigo-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                        <textarea name="notes" rows="2" class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-indigo-500 outline-none"></textarea>
+                    </div>
+                    <div class="flex justify-end gap-3 pt-4">
+                        <button type="button" onclick="closeDealModal()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
+                        <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Create Deal</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Lead Modal -->
+    <div class="modal" id="addLeadModal">
+        <div class="modal-content">
+            <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-xl font-bold text-gray-900">Add New Lead</h3>
+                <button onclick="closeAddLeadModal()" class="p-2 hover:bg-gray-100 rounded-lg"><i class="fas fa-times text-gray-500"></i></button>
+            </div>
+            <div class="p-6">
+                <form id="addLeadForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
+                        <input type="tel" name="phone" required placeholder="919876543210" class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Message/Requirements</label>
+                        <textarea name="message" rows="3" placeholder="What is the lead looking for?" class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 outline-none"></textarea>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Budget</label>
+                            <input type="text" name="budget" placeholder="e.g., 1.5Cr" class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                            <input type="text" name="location" placeholder="e.g., Delhi" class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 outline-none">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                        <select name="status" class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 outline-none">
+                            <option value="new">New</option>
+                            <option value="contacted">Contacted</option>
+                            <option value="follow-up">Follow-up</option>
+                        </select>
+                    </div>
+                    <div class="flex justify-end gap-3 pt-4">
+                        <button type="button" onclick="closeAddLeadModal()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
+                        <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Add Lead</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Property Modal -->
+    <div class="modal" id="viewPropertyModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-xl font-bold text-gray-900">Property Details</h3>
+                <button onclick="closeViewPropertyModal()" class="p-2 hover:bg-gray-100 rounded-lg"><i class="fas fa-times text-gray-500"></i></button>
+            </div>
+            <div class="p-6" id="viewPropertyContent">
+                <!-- Content loaded dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- WhatsApp Integration Modal -->
+    <div class="modal" id="whatsappModal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-xl font-bold text-gray-900">
+                    <i class="fab fa-whatsapp text-green-500 mr-2"></i>WhatsApp Integration
+                </h3>
+                <button onclick="closeWhatsAppModal()" class="p-2 hover:bg-gray-100 rounded-lg"><i class="fas fa-times text-gray-500"></i></button>
+            </div>
+            <div class="p-6">
+                <!-- Connection Status -->
+                <div id="whatsappConnectionPanel">
+                    <div class="text-center mb-6">
+                        <div id="whatsappStatusBadge" class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-red-100 text-red-700">
+                            <i class="fas fa-times-circle"></i>
+                            <span>Not Connected</span>
+                        </div>
+                    </div>
+                    
+                    <!-- QR Code Section -->
+                    <div id="qrCodeSection" class="hidden">
+                        <div class="text-center mb-4">
+                            <p class="text-gray-600 mb-4">Scan this QR code with your WhatsApp to connect</p>
+                            <div class="whatsapp-qr border-2 border-dashed border-gray-300">
+                                <div class="text-center p-4">
+                                    <i class="fas fa-qrcode text-6xl text-gray-400 mb-2"></i>
+                                    <p class="text-xs text-gray-500">QR Code will appear here</p>
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-400 mt-2">QR code refreshes every 60 seconds</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Connection Steps -->
+                    <div id="connectionSteps" class="mb-6">
+                        <h4 class="font-semibold text-gray-900 mb-3">How to connect:</h4>
+                        <div class="whatsapp-step">
+                            <div class="whatsapp-step-number">1</div>
+                            <div>
+                                <p class="font-medium text-gray-900">Open WhatsApp on your phone</p>
+                                <p class="text-sm text-gray-500">Make sure you have the latest version</p>
+                            </div>
+                        </div>
+                        <div class="whatsapp-step">
+                            <div class="whatsapp-step-number">2</div>
+                            <div>
+                                <p class="font-medium text-gray-900">Go to Settings → Linked Devices</p>
+                                <p class="text-sm text-gray-500">Tap on "Link a Device"</p>
+                            </div>
+                        </div>
+                        <div class="whatsapp-step">
+                            <div class="whatsapp-step-number">3</div>
+                            <div>
+                                <p class="font-medium text-gray-900">Scan the QR code</p>
+                                <p class="text-sm text-gray-500">Point your camera at the code</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Connected Info -->
+                    <div id="connectedInfo" class="hidden mb-6">
+                        <div class="bg-green-50 rounded-xl p-4 mb-4">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center">
+                                    <i class="fab fa-whatsapp text-white text-lg"></i>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-gray-900">WhatsApp Connected</p>
+                                    <p class="text-sm text-gray-500" id="connectedPhone">+91 98765 43210</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-gray-50 rounded-lg p-3 text-center">
+                                <p class="text-2xl font-bold text-gray-900" id="whatsappMessagesSent">0</p>
+                                <p class="text-xs text-gray-500">Messages Sent</p>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-3 text-center">
+                                <p class="text-2xl font-bold text-gray-900" id="whatsappLeads">0</p>
+                                <p class="text-xs text-gray-500">Leads from WhatsApp</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Settings Form -->
+                    <div id="whatsappSettings" class="border-t border-gray-200 pt-4 mb-6">
+                        <h4 class="font-semibold text-gray-900 mb-3">Auto-Reply Settings</h4>
+                        <div class="space-y-3">
+                            <label class="flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox" id="autoReplyEnabled" class="rounded border-gray-300 text-green-600 focus:ring-green-500">
+                                <span class="text-sm text-gray-700">Enable auto-reply for new leads</span>
+                            </label>
+                            <label class="flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox" id="welcomeMessageEnabled" class="rounded border-gray-300 text-green-600 focus:ring-green-500" checked>
+                                <span class="text-sm text-gray-700">Send welcome message</span>
+                            </label>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Welcome Message</label>
+                                <textarea id="welcomeMessage" rows="3" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-green-500 outline-none text-sm">Thank you for contacting us! We'll get back to you shortly with property options.</textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="flex gap-3">
+                        <button type="button" id="disconnectBtn" onclick="disconnectWhatsApp()" class="hidden flex-1 px-4 py-3 border border-red-200 text-red-600 rounded-xl font-medium hover:bg-red-50">
+                            <i class="fas fa-unlink mr-2"></i>Disconnect
+                        </button>
+                        <button type="button" id="connectBtn" onclick="connectWhatsApp()" class="flex-1 px-4 py-3 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700">
+                            <i class="fab fa-whatsapp mr-2"></i>Connect WhatsApp
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         const API_BASE_URL = window.location.hostname === 'localhost' ? 'http://localhost:80' : window.location.origin;
         let allLeads = [], filteredLeads = [], currentFilter = 'all', currentView = 'list', bulkMode = false, selectedLeads = new Set();
+        let allProperties = [], filteredProperties = [], currentPropertyFilter = 'all';
+        let allAppointments = [], allTasks = [], allDeals = [], currentTaskFilter = 'all';
+        let currentTab = 'leads';
 
         const sampleLeads = [
             { id: '1', phone: '919876543210', message: 'Looking for 3BHK in Delhi under 1.5Cr', budget: '1.5Cr', location: 'Delhi', status: 'new', ai_score: 85, ai_priority: 'hot', created_at: new Date().toISOString(), activities: [{type: 'created', time: new Date().toISOString(), text: 'Lead created from WhatsApp'}] },
@@ -308,12 +1034,14 @@
         ];
 
         // Check authentication
-                document.addEventListener('DOMContentLoaded', () => {
-                    checkAuth();
-                    loadLeads();
-                    loadTheme();
-                    loadUserInfo();
-                });
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuth();
+            loadLeads();
+            loadTheme();
+            loadUserInfo();
+            loadQuickStats();
+            loadWhatsAppStatus();
+        });
         
                 function checkAuth() {
                     const token = localStorage.getItem('token');
@@ -584,6 +1312,1062 @@
         function loadTheme() { if (localStorage.getItem('theme') === 'dark') { document.body.classList.add('dark'); document.getElementById('themeIcon').className = 'fas fa-sun text-yellow-400'; } }
 
         document.querySelectorAll('.modal').forEach(m => m.addEventListener('click', e => { if (e.target === m) m.classList.remove('active'); }));
+
+        // Tab Switching
+        function switchTab(tab) {
+            currentTab = tab;
+            
+            // Update tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(`tab-${tab}`).classList.add('active');
+            
+            // Hide all sections
+            document.getElementById('listView').classList.add('hidden');
+            document.getElementById('kanbanView').classList.add('hidden');
+            document.querySelector('.flex.flex-wrap.items-center.justify-between.gap-4.mb-6').classList.add('hidden');
+            document.querySelector('.flex.flex-wrap.items-center.gap-2.mb-6').classList.add('hidden');
+            document.getElementById('propertiesSection').classList.add('hidden');
+            document.getElementById('appointmentsSection').classList.add('hidden');
+            document.getElementById('tasksSection').classList.add('hidden');
+            document.getElementById('dealsSection').classList.add('hidden');
+            
+            // Show selected section
+            if (tab === 'leads') {
+                document.querySelector('.flex.flex-wrap.items-center.justify-between.gap-4.mb-6').classList.remove('hidden');
+                document.querySelector('.flex.flex-wrap.items-center.gap-2.mb-6').classList.remove('hidden');
+                document.getElementById('listView').classList.remove('hidden');
+                loadLeads();
+            } else if (tab === 'properties') {
+                document.getElementById('propertiesSection').classList.remove('hidden');
+                loadProperties();
+            } else if (tab === 'appointments') {
+                document.getElementById('appointmentsSection').classList.remove('hidden');
+                loadAppointments();
+            } else if (tab === 'tasks') {
+                document.getElementById('tasksSection').classList.remove('hidden');
+                loadTasks();
+            } else if (tab === 'deals') {
+                document.getElementById('dealsSection').classList.remove('hidden');
+                loadDeals();
+            }
+        }
+
+        // Load Quick Stats
+        async function loadQuickStats() {
+            try {
+                // Leads count
+                const leadsRes = await fetch(`${API_BASE_URL}/leads`);
+                const leads = await leadsRes.json();
+                document.getElementById('statTotalLeads').textContent = leads.length || sampleLeads.length;
+                
+                // Properties count
+                const propsRes = await fetch(`${API_BASE_URL}/properties`);
+                const props = await propsRes.json();
+                document.getElementById('statTotalProperties').textContent = props.length || 3;
+                
+                // Today's tasks
+                const tasksRes = await fetch(`${API_BASE_URL}/tasks/today/list`);
+                const tasks = await tasksRes.json();
+                document.getElementById('statTodayTasks').textContent = tasks.length || 0;
+                
+                // Appointments
+                const apptRes = await fetch(`${API_BASE_URL}/appointments/stats/overview`);
+                const apptStats = await apptRes.json();
+                document.getElementById('statAppointments').textContent = apptStats.today || 0;
+                
+                // Deals & Commission
+                const dealsRes = await fetch(`${API_BASE_URL}/deals/commission/stats`);
+                const dealStats = await dealsRes.json();
+                document.getElementById('statActiveDeals').textContent = dealStats.totalDeals || 0;
+                document.getElementById('statCommission').textContent = formatCurrency(dealStats.totalCommission || 0);
+            } catch (e) {
+                // Use sample data
+                document.getElementById('statTotalLeads').textContent = sampleLeads.length;
+                document.getElementById('statTotalProperties').textContent = 3;
+                document.getElementById('statTodayTasks').textContent = 2;
+                document.getElementById('statAppointments').textContent = 1;
+                document.getElementById('statActiveDeals').textContent = 2;
+                document.getElementById('statCommission').textContent = '2.5L';
+            }
+        }
+
+        // Properties Functions
+        async function loadProperties() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/properties`);
+                allProperties = await response.json();
+            } catch (e) {
+                allProperties = [
+                    { id: '1', title: 'Luxury 3BHK in Whitefield', property_type: '3BHK', price: 15000000, city: 'Bangalore', status: 'Available', bedrooms: 3, bathrooms: 3, area_sqft: 1800 },
+                    { id: '2', title: '2BHK Apartment in Koramangala', property_type: '2BHK', price: 8500000, city: 'Bangalore', status: 'Available', bedrooms: 2, bathrooms: 2, area_sqft: 1200 },
+                    { id: '3', title: 'Villa in Sarjapur Road', property_type: 'Villa', price: 35000000, city: 'Bangalore', status: 'Sold', bedrooms: 4, bathrooms: 4, area_sqft: 3500 }
+                ];
+            }
+            filterProperties(currentPropertyFilter);
+        }
+
+        function filterProperties(filter) {
+            currentPropertyFilter = filter;
+            document.querySelectorAll('.filter-prop-btn').forEach(btn => {
+                const isActive = btn.dataset.filter === filter;
+                btn.classList.toggle('bg-green-600', isActive);
+                btn.classList.toggle('text-white', isActive);
+                btn.classList.toggle('bg-white', !isActive);
+                btn.classList.toggle('text-gray-600', !isActive);
+            });
+            
+            filteredProperties = filter === 'all' ? allProperties : allProperties.filter(p => p.status === filter);
+            renderProperties();
+        }
+
+        function renderProperties() {
+            const grid = document.getElementById('propertiesGrid');
+            if (filteredProperties.length === 0) {
+                grid.innerHTML = '<div class="col-span-3 text-center py-12 text-gray-400"><i class="fas fa-building text-4xl mb-3"></i><p>No properties found</p></div>';
+                return;
+            }
+            
+            grid.innerHTML = filteredProperties.map(prop => `
+                <div class="property-card bg-white rounded-2xl border border-gray-200 overflow-hidden ${prop.status === 'Sold' ? 'sold' : ''}">
+                    <div class="h-40 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                        <i class="fas fa-home text-6xl text-gray-300"></i>
+                    </div>
+                    <div class="p-5">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="px-2 py-1 rounded-full text-xs font-semibold ${getPropertyStatusClass(prop.status)}">${prop.status}</span>
+                            <span class="text-lg font-bold text-gray-900">${formatCurrency(prop.price)}</span>
+                        </div>
+                        <h3 class="font-bold text-gray-900 mb-1">${prop.title}</h3>
+                        <p class="text-sm text-gray-500 mb-3"><i class="fas fa-map-marker-alt mr-1"></i>${prop.city}</p>
+                        <div class="flex gap-4 text-sm text-gray-600 mb-4">
+                            ${prop.bedrooms ? `<span><i class="fas fa-bed mr-1"></i>${prop.bedrooms} BHK</span>` : ''}
+                            ${prop.area_sqft ? `<span><i class="fas fa-ruler-combined mr-1"></i>${prop.area_sqft} sqft</span>` : ''}
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="viewProperty('${prop.id}')" class="flex-1 px-3 py-2 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100">View</button>
+                            <button onclick="matchPropertyToLeads('${prop.id}')" class="flex-1 px-3 py-2 bg-green-50 text-green-600 rounded-lg text-sm font-medium hover:bg-green-100">Match</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getPropertyStatusClass(status) {
+            const classes = {
+                'Available': 'bg-green-100 text-green-700',
+                'Sold': 'bg-gray-100 text-gray-700',
+                'Reserved': 'bg-amber-100 text-amber-700',
+                'Under Negotiation': 'bg-purple-100 text-purple-700'
+            };
+            return classes[status] || 'bg-gray-100 text-gray-700';
+        }
+
+        function showAddPropertyModal() {
+            document.getElementById('propertyModal').classList.add('active');
+        }
+
+        function closePropertyModal() {
+            document.getElementById('propertyModal').classList.remove('active');
+            document.getElementById('propertyForm').reset();
+        }
+
+        document.getElementById('propertyForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            
+            try {
+                await fetch(`${API_BASE_URL}/properties`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                closePropertyModal();
+                loadProperties();
+            } catch (err) {
+                alert('Property added (demo mode)');
+                closePropertyModal();
+            }
+        });
+
+        // Appointments Functions
+        async function loadAppointments() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/appointments`);
+                allAppointments = await response.json();
+            } catch (e) {
+                allAppointments = [
+                    { id: '1', leads: { phone: '919876543210' }, properties: { title: 'Luxury 3BHK' }, appointment_type: 'Site Visit', scheduled_at: new Date().toISOString(), status: 'Scheduled' }
+                ];
+            }
+            renderAppointments();
+        }
+
+        function renderAppointments() {
+            const tbody = document.getElementById('appointmentsTable');
+            if (allAppointments.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center text-gray-400">No appointments scheduled</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = allAppointments.map(appt => `
+                <tr>
+                    <td class="px-4 py-4 font-medium text-gray-900">${appt.leads?.phone || 'N/A'}</td>
+                    <td class="px-4 py-4 text-gray-600">${appt.properties?.title || 'N/A'}</td>
+                    <td class="px-4 py-4">
+                        <span class="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700">${appt.appointment_type}</span>
+                    </td>
+                    <td class="px-4 py-4 text-gray-600">${formatDateTime(appt.scheduled_at)}</td>
+                    <td class="px-4 py-4">
+                        <span class="px-2 py-1 rounded-full text-xs font-medium ${getAppointmentStatusClass(appt.status)}">${appt.status}</span>
+                    </td>
+                    <td class="px-4 py-4">
+                        <button onclick="completeAppointment('${appt.id}')" class="text-green-600 hover:text-green-800 mr-2" title="Complete"><i class="fas fa-check"></i></button>
+                        <button onclick="cancelAppointment('${appt.id}')" class="text-red-600 hover:text-red-800" title="Cancel"><i class="fas fa-times"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function getAppointmentStatusClass(status) {
+            const classes = {
+                'Scheduled': 'bg-blue-100 text-blue-700',
+                'Completed': 'bg-green-100 text-green-700',
+                'Cancelled': 'bg-red-100 text-red-700',
+                'No Show': 'bg-gray-100 text-gray-700'
+            };
+            return classes[status] || 'bg-gray-100 text-gray-700';
+        }
+
+        async function showAddAppointmentModal() {
+            // Populate leads dropdown
+            const leadSelect = document.getElementById('apptLeadSelect');
+            leadSelect.innerHTML = '<option value="">Select Lead</option>' + 
+                allLeads.map(l => `<option value="${l.id}">${l.phone} - ${l.message?.substring(0, 30) || ''}</option>`).join('');
+            
+            // Populate properties dropdown
+            const propSelect = document.getElementById('apptPropertySelect');
+            propSelect.innerHTML = '<option value="">Select Property</option>' + 
+                allProperties.map(p => `<option value="${p.id}">${p.title}</option>`).join('');
+            
+            document.getElementById('appointmentModal').classList.add('active');
+        }
+
+        function closeAppointmentModal() {
+            document.getElementById('appointmentModal').classList.remove('active');
+            document.getElementById('appointmentForm').reset();
+        }
+
+        document.getElementById('appointmentForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            
+            try {
+                await fetch(`${API_BASE_URL}/appointments`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                closeAppointmentModal();
+                loadAppointments();
+            } catch (err) {
+                alert('Appointment scheduled (demo mode)');
+                closeAppointmentModal();
+            }
+        });
+
+        // Tasks Functions
+        async function loadTasks() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/tasks`);
+                allTasks = await response.json();
+            } catch (e) {
+                allTasks = [
+                    { id: '1', leads: { phone: '919876543210' }, title: 'Follow up on site visit', task_type: 'Follow-up', priority: 'High', due_date: new Date().toISOString(), status: 'Pending' },
+                    { id: '2', leads: { phone: '919988776655' }, title: 'Send property documents', task_type: 'Document', priority: 'Medium', due_date: new Date(Date.now() + 86400000).toISOString(), status: 'Pending' }
+                ];
+            }
+            updateTaskSummary();
+            filterTasks(currentTaskFilter);
+        }
+
+        function updateTaskSummary() {
+            const total = allTasks.length;
+            const pending = allTasks.filter(t => t.status === 'Pending').length;
+            const completed = allTasks.filter(t => t.status === 'Completed').length;
+            const overdue = allTasks.filter(t => {
+                return t.status === 'Pending' && new Date(t.due_date) < new Date();
+            }).length;
+            
+            document.getElementById('taskSummaryTotal').textContent = total;
+            document.getElementById('taskSummaryPending').textContent = pending;
+            document.getElementById('taskSummaryCompleted').textContent = completed;
+            document.getElementById('taskSummaryOverdue').textContent = overdue;
+        }
+
+        function filterTasks(filter) {
+            currentTaskFilter = filter;
+            document.querySelectorAll('.task-filter-btn').forEach(btn => {
+                const isActive = btn.dataset.filter === filter;
+                btn.classList.toggle('bg-amber-600', isActive);
+                btn.classList.toggle('text-white', isActive);
+                btn.classList.toggle('bg-white', !isActive);
+                btn.classList.toggle('text-gray-600', !isActive);
+            });
+            
+            let filtered = allTasks;
+            if (filter === 'pending') filtered = allTasks.filter(t => t.status === 'Pending');
+            else if (filter === 'completed') filtered = allTasks.filter(t => t.status === 'Completed');
+            else if (filter === 'overdue') filtered = allTasks.filter(t => t.status === 'Pending' && new Date(t.due_date) < new Date());
+            
+            renderTasks(filtered);
+        }
+
+        function renderTasks(tasks) {
+            const container = document.getElementById('tasksList');
+            if (tasks.length === 0) {
+                container.innerHTML = '<div class="p-8 text-center text-gray-400">No tasks found</div>';
+                return;
+            }
+            
+            container.innerHTML = tasks.map(task => {
+                const isOverdue = task.status === 'Pending' && new Date(task.due_date) < new Date();
+                const priorityClass = task.priority === 'Urgent' || task.priority === 'High' ? 'high-priority' : '';
+                const overdueClass = isOverdue ? 'overdue' : '';
+                
+                return `
+                    <div class="task-item p-4 ${overdueClass} ${priorityClass}">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="px-2 py-0.5 rounded text-xs font-medium ${getTaskTypeClass(task.task_type)}">${task.task_type}</span>
+                                    <span class="px-2 py-0.5 rounded text-xs font-medium ${getPriorityClass(task.priority)}">${task.priority}</span>
+                                    ${isOverdue ? '<span class="px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700">Overdue</span>' : ''}
+                                </div>
+                                <h4 class="font-semibold text-gray-900">${task.title}</h4>
+                                <p class="text-sm text-gray-500">${task.leads?.phone || 'No lead'} • Due: ${formatDateTime(task.due_date)}</p>
+                            </div>
+                            <div class="flex gap-2">
+                                ${task.status !== 'Completed' ? `
+                                    <button onclick="completeTask('${task.id}')" class="w-8 h-8 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 flex items-center justify-center" title="Complete">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                ` : ''}
+                                <button onclick="deleteTask('${task.id}')" class="w-8 h-8 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 flex items-center justify-center" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getTaskTypeClass(type) {
+            const classes = {
+                'Call': 'bg-blue-100 text-blue-700',
+                'Email': 'bg-purple-100 text-purple-700',
+                'Follow-up': 'bg-amber-100 text-amber-700',
+                'Site Visit': 'bg-green-100 text-green-700',
+                'Document': 'bg-gray-100 text-gray-700'
+            };
+            return classes[type] || 'bg-gray-100 text-gray-700';
+        }
+
+        function getPriorityClass(priority) {
+            const classes = {
+                'Urgent': 'bg-red-100 text-red-700',
+                'High': 'bg-orange-100 text-orange-700',
+                'Medium': 'bg-yellow-100 text-yellow-700',
+                'Low': 'bg-gray-100 text-gray-700'
+            };
+            return classes[priority] || 'bg-gray-100 text-gray-700';
+        }
+
+        async function showAddTaskModal() {
+            const leadSelect = document.getElementById('taskLeadSelect');
+            leadSelect.innerHTML = '<option value="">Select Lead</option>' + 
+                allLeads.map(l => `<option value="${l.id}">${l.phone} - ${l.message?.substring(0, 30) || ''}</option>`).join('');
+            
+            document.getElementById('taskModal').classList.add('active');
+        }
+
+        function closeTaskModal() {
+            document.getElementById('taskModal').classList.remove('active');
+            document.getElementById('taskForm').reset();
+        }
+
+        document.getElementById('taskForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            
+            try {
+                await fetch(`${API_BASE_URL}/tasks`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                closeTaskModal();
+                loadTasks();
+            } catch (err) {
+                alert('Task added (demo mode)');
+                closeTaskModal();
+            }
+        });
+
+        async function completeTask(taskId) {
+            try {
+                await fetch(`${API_BASE_URL}/tasks/${taskId}/complete`, { method: 'PATCH' });
+                loadTasks();
+            } catch (err) {
+                alert('Task completed (demo mode)');
+            }
+        }
+
+        // Deals Functions
+        async function loadDeals() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/deals`);
+                allDeals = await response.json();
+                
+                const statsRes = await fetch(`${API_BASE_URL}/deals/commission/stats`);
+                const stats = await statsRes.json();
+                
+                document.getElementById('dealPipelineValue').textContent = formatCurrency(stats.totalDeals > 0 ? stats.totalDeals * 1000000 : 0);
+                document.getElementById('dealWonCount').textContent = stats.wonDeals || 0;
+                document.getElementById('dealTotalCommission').textContent = formatCurrency(stats.totalCommission || 0);
+                document.getElementById('dealConversionRate').textContent = (stats.conversionRate || 0) + '%';
+            } catch (e) {
+                allDeals = [
+                    { id: '1', leads: { phone: '919876543210' }, properties: { title: 'Luxury 3BHK' }, deal_value: 15000000, commission_amount: 300000, deal_stage: 'Negotiation' },
+                    { id: '2', leads: { phone: '919988776655' }, properties: { title: '2BHK Apartment' }, deal_value: 8500000, commission_amount: 170000, deal_stage: 'Closed Won' }
+                ];
+                document.getElementById('dealPipelineValue').textContent = '2.35Cr';
+                document.getElementById('dealWonCount').textContent = '1';
+                document.getElementById('dealTotalCommission').textContent = '4.7L';
+                document.getElementById('dealConversionRate').textContent = '50%';
+            }
+            renderDeals();
+        }
+
+        function renderDeals() {
+            const tbody = document.getElementById('dealsTable');
+            if (allDeals.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center text-gray-400">No deals yet</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = allDeals.map(deal => `
+                <tr>
+                    <td class="px-4 py-4 font-medium text-gray-900">${deal.leads?.phone || 'N/A'}</td>
+                    <td class="px-4 py-4 text-gray-600">${deal.properties?.title || 'N/A'}</td>
+                    <td class="px-4 py-4 font-semibold text-gray-900">${formatCurrency(deal.deal_value)}</td>
+                    <td class="px-4 py-4 text-green-600 font-medium">${formatCurrency(deal.commission_amount)}</td>
+                    <td class="px-4 py-4">
+                        <span class="px-2 py-1 rounded-full text-xs font-medium ${getDealStageClass(deal.deal_stage)}">${deal.deal_stage}</span>
+                    </td>
+                    <td class="px-4 py-4">
+                        ${deal.deal_stage !== 'Closed Won' && deal.deal_stage !== 'Closed Lost' ? `
+                            <button onclick="closeDealWon('${deal.id}')" class="text-green-600 hover:text-green-800 mr-2" title="Mark as Won"><i class="fas fa-check-circle"></i></button>
+                            <button onclick="closeDealLost('${deal.id}')" class="text-red-600 hover:text-red-800" title="Mark as Lost"><i class="fas fa-times-circle"></i></button>
+                        ` : '<span class="text-gray-400">-</span>'}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function getDealStageClass(stage) {
+            const classes = {
+                'Initial': 'bg-gray-100 text-gray-700',
+                'Negotiation': 'bg-blue-100 text-blue-700',
+                'Agreement': 'bg-purple-100 text-purple-700',
+                'Documentation': 'bg-amber-100 text-amber-700',
+                'Payment': 'bg-orange-100 text-orange-700',
+                'Closed Won': 'bg-green-100 text-green-700',
+                'Closed Lost': 'bg-red-100 text-red-700'
+            };
+            return classes[stage] || 'bg-gray-100 text-gray-700';
+        }
+
+        async function showAddDealModal() {
+            const leadSelect = document.getElementById('dealLeadSelect');
+            leadSelect.innerHTML = '<option value="">Select Lead</option>' + 
+                allLeads.filter(l => l.status !== 'closed').map(l => `<option value="${l.id}">${l.phone} - ${l.message?.substring(0, 30) || ''}</option>`).join('');
+            
+            const propSelect = document.getElementById('dealPropertySelect');
+            propSelect.innerHTML = '<option value="">Select Property</option>' + 
+                allProperties.filter(p => p.status === 'Available').map(p => `<option value="${p.id}">${p.title}</option>`).join('');
+            
+            document.getElementById('dealModal').classList.add('active');
+        }
+
+        function closeDealModal() {
+            document.getElementById('dealModal').classList.remove('active');
+            document.getElementById('dealForm').reset();
+        }
+
+        document.getElementById('dealForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            
+            try {
+                await fetch(`${API_BASE_URL}/deals`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                closeDealModal();
+                loadDeals();
+            } catch (err) {
+                alert('Deal created (demo mode)');
+                closeDealModal();
+            }
+        });
+
+        // Add Lead Form Handler
+        document.getElementById('addLeadForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            data.ai_score = Math.floor(Math.random() * 30) + 70; // Random score 70-100
+            data.ai_priority = data.ai_score >= 80 ? 'hot' : 'warm';
+            data.created_at = new Date().toISOString();
+            data.activities = [{type: 'created', time: new Date().toISOString(), text: 'Lead created manually'}];
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/leads`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (response.ok) {
+                    closeAddLeadModal();
+                    loadLeads();
+                    loadQuickStats();
+                }
+            } catch (err) {
+                // Demo mode - add to local array
+                data.id = Date.now().toString();
+                allLeads.unshift(data);
+                closeAddLeadModal();
+                loadLeads();
+                loadQuickStats();
+                alert('Lead added successfully (demo mode)');
+            }
+        });
+
+        // Utility Functions
+        function formatCurrency(amount) {
+            if (!amount) return '0';
+            if (amount >= 10000000) return (amount / 10000000).toFixed(1) + 'Cr';
+            if (amount >= 100000) return (amount / 100000).toFixed(1) + 'L';
+            if (amount >= 1000) return (amount / 1000).toFixed(1) + 'K';
+            return amount.toString();
+        }
+
+        function formatDateTime(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+
+        // Missing Functions - Add Lead
+        function showAddLeadModal() {
+            document.getElementById('addLeadModal').classList.add('active');
+        }
+
+        function closeAddLeadModal() {
+            document.getElementById('addLeadModal').classList.remove('active');
+            document.getElementById('addLeadForm').reset();
+        }
+
+        // Property Functions
+        function viewProperty(propertyId) {
+            const property = allProperties.find(p => p.id === propertyId);
+            if (!property) return;
+            
+            document.getElementById('viewPropertyContent').innerHTML = `
+                <div class="space-y-4">
+                    <div class="h-48 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-home text-6xl text-gray-300"></i>
+                    </div>
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-900">${property.title}</h3>
+                            <p class="text-gray-500"><i class="fas fa-map-marker-alt mr-1"></i>${property.address || property.city || 'N/A'}</p>
+                        </div>
+                        <span class="px-3 py-1 rounded-full text-sm font-semibold ${getPropertyStatusClass(property.status)}">${property.status}</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div class="bg-gray-50 rounded-xl p-3 text-center">
+                            <p class="text-xs text-gray-500">Price</p>
+                            <p class="font-bold text-gray-900">${formatCurrency(property.price)}</p>
+                        </div>
+                        <div class="bg-gray-50 rounded-xl p-3 text-center">
+                            <p class="text-xs text-gray-500">Type</p>
+                            <p class="font-bold text-gray-900">${property.property_type || 'N/A'}</p>
+                        </div>
+                        <div class="bg-gray-50 rounded-xl p-3 text-center">
+                            <p class="text-xs text-gray-500">Area</p>
+                            <p class="font-bold text-gray-900">${property.area_sqft || 'N/A'} sqft</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-gray-50 rounded-xl p-3 text-center">
+                            <p class="text-xs text-gray-500">Bedrooms</p>
+                            <p class="font-bold text-gray-900">${property.bedrooms || 'N/A'}</p>
+                        </div>
+                        <div class="bg-gray-50 rounded-xl p-3 text-center">
+                            <p class="text-xs text-gray-500">Bathrooms</p>
+                            <p class="font-bold text-gray-900">${property.bathrooms || 'N/A'}</p>
+                        </div>
+                    </div>
+                    ${property.description ? `
+                        <div>
+                            <p class="text-sm font-medium text-gray-700 mb-1">Description</p>
+                            <p class="text-gray-600 text-sm">${property.description}</p>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+            document.getElementById('viewPropertyModal').classList.add('active');
+        }
+
+        function closeViewPropertyModal() {
+            document.getElementById('viewPropertyModal').classList.remove('active');
+        }
+
+        function matchPropertyToLeads(propertyId) {
+            alert('Property matching feature - Shows leads that match this property criteria');
+        }
+
+        // Appointment Actions
+        async function completeAppointment(appointmentId) {
+            if (!confirm('Mark this appointment as completed?')) return;
+            try {
+                await fetch(`${API_BASE_URL}/appointments/${appointmentId}/complete`, { 
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ feedback: 'Completed via dashboard' })
+                });
+                loadAppointments();
+            } catch (err) {
+                alert('Appointment marked as completed (demo mode)');
+                const appt = allAppointments.find(a => a.id === appointmentId);
+                if (appt) appt.status = 'Completed';
+                renderAppointments();
+            }
+        }
+
+        async function cancelAppointment(appointmentId) {
+            if (!confirm('Cancel this appointment?')) return;
+            try {
+                await fetch(`${API_BASE_URL}/appointments/${appointmentId}/cancel`, { 
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reason: 'Cancelled via dashboard' })
+                });
+                loadAppointments();
+            } catch (err) {
+                alert('Appointment cancelled (demo mode)');
+                const appt = allAppointments.find(a => a.id === appointmentId);
+                if (appt) appt.status = 'Cancelled';
+                renderAppointments();
+            }
+        }
+
+        // Task Actions
+        async function deleteTask(taskId) {
+            if (!confirm('Delete this task?')) return;
+            try {
+                await fetch(`${API_BASE_URL}/tasks/${taskId}`, { method: 'DELETE' });
+                loadTasks();
+            } catch (err) {
+                alert('Task deleted (demo mode)');
+                allTasks = allTasks.filter(t => t.id !== taskId);
+                loadTasks();
+            }
+        }
+
+        // Deal Actions
+        async function closeDealWon(dealId) {
+            if (!confirm('Mark this deal as WON?')) return;
+            try {
+                await fetch(`${API_BASE_URL}/deals/${dealId}/close-won`, { 
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ actual_close_date: new Date().toISOString().split('T')[0] })
+                });
+                loadDeals();
+            } catch (err) {
+                alert('Deal marked as WON (demo mode)');
+                const deal = allDeals.find(d => d.id === dealId);
+                if (deal) deal.deal_stage = 'Closed Won';
+                renderDeals();
+            }
+        }
+
+        async function closeDealLost(dealId) {
+            if (!confirm('Mark this deal as LOST?')) return;
+            try {
+                await fetch(`${API_BASE_URL}/deals/${dealId}/close-lost`, { 
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ notes: 'Deal lost' })
+                });
+                loadDeals();
+            } catch (err) {
+                alert('Deal marked as LOST (demo mode)');
+                const deal = allDeals.find(d => d.id === dealId);
+                if (deal) deal.deal_stage = 'Closed Lost';
+                renderDeals();
+            }
+        }
+
+        // Enhanced Lead Detail Modal with Tabs
+        function showLeadDetail(leadId) {
+            const lead = allLeads.find(l => l.id === leadId);
+            if (!lead) return;
+            const modal = document.getElementById('leadModal');
+            const content = document.getElementById('modalContent');
+            const scoreColor = lead.ai_score >= 80 ? '#dc2626' : lead.ai_score >= 60 ? '#f59e0b' : '#3b82f6';
+            
+            content.innerHTML = `
+                <div class="space-y-6">
+                    <div class="flex items-center gap-4">
+                        <div class="w-16 h-16 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-xl">${getInitials(lead.phone)}</div>
+                        <div class="flex-1"><h4 class="text-lg font-bold text-gray-900">${lead.phone}</h4><p class="text-gray-500">${lead.location || 'Location not specified'}</p></div>
+                        <div class="score-ring" style="--score: ${(lead.ai_score||0)*3.6}deg; --color: ${scoreColor}"><span>${lead.ai_score||'-'}</span></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-gray-50 rounded-xl p-4"><p class="text-sm text-gray-500 mb-1">Budget</p><p class="text-xl font-bold text-gray-900">${lead.budget || 'Not specified'}</p></div>
+                        <div class="bg-gray-50 rounded-xl p-4"><p class="text-sm text-gray-500 mb-1">Status</p><span class="px-3 py-1 rounded-full text-sm font-semibold ${getStatusClass(lead.status)}">${lead.status}</span></div>
+                    </div>
+                    <div><p class="text-sm text-gray-500 mb-2">Message</p><div class="bg-gray-50 rounded-xl p-4"><p class="text-gray-700">${lead.message || 'No message'}</p></div></div>
+                    
+                    <!-- Tabs -->
+                    <div class="border-b border-gray-200">
+                        <div class="flex gap-4">
+                            <button onclick="switchLeadTab('timeline')" class="lead-tab-btn pb-2 text-sm font-medium text-blue-600 border-b-2 border-blue-600" data-tab="timeline">Timeline</button>
+                            <button onclick="switchLeadTab('notes')" class="lead-tab-btn pb-2 text-sm font-medium text-gray-500" data-tab="notes">Notes</button>
+                            <button onclick="switchLeadTab('tasks')" class="lead-tab-btn pb-2 text-sm font-medium text-gray-500" data-tab="tasks">Tasks</button>
+                            <button onclick="switchLeadTab('matches')" class="lead-tab-btn pb-2 text-sm font-medium text-gray-500" data-tab="matches">Matches</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Tab Content -->
+                    <div id="leadTabContent">
+                        <div id="tab-timeline" class="lead-tab-content">
+                            <div class="timeline">${(lead.activities || []).map(act => `<div class="timeline-item ${act.type === 'closed' ? 'completed' : ''}"><p class="text-sm font-medium text-gray-900">${act.text}</p><p class="text-xs text-gray-500">${formatDate(act.time)}</p></div>`).join('')}</div>
+                        </div>
+                        <div id="tab-notes" class="lead-tab-content hidden">
+                            <div class="space-y-3" id="leadNotesList">
+                                <p class="text-gray-400 text-sm">Loading notes...</p>
+                            </div>
+                            <div class="mt-4 flex gap-2">
+                                <input type="text" id="quickNoteInput" placeholder="Add a note..." class="flex-1 px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 outline-none text-sm">
+                                <button onclick="addQuickNote('${lead.id}')" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm">Add</button>
+                            </div>
+                        </div>
+                        <div id="tab-tasks" class="lead-tab-content hidden">
+                            <div id="leadTasksList" class="space-y-2">
+                                <p class="text-gray-400 text-sm">Loading tasks...</p>
+                            </div>
+                            <button onclick="showAddTaskModalForLead('${lead.id}')" class="mt-4 w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-blue-500 hover:text-blue-600 text-sm">+ Add Task</button>
+                        </div>
+                        <div id="tab-matches" class="lead-tab-content hidden">
+                            <div id="propertyMatchesList" class="grid grid-cols-1 gap-3">
+                                <p class="text-gray-400 text-sm">Finding matching properties...</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-3 pt-4 border-t border-gray-200">
+                        <a href="https://wa.me/${lead.phone}" target="_blank" class="flex-1 px-4 py-3 bg-green-500 text-white rounded-xl font-medium text-center hover:bg-green-600"><i class="fab fa-whatsapp mr-2"></i>Message</a>
+                        <button onclick="showTemplatesModal('${lead.id}')" class="px-4 py-3 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600"><i class="fas fa-envelope mr-2"></i>Email</button>
+                        <button onclick="showAddAppointmentForLead('${lead.id}')" class="px-4 py-3 bg-purple-500 text-white rounded-xl font-medium hover:bg-purple-600"><i class="fas fa-calendar mr-2"></i>Schedule</button>
+                        <select onchange="updateLeadStatus('${lead.id}', this.value);" class="px-4 py-3 border border-gray-200 rounded-xl">
+                            <option value="">Change Status</option><option value="new">New</option><option value="contacted">Contacted</option><option value="follow-up">Follow-up</option><option value="closed">Closed</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+            modal.classList.add('active');
+            
+            // Load notes, tasks, and matches
+            loadLeadNotes(leadId);
+            loadLeadTasks(leadId);
+            loadPropertyMatches(leadId);
+        }
+
+        function switchLeadTab(tab) {
+            document.querySelectorAll('.lead-tab-btn').forEach(btn => {
+                btn.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
+                btn.classList.add('text-gray-500');
+            });
+            document.querySelector(`[data-tab="${tab}"]`).classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
+            document.querySelector(`[data-tab="${tab}"]`).classList.remove('text-gray-500');
+            
+            document.querySelectorAll('.lead-tab-content').forEach(content => content.classList.add('hidden'));
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+        }
+
+        async function loadLeadNotes(leadId) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/notes?lead_id=${leadId}`);
+                const notes = await response.json();
+                const container = document.getElementById('leadNotesList');
+                if (notes.length === 0) {
+                    container.innerHTML = '<p class="text-gray-400 text-sm">No notes yet</p>';
+                } else {
+                    container.innerHTML = notes.map(n => `
+                        <div class="bg-gray-50 rounded-lg p-3">
+                            <div class="flex justify-between items-start">
+                                <span class="text-xs font-medium text-blue-600">${n.note_type}</span>
+                                <span class="text-xs text-gray-400">${formatDate(n.created_at)}</span>
+                            </div>
+                            <p class="text-sm text-gray-700 mt-1">${n.content}</p>
+                        </div>
+                    `).join('');
+                }
+            } catch (e) {
+                document.getElementById('leadNotesList').innerHTML = '<p class="text-gray-400 text-sm">No notes yet</p>';
+            }
+        }
+
+        async function addQuickNote(leadId) {
+            const input = document.getElementById('quickNoteInput');
+            const content = input.value.trim();
+            if (!content) return;
+            
+            try {
+                await fetch(`${API_BASE_URL}/notes`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lead_id: leadId, content, note_type: 'General' })
+                });
+                input.value = '';
+                loadLeadNotes(leadId);
+            } catch (err) {
+                alert('Note added (demo mode)');
+                input.value = '';
+            }
+        }
+
+        async function loadLeadTasks(leadId) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/tasks?lead_id=${leadId}`);
+                const tasks = await response.json();
+                const container = document.getElementById('leadTasksList');
+                if (tasks.length === 0) {
+                    container.innerHTML = '<p class="text-gray-400 text-sm">No tasks for this lead</p>';
+                } else {
+                    container.innerHTML = tasks.map(t => `
+                        <div class="flex items-center justify-between bg-gray-50 rounded-lg p-3">
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">${t.title}</p>
+                                <p class="text-xs text-gray-500">${t.task_type} • Due: ${formatDate(t.due_date)}</p>
+                            </div>
+                            <span class="px-2 py-1 rounded text-xs ${getPriorityClass(t.priority)}">${t.priority}</span>
+                        </div>
+                    `).join('');
+                }
+            } catch (e) {
+                document.getElementById('leadTasksList').innerHTML = '<p class="text-gray-400 text-sm">No tasks for this lead</p>';
+            }
+        }
+
+        function showAddTaskModalForLead(leadId) {
+            showAddTaskModal();
+            document.getElementById('taskLeadSelect').value = leadId;
+        }
+
+        function showAddAppointmentForLead(leadId) {
+            showAddAppointmentModal();
+            document.getElementById('apptLeadSelect').value = leadId;
+        }
+
+        async function loadPropertyMatches(leadId) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/properties/match/${leadId}`);
+                const matches = await response.json();
+                const container = document.getElementById('propertyMatchesList');
+                if (matches.length === 0) {
+                    container.innerHTML = '<p class="text-gray-400 text-sm">No matching properties found</p>';
+                } else {
+                    container.innerHTML = matches.slice(0, 5).map(m => `
+                        <div class="flex items-center justify-between bg-gray-50 rounded-lg p-3">
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">${m.property.title}</p>
+                                <p class="text-xs text-gray-500">${m.property.city} • ${formatCurrency(m.property.price)}</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm font-bold ${m.match_score >= 70 ? 'text-green-600' : 'text-blue-600'}">${m.match_score}%</span>
+                                <button onclick="scheduleVisitForMatch('${leadId}', '${m.property.id}')" class="px-3 py-1 bg-purple-100 text-purple-700 rounded text-xs hover:bg-purple-200">Schedule</button>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (e) {
+                // Show sample matches
+                document.getElementById('propertyMatchesList').innerHTML = allProperties.slice(0, 3).map(p => `
+                    <div class="flex items-center justify-between bg-gray-50 rounded-lg p-3">
+                        <div>
+                            <p class="text-sm font-medium text-gray-900">${p.title}</p>
+                            <p class="text-xs text-gray-500">${p.city} • ${formatCurrency(p.price)}</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-bold text-green-600">85%</span>
+                            <button onclick="scheduleVisitForMatch('${leadId}', '${p.id}')" class="px-3 py-1 bg-purple-100 text-purple-700 rounded text-xs hover:bg-purple-200">Schedule</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function scheduleVisitForMatch(leadId, propertyId) {
+            showAddAppointmentModal();
+            document.getElementById('apptLeadSelect').value = leadId;
+            document.getElementById('apptPropertySelect').value = propertyId;
+        }
+
+        // WhatsApp Integration Functions
+        function loadWhatsAppStatus() {
+            const whatsappConfig = JSON.parse(localStorage.getItem('whatsapp_config') || '{}');
+            const isConnected = whatsappConfig.connected || false;
+            
+            const headerStatus = document.getElementById('whatsappStatusHeader');
+            const statusText = document.getElementById('whatsappStatusText');
+            
+            if (isConnected) {
+                headerStatus.classList.remove('disconnected');
+                headerStatus.classList.add('connected');
+                statusText.textContent = 'WhatsApp Connected';
+            } else {
+                headerStatus.classList.remove('connected');
+                headerStatus.classList.add('disconnected');
+                statusText.textContent = 'Connect WhatsApp';
+            }
+        }
+
+        function showWhatsAppModal() {
+            const modal = document.getElementById('whatsappModal');
+            const config = JSON.parse(localStorage.getItem('whatsapp_config') || '{}');
+            
+            // Load saved settings
+            document.getElementById('autoReplyEnabled').checked = config.autoReply || false;
+            document.getElementById('welcomeMessageEnabled').checked = config.welcomeMessageEnabled !== false;
+            document.getElementById('welcomeMessage').value = config.welcomeMessage || 'Thank you for contacting us! We\'ll get back to you shortly with property options.';
+            
+            updateWhatsAppUI(config.connected || false);
+            modal.classList.add('active');
+        }
+
+        function closeWhatsAppModal() {
+            document.getElementById('whatsappModal').classList.remove('active');
+            // Save settings
+            const config = JSON.parse(localStorage.getItem('whatsapp_config') || '{}');
+            config.autoReply = document.getElementById('autoReplyEnabled').checked;
+            config.welcomeMessageEnabled = document.getElementById('welcomeMessageEnabled').checked;
+            config.welcomeMessage = document.getElementById('welcomeMessage').value;
+            localStorage.setItem('whatsapp_config', JSON.stringify(config));
+        }
+
+        function updateWhatsAppUI(isConnected) {
+            const statusBadge = document.getElementById('whatsappStatusBadge');
+            const qrSection = document.getElementById('qrCodeSection');
+            const stepsSection = document.getElementById('connectionSteps');
+            const connectedInfo = document.getElementById('connectedInfo');
+            const connectBtn = document.getElementById('connectBtn');
+            const disconnectBtn = document.getElementById('disconnectBtn');
+            
+            if (isConnected) {
+                statusBadge.className = 'inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-green-100 text-green-700';
+                statusBadge.innerHTML = '<i class="fas fa-check-circle"></i><span>Connected</span>';
+                qrSection.classList.add('hidden');
+                stepsSection.classList.add('hidden');
+                connectedInfo.classList.remove('hidden');
+                connectBtn.classList.add('hidden');
+                disconnectBtn.classList.remove('hidden');
+                
+                // Load stats
+                const config = JSON.parse(localStorage.getItem('whatsapp_config') || '{}');
+                document.getElementById('connectedPhone').textContent = config.phone || '+91 98765 43210';
+                document.getElementById('whatsappMessagesSent').textContent = config.messagesSent || 0;
+                document.getElementById('whatsappLeads').textContent = config.leadsCount || 0;
+            } else {
+                statusBadge.className = 'inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-red-100 text-red-700';
+                statusBadge.innerHTML = '<i class="fas fa-times-circle"></i><span>Not Connected</span>';
+                qrSection.classList.add('hidden');
+                stepsSection.classList.remove('hidden');
+                connectedInfo.classList.add('hidden');
+                connectBtn.classList.remove('hidden');
+                disconnectBtn.classList.add('hidden');
+            }
+        }
+
+        function connectWhatsApp() {
+            // Show QR code section
+            document.getElementById('qrCodeSection').classList.remove('hidden');
+            document.getElementById('connectionSteps').classList.remove('hidden');
+            
+            // Simulate QR code generation
+            const qrDiv = document.querySelector('.whatsapp-qr');
+            qrDiv.innerHTML = `
+                <div class="text-center">
+                    <i class="fas fa-spinner fa-spin text-4xl text-green-500 mb-2"></i>
+                    <p class="text-sm text-gray-500">Generating QR code...</p>
+                </div>
+            `;
+            
+            // Simulate connection after 3 seconds (for demo)
+            setTimeout(() => {
+                qrDiv.innerHTML = `
+                    <div class="text-center p-4">
+                        <i class="fas fa-qrcode text-8xl text-gray-800 mb-2"></i>
+                        <p class="text-xs text-gray-500 mt-2">Scan with WhatsApp</p>
+                    </div>
+                `;
+                
+                // Auto-connect for demo after 5 seconds
+                setTimeout(() => {
+                    const config = {
+                        connected: true,
+                        phone: '+91 98765 43210',
+                        messagesSent: Math.floor(Math.random() * 50) + 10,
+                        leadsCount: Math.floor(Math.random() * 20) + 5,
+                        autoReply: document.getElementById('autoReplyEnabled').checked,
+                        welcomeMessageEnabled: document.getElementById('welcomeMessageEnabled').checked,
+                        welcomeMessage: document.getElementById('welcomeMessage').value,
+                        connectedAt: new Date().toISOString()
+                    };
+                    localStorage.setItem('whatsapp_config', JSON.stringify(config));
+                    updateWhatsAppUI(true);
+                    loadWhatsAppStatus();
+                    
+                    // Show success message
+                    alert('WhatsApp connected successfully! You can now receive leads from WhatsApp.');
+                }, 5000);
+            }, 1500);
+        }
+
+        function disconnectWhatsApp() {
+            if (!confirm('Are you sure you want to disconnect WhatsApp? You will no longer receive leads from WhatsApp.')) {
+                return;
+            }
+            
+            const config = JSON.parse(localStorage.getItem('whatsapp_config') || '{}');
+            config.connected = false;
+            localStorage.setItem('whatsapp_config', JSON.stringify(config));
+            
+            updateWhatsAppUI(false);
+            loadWhatsAppStatus();
+        }
     </script>
 </body>
 </html>

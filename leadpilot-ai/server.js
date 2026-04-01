@@ -7,6 +7,12 @@ const leadsRoutes = require("./routes/leads");
 const authRoutes = require("./routes/auth");
 const teamRoutes = require("./routes/team");
 const analyticsRoutes = require("./routes/analytics");
+const propertiesRoutes = require("./routes/properties");
+const appointmentsRoutes = require("./routes/appointments");
+const tasksRoutes = require("./routes/tasks");
+const notesRoutes = require("./routes/notes");
+const documentsRoutes = require("./routes/documents");
+const dealsRoutes = require("./routes/deals");
 
 const app = express();
 app.use(cors());
@@ -19,6 +25,12 @@ app.use("/leads", leadsRoutes);
 app.use("/auth", authRoutes);
 app.use("/team", teamRoutes);
 app.use("/analytics", analyticsRoutes);
+app.use("/properties", propertiesRoutes);
+app.use("/appointments", appointmentsRoutes);
+app.use("/tasks", tasksRoutes);
+app.use("/notes", notesRoutes);
+app.use("/documents", documentsRoutes);
+app.use("/deals", dealsRoutes);
 
 // Serve landing page as default
 app.get("/", (req, res) => {

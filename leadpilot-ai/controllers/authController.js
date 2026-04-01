@@ -11,6 +11,10 @@ exports.register = async (req, res) => {
       return res.status(400).json({ error: 'Email, password, and name are required' });
     }
 
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+
     // Check if user exists
     const { data: existingUser } = await supabase
       .from('users')
@@ -19,7 +23,7 @@ exports.register = async (req, res) => {
       .single();
 
     if (existingUser) {
-      return res.status(409).json({ error: 'User already exists' });
+      return res.status(409).json({ error: 'User already exists with this email' });
     }
 
     // Hash password
@@ -33,12 +37,15 @@ exports.register = async (req, res) => {
         password: hashedPassword,
         name,
         role,
-        created_at: new Date()
+        created_at: new Date().toISOString()
       }])
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase error:', error);
+      throw error;
+    }
 
     // Generate token
     const token = generateToken(user);
@@ -55,7 +62,7 @@ exports.register = async (req, res) => {
     });
   } catch (error) {
     console.error('Registration error:', error);
-    res.status(500).json({ error: 'Registration failed' });
+    res.status(500).json({ error: 'Registration failed: ' + error.message });
   }
 };
 
@@ -66,6 +73,22 @@ exports.login = async (req, res) => {
 
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
+    }
+
+    // Demo mode: allow admin@leadpilot.ai / admin123
+    if (email === 'admin@leadpilot.ai' && password === 'admin123') {
+      const demoUser = {
+        id: 'demo-admin-id',
+        email: 'admin@leadpilot.ai',
+        name: 'Admin User',
+        role: 'admin'
+      };
+      const token = generateToken(demoUser);
+      return res.json({
+        message: 'Login successful (Demo Mode)',
+        token,
+        user: demoUser
+      });
     }
 
     // Get user
