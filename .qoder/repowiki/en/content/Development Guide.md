@@ -11,21 +11,21 @@
 - [whatsappService.js](file://leadpilot-ai/services/whatsappService.js)
 - [supabase.js](file://leadpilot-ai/db/supabase.js)
 - [parser.js](file://leadpilot-ai/utils/parser.js)
-- [DESIGN.md](file://leadpilot-ai/leadpilot-ui/DESIGN.md)
-- [README.md](file://leadpilot-ai/leadpilot-ui/README.md)
-- [code.html](file://leadpilot-ai/leadpilot-ui/code.html)
+- [dashboard.html](file://leadpilot-ai/leadpilot-ui/dashboard.html)
+- [index.html](file://leadpilot-ai/leadpilot-ui/index.html)
 - [dashboard.html](file://leadpilot-ai/public/dashboard.html)
 - [README.md](file://leadpilot-ai/README.md)
 </cite>
 
 ## Update Summary
 **Changes Made**
-- Enhanced UI development documentation with Material Design implementation details
-- Added comprehensive theme management system documentation including dark/light mode toggle
-- Documented interactive UI components with real-time updates and search functionality
-- Updated UI customization guidance with Material Design tokens and design system principles
-- Added theme persistence documentation using localStorage
-- Expanded UI architecture coverage with modern dashboard implementation
+- Enhanced UI development documentation with Tailwind CSS implementation details
+- Added comprehensive dark/light theme switching system with localStorage persistence
+- Documented mobile-responsive design patterns with breakpoint-specific layouts
+- Updated to include new dashboard.html and index.html files with advanced interactive features
+- Documented comprehensive lead management capabilities with real-time updates
+- Added theme management system documentation with CSS custom properties and dynamic switching
+- Expanded UI architecture coverage with modern dashboard implementation using Tailwind CSS
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -35,21 +35,22 @@
 5. [Detailed Component Analysis](#detailed-component-analysis)
 6. [Modular Development Workflow](#modular-development-workflow)
 7. [Database Connection Management](#database-connection-management)
-8. [Enhanced UI Development with Material Design](#enhanced-ui-development-with-material-design)
+8. [Enhanced UI Development with Tailwind CSS](#enhanced-ui-development-with-tailwind-css)
 9. [Theme Management System](#theme-management-system)
 10. [Interactive UI Components](#interactive-ui-components)
-11. [UI Customization and Design System](#ui-customization-and-design-system)
-12. [Dependency Analysis](#dependency-analysis)
-3. [Performance Considerations](#performance-considerations)
-4. [Testing Strategies](#testing-strategies)
-5. [Debugging and Logging](#debugging-and-logging)
-6. [Error Handling Patterns](#error-handling-patterns)
-7. [Extending Existing Functionality](#extending-existing-functionality)
-8. [Code Quality Standards and Contribution Guidelines](#code-quality-standards-and-contribution-guidelines)
-9. [Conclusion](#conclusion)
+11. [Mobile-Responsive Design Implementation](#mobile-responsive-design-implementation)
+12. [Comprehensive Lead Management Features](#comprehensive-lead-management-features)
+13. [Dependency Analysis](#dependency-analysis)
+14. [Performance Considerations](#performance-considerations)
+15. [Testing Strategies](#testing-strategies)
+16. [Debugging and Logging](#debugging-and-logging)
+17. [Error Handling Patterns](#error-handling-patterns)
+18. [Extending Existing Functionality](#extending-existing-functionality)
+19. [Code Quality Standards and Contribution Guidelines](#code-quality-standards-and-contribution-guidelines)
+20. [Conclusion](#conclusion)
 
 ## Introduction
-This development guide documents the LeadPilot AI codebase, focusing on the Express.js server configuration, middleware setup, request processing pipeline, and modular design patterns. The project now implements a comprehensive controller-based architecture with dedicated controllers for WhatsApp webhook handling and lead management, database connection management through Supabase, and modern UI development with Material Design implementation and theme management system. It provides practical guidance for adding new features, extending existing functionality, implementing custom business logic, and integrating with the WhatsApp Business API. It also covers testing strategies, debugging techniques, logging, error handling, and code quality standards.
+This development guide documents the LeadPilot AI codebase, focusing on the Express.js server configuration, middleware setup, request processing pipeline, and modular design patterns. The project now implements a comprehensive controller-based architecture with dedicated controllers for WhatsApp webhook handling and lead management, database connection management through Supabase, and modern UI development with Tailwind CSS implementation and advanced theme management system. It provides practical guidance for adding new features, extending existing functionality, implementing custom business logic, and integrating with the WhatsApp Business API. It also covers testing strategies, debugging techniques, logging, error handling, and code quality standards.
 
 ## Project Structure
 The project follows a modern layered architecture with clear separation of concerns and modular design patterns:
@@ -58,8 +59,8 @@ The project follows a modern layered architecture with clear separation of conce
 - Dedicated controllers encapsulate request handling logic and orchestrate service calls
 - Services abstract external API integrations and database operations
 - Database connection management through centralized Supabase client
-- Modern UI development with Material Design implementation and theme management
-- Interactive dashboard with real-time updates and search functionality
+- Modern UI development with Tailwind CSS implementation and comprehensive theme management
+- Interactive dashboard with real-time updates, search functionality, and mobile-responsive design
 
 ```mermaid
 graph TB
@@ -71,32 +72,30 @@ Controllers --> Database["Database Layer<br/>Supabase Client"]
 Services --> ExternalAPI["External APIs<br/>WhatsApp Cloud API"]
 Database --> SupabaseDB["Supabase Database<br/>leads table"]
 Controllers --> Utils["Utility Layer<br/>parser.js"]
-UI["Enhanced UI Layer<br/>Material Design, Theme Management"] --> Dashboard["Interactive Dashboard<br/>Real-time Updates, Search"]
-UI --> DesignSystem["Design System<br/>Material Tokens, Components"]
-UI --> ThemePersistence["Theme Persistence<br/>localStorage"]
+UI["Enhanced UI Layer<br/>Tailwind CSS, Theme Management"] --> Dashboard["Interactive Dashboard<br/>Real-time Updates, Search, Mobile Responsive"]
+UI --> ThemeSystem["Theme Management<br/>Dark/Light Mode, localStorage"]
+UI --> ResponsiveDesign["Responsive Design<br/>Mobile-first, Breakpoints"]
 ```
 
 **Diagram sources**
-- [server.js:1-29](file://leadpilot-ai/server.js#L1-L29)
+- [server.js:1-35](file://leadpilot-ai/server.js#L1-L35)
 - [webhook.js:1-12](file://leadpilot-ai/routes/webhook.js#L1-L12)
 - [leads.js:1-14](file://leadpilot-ai/routes/leads.js#L1-L14)
 - [whatsappController.js:1-78](file://leadpilot-ai/controllers/whatsappController.js#L1-L78)
 - [leadsController.js:1-57](file://leadpilot-ai/controllers/leadsController.js#L1-L57)
 - [whatsappService.js:1-23](file://leadpilot-ai/services/whatsappService.js#L1-L23)
 - [supabase.js:1-9](file://leadpilot-ai/db/supabase.js#L1-L9)
-- [code.html:1-578](file://leadpilot-ai/leadpilot-ui/code.html#L1-L578)
-- [DESIGN.md:1-95](file://leadpilot-ai/leadpilot-ui/DESIGN.md#L1-L95)
+- [dashboard.html:1-533](file://leadpilot-ai/leadpilot-ui/dashboard.html#L1-L533)
 
 **Section sources**
-- [server.js:1-29](file://leadpilot-ai/server.js#L1-L29)
+- [server.js:1-35](file://leadpilot-ai/server.js#L1-L35)
 - [webhook.js:1-12](file://leadpilot-ai/routes/webhook.js#L1-L12)
 - [leads.js:1-14](file://leadpilot-ai/routes/leads.js#L1-L14)
 - [whatsappController.js:1-78](file://leadpilot-ai/controllers/whatsappController.js#L1-L78)
 - [leadsController.js:1-57](file://leadpilot-ai/controllers/leadsController.js#L1-L57)
 - [whatsappService.js:1-23](file://leadpilot-ai/services/whatsappService.js#L1-L23)
 - [supabase.js:1-9](file://leadpilot-ai/db/supabase.js#L1-L9)
-- [code.html:1-578](file://leadpilot-ai/leadpilot-ui/code.html#L1-L578)
-- [DESIGN.md:1-95](file://leadpilot-ai/leadpilot-ui/DESIGN.md#L1-L95)
+- [dashboard.html:1-533](file://leadpilot-ai/leadpilot-ui/dashboard.html#L1-L533)
 
 ## Core Components
 - **Express Server**: Initializes the application with CORS support, global JSON body parsing, static file serving, and multiple route modules
@@ -105,7 +104,7 @@ UI --> ThemePersistence["Theme Persistence<br/>localStorage"]
 - **Service Layer**: WhatsApp API integration service and database abstraction layer
 - **Database Layer**: Centralized Supabase client configuration with environment-based credential management
 - **Utility Layer**: Message parsing utilities for extracting lead information
-- **Enhanced UI Layer**: Modern dashboard interface built with Material Design, theme management, and interactive components
+- **Enhanced UI Layer**: Modern dashboard interface built with Tailwind CSS, theme management, and interactive components
 
 Key implementation patterns:
 - **Modular Architecture**: Clear separation between server initialization, routing, controllers, services, and UI components
@@ -113,20 +112,20 @@ Key implementation patterns:
 - **Controller-Based Design**: Dedicated controllers for specific functional domains
 - **Service Abstraction**: Clear separation between business logic and external integrations
 - **Database Connection Management**: Centralized database client with proper error handling
-- **Material Design System**: Implementation of Google's Material Design principles with custom theming
+- **Tailwind CSS Framework**: Implementation of utility-first CSS methodology with custom theming
 - **Theme Management**: Persistent theme switching with localStorage integration
+- **Mobile-First Design**: Responsive layout implementation with breakpoint-specific optimizations
 
 **Section sources**
-- [server.js:1-29](file://leadpilot-ai/server.js#L1-L29)
+- [server.js:1-35](file://leadpilot-ai/server.js#L1-L35)
 - [webhook.js:1-12](file://leadpilot-ai/routes/webhook.js#L1-L12)
 - [leads.js:1-14](file://leadpilot-ai/routes/leads.js#L1-L14)
 - [whatsappController.js:1-78](file://leadpilot-ai/controllers/whatsappController.js#L1-L78)
 - [leadsController.js:1-57](file://leadpilot-ai/controllers/leadsController.js#L1-L57)
 - [whatsappService.js:1-23](file://leadpilot-ai/services/whatsappService.js#L1-L23)
 - [supabase.js:1-9](file://leadpilot-ai/db/supabase.js#L1-L9)
-- [parser.js:1-10](file://leadpilot-ai/utils/parser.js#L1-L10)
-- [code.html:1-578](file://leadpilot-ai/leadpilot-ui/code.html#L1-L578)
-- [DESIGN.md:1-95](file://leadpilot-ai/leadpilot-ui/DESIGN.md#L1-L95)
+- [parser.js:1-37](file://leadpilot-ai/utils/parser.js#L1-L37)
+- [dashboard.html:1-533](file://leadpilot-ai/leadpilot-ui/dashboard.html#L1-L533)
 
 ## Architecture Overview
 The system processes inbound webhook requests and API calls through a well-defined pipeline with multiple layers:
@@ -136,7 +135,7 @@ The system processes inbound webhook requests and API calls through a well-defin
 - Controllers validate requests, extract data, and orchestrate service/database operations
 - Services handle external API integrations and database operations
 - Response is returned through standardized controller methods
-- Enhanced UI layer provides interactive dashboard with real-time updates and theme management
+- Enhanced UI layer provides interactive dashboard with real-time updates, theme management, and mobile-responsive design
 
 ```mermaid
 sequenceDiagram
@@ -168,20 +167,20 @@ LeadsRouter->>LeadsController : "getLeads()"
 LeadsController->>Supabase : "select * from leads"
 Supabase-->>LeadsController : "lead records"
 LeadsController-->>Client : "200 OK with leads"
-Client->>Server : "GET /dashboard (Enhanced UI)"
-Server-->>Client : "Material Design Dashboard with Theme Management"
+Client->>Server : "GET /dashboard (Enhanced UI with Tailwind CSS)"
+Server-->>Client : "Interactive Dashboard with Theme Management"
 ```
 
 **Diagram sources**
-- [server.js:1-29](file://leadpilot-ai/server.js#L1-L29)
+- [server.js:1-35](file://leadpilot-ai/server.js#L1-L35)
 - [webhook.js:1-12](file://leadpilot-ai/routes/webhook.js#L1-L12)
 - [leads.js:1-14](file://leadpilot-ai/routes/leads.js#L1-L14)
 - [whatsappController.js:1-78](file://leadpilot-ai/controllers/whatsappController.js#L1-L78)
 - [leadsController.js:1-57](file://leadpilot-ai/controllers/leadsController.js#L1-L57)
-- [parser.js:1-10](file://leadpilot-ai/utils/parser.js#L1-L10)
+- [parser.js:1-37](file://leadpilot-ai/utils/parser.js#L1-L37)
 - [supabase.js:1-9](file://leadpilot-ai/db/supabase.js#L1-L9)
 - [whatsappService.js:1-23](file://leadpilot-ai/services/whatsappService.js#L1-L23)
-- [code.html:1-578](file://leadpilot-ai/leadpilot-ui/code.html#L1-L578)
+- [dashboard.html:1-533](file://leadpilot-ai/leadpilot-ui/dashboard.html#L1-L533)
 
 ## Detailed Component Analysis
 
@@ -192,17 +191,17 @@ The server now implements a comprehensive initialization pattern with multiple m
 - **Middleware Stack**: Configures CORS for cross-origin requests, global JSON body parsing, and static file serving
 - **Route Modules**: Mounts separate route modules for webhook and leads management
 - **Static File Serving**: Serves both the modern dashboard UI and legacy dashboard
-- **Enhanced UI Routing**: Routes serve the Material Design dashboard as the main interface
+- **Enhanced UI Routing**: Routes serve the Tailwind CSS dashboard as the main interface
 - **Health Check**: Provides root endpoint for server status verification
 
 Operational enhancements:
 - **CORS Support**: Enables cross-origin requests for web-based clients
-- **Static Asset Serving**: Serves both modern Material Design dashboard and legacy HTML dashboard
+- **Static Asset Serving**: Serves both modern Tailwind CSS dashboard and legacy HTML dashboard
 - **Multi-route Architecture**: Organized route modules for better maintainability
 - **UI Integration**: Seamless integration between backend API and frontend dashboard
 
 **Section sources**
-- [server.js:1-29](file://leadpilot-ai/server.js#L1-L29)
+- [server.js:1-35](file://leadpilot-ai/server.js#L1-L35)
 
 ### Route Layer: Modular Route Architecture
 The project now implements separate route modules for different functional domains:
@@ -277,7 +276,7 @@ The parser utility provides intelligent lead extraction:
 - **Pattern Matching**: Uses regular expressions for reliable data extraction
 
 **Section sources**
-- [parser.js:1-10](file://leadpilot-ai/utils/parser.js#L1-L10)
+- [parser.js:1-37](file://leadpilot-ai/utils/parser.js#L1-L37)
 
 ### Class Model of Key Components
 ```mermaid
@@ -320,11 +319,12 @@ class SupabaseClient {
 class Parser {
 +parseMessage(text)
 }
-class MaterialDesignDashboard {
+class TailwindDashboard {
 +renderLeads(leads)
 +toggleTheme()
 +searchLeads(query)
 +addLead()
++filterByStatus(status)
 }
 class ThemeManager {
 +saveTheme(theme)
@@ -339,19 +339,19 @@ WhatsAppController --> WhatsAppService : "uses"
 WhatsAppController --> Parser : "uses"
 WhatsAppController --> SupabaseClient : "uses"
 LeadsController --> SupabaseClient : "uses"
-MaterialDesignDashboard --> ThemeManager : "uses"
+TailwindDashboard --> ThemeManager : "uses"
 ```
 
 **Diagram sources**
-- [server.js:1-29](file://leadpilot-ai/server.js#L1-L29)
+- [server.js:1-35](file://leadpilot-ai/server.js#L1-L35)
 - [webhook.js:1-12](file://leadpilot-ai/routes/webhook.js#L1-L12)
 - [leads.js:1-14](file://leadpilot-ai/routes/leads.js#L1-L14)
 - [whatsappController.js:1-78](file://leadpilot-ai/controllers/whatsappController.js#L1-L78)
 - [leadsController.js:1-57](file://leadpilot-ai/controllers/leadsController.js#L1-L57)
 - [whatsappService.js:1-23](file://leadpilot-ai/services/whatsappService.js#L1-L23)
 - [supabase.js:1-9](file://leadpilot-ai/db/supabase.js#L1-L9)
-- [parser.js:1-10](file://leadpilot-ai/utils/parser.js#L1-L10)
-- [code.html:1-578](file://leadpilot-ai/leadpilot-ui/code.html#L1-L578)
+- [parser.js:1-37](file://leadpilot-ai/utils/parser.js#L1-L37)
+- [dashboard.html:1-533](file://leadpilot-ai/leadpilot-ui/dashboard.html#L1-L533)
 
 ## Modular Development Workflow
 The project implements a comprehensive modular development approach that promotes scalability and maintainability:
@@ -361,7 +361,7 @@ The project implements a comprehensive modular development approach that promote
 - **Service Abstraction**: External integrations and database operations are abstracted into service classes
 - **Route Organization**: Separate route modules for different domains improve maintainability
 - **Utility Functions**: Reusable utility functions handle common operations like message parsing
-- **UI Modularity**: Material Design components and theme management are modular and reusable
+- **UI Modularity**: Tailwind CSS components and theme management are modular and reusable
 
 ### Extension Guidelines
 To add new features following the established patterns:
@@ -370,14 +370,14 @@ To add new features following the established patterns:
 3. **Add Service**: Implement service layer for external integrations if needed
 4. **Update Server**: Register new route module in server configuration
 5. **Add Dependencies**: Install and configure any new dependencies
-6. **UI Integration**: Integrate new features with Material Design dashboard components
+6. **UI Integration**: Integrate new features with Tailwind CSS dashboard components
 
 ### Scalability Benefits
 - **Independent Development**: Teams can work on different modules simultaneously
 - **Easy Testing**: Modular structure facilitates unit testing and mocking
 - **Code Reusability**: Shared utilities and services promote code reuse
 - **Deployment Flexibility**: Modules can be deployed independently if needed
-- **UI Scalability**: Material Design system supports easy UI component extension
+- **UI Scalability**: Tailwind CSS system supports easy UI component extension
 
 ## Database Connection Management
 The project implements centralized database connection management through Supabase:
@@ -404,18 +404,17 @@ The leads table follows a structured schema optimized for real estate lead manag
 
 **Section sources**
 - [supabase.js:1-9](file://leadpilot-ai/db/supabase.js#L1-L9)
-- [db/README.md:18-35](file://leadpilot-ai/db/README.md#L18-L35)
 
-## Enhanced UI Development with Material Design
-The project features a comprehensive Material Design implementation with modern design principles and interactive components:
+## Enhanced UI Development with Tailwind CSS
+The project features a comprehensive Tailwind CSS implementation with modern design principles and interactive components:
 
-### Material Design Architecture
-The dashboard implements Google's Material Design 3 principles with custom theming:
-- **Material Symbols Integration**: Consistent iconography using Material Symbols Outlined
-- **Typography System**: Dual-font strategy with Manrope for headlines and Inter for body text
-- **Color System**: Custom color palette with Material Design tokens (primary, secondary, tertiary)
-- **Component Design**: Rounded corners (rounded-xl), consistent spacing, and elevation through tonal layering
-- **Surface Hierarchy**: Three-tier surface container system for depth perception
+### Tailwind CSS Architecture
+The dashboard implements a utility-first CSS approach with custom theming:
+- **Tailwind CSS CDN Integration**: Leverages CDN for rapid development and prototyping
+- **Responsive Design System**: Mobile-first approach with breakpoint-specific utilities
+- **Custom Styling**: Extensive custom CSS for animations, gradients, and special effects
+- **Component Design**: Reusable utility classes for consistent styling across components
+- **Glass Morphism**: Modern glass effect using backdrop-filter and rgba colors
 
 ### Interactive Dashboard Features
 - **Real-time Lead Management**: Live updates every 10 seconds with automatic refresh
@@ -432,9 +431,7 @@ The dashboard implements Google's Material Design 3 principles with custom themi
 - **Cross-browser Compatibility**: Consistent rendering across modern browsers
 
 **Section sources**
-- [code.html:1-578](file://leadpilot-ai/leadpilot-ui/code.html#L1-L578)
-- [DESIGN.md:1-95](file://leadpilot-ai/leadpilot-ui/DESIGN.md#L1-L95)
-- [README.md:1-29](file://leadpilot-ai/leadpilot-ui/README.md#L1-L29)
+- [dashboard.html:1-533](file://leadpilot-ai/leadpilot-ui/dashboard.html#L1-L533)
 
 ## Theme Management System
 The project implements a sophisticated theme management system with persistent theme switching:
@@ -448,7 +445,7 @@ The project implements a sophisticated theme management system with persistent t
 
 ### Implementation Details
 - **Class-based Switching**: Body element toggles between 'light' and 'dark' classes
-- **Material Design Tokens**: Custom color tokens mapped to Material Design palettes
+- **Custom Color Tokens**: CSS custom properties for dynamic color scheme changes
 - **Component Theming**: All UI components automatically adapt to current theme
 - **Icon Adaptation**: Theme-aware icons and visual elements
 - **Form Element Theming**: Input fields, selects, and buttons adapt to theme context
@@ -460,8 +457,7 @@ The project implements a sophisticated theme management system with persistent t
 - **Cross-session Consistency**: Theme preference maintained across browser sessions
 
 **Section sources**
-- [code.html:550-578](file://leadpilot-ai/leadpilot-ui/code.html#L550-L578)
-- [DESIGN.md:11-29](file://leadpilot-ai/leadpilot-ui/DESIGN.md#L11-L29)
+- [dashboard.html:76-98](file://leadpilot-ai/leadpilot-ui/dashboard.html#L76-L98)
 
 ## Interactive UI Components
 The dashboard features a comprehensive set of interactive components designed for real estate lead management:
@@ -495,42 +491,61 @@ The dashboard features a comprehensive set of interactive components designed fo
 - **Loading States**: Progress indicators and skeleton screens for better UX
 
 **Section sources**
-- [code.html:338-578](file://leadpilot-ai/leadpilot-ui/code.html#L338-L578)
+- [dashboard.html:236-533](file://leadpilot-ai/leadpilot-ui/dashboard.html#L236-L533)
 
-## UI Customization and Design System
-The project implements a comprehensive design system that enables extensive UI customization while maintaining consistency:
+## Mobile-Responsive Design Implementation
+The project implements comprehensive mobile-responsive design patterns:
 
-### Design System Principles
-- **Material Design Foundation**: Google's Material Design 3 principles with custom adaptations
-- **Design Token System**: Centralized design tokens for colors, typography, spacing, and components
-- **Consistency Framework**: Unified design language across all interface elements
-- **Accessibility First**: WCAG-compliant design with proper contrast ratios and semantic markup
-- **Performance Optimization**: Efficient rendering with minimal DOM manipulation
+### Responsive Design Architecture
+- **Mobile-First Approach**: Base styles optimized for mobile devices
+- **Breakpoint System**: Tailwind CSS breakpoints for tablet and desktop adaptation
+- **Touch-Friendly Elements**: Minimum touch targets sized for mobile interaction
+- **Flexible Grid System**: Responsive grid layouts with appropriate spacing
+- **Adaptive Navigation**: Collapsible sidebar with overlay for mobile devices
 
-### Customization Capabilities
-- **Color Customization**: Easy modification of primary, secondary, and tertiary color schemes
-- **Typography Control**: Flexible font family selection and sizing adjustments
-- **Component Theming**: Individual component styling overrides without affecting global design
-- **Layout Flexibility**: Responsive grid system with customizable breakpoints
-- **Animation Control**: Configurable transitions and motion design elements
+### Mobile-Specific Features
+- **Collapsible Sidebar**: Slide-out navigation for mobile screens
+- **Touch-Optimized Buttons**: Minimum 44px touch targets for accessibility
+- **Responsive Tables**: Horizontal scrolling for small screens
+- **Mobile Card View**: Alternative card-based layout for small screens
+- **Viewport Meta Tags**: Proper mobile viewport configuration
 
-### Design Token Implementation
-- **Color Tokens**: Comprehensive color palette with semantic naming (primary, secondary, error, etc.)
-- **Typography Tokens**: Systematic font sizing, weight, and spacing scales
-- **Spacing Tokens**: Consistent spacing system for margins, padding, and gaps
-- **Border Radius Tokens**: Standardized corner radius values for consistent rounded elements
-- **Shadow Tokens**: Systematic elevation and depth indicators
-
-### Component Library Architecture
-- **Reusable Components**: Modular UI components with consistent APIs
-- **Props System**: Flexible component configuration through props
-- **Slot System**: Content projection for flexible component composition
-- **Event System**: Standardized event handling across component interactions
-- **Styling System**: CSS-in-JS or utility-first approach for component styling
+### Breakpoint-Specific Layouts
+- **Desktop (1024px+)**: Full sidebar navigation and desktop table view
+- **Tablet (768px-1023px)**: Optimized layouts for intermediate screens
+- **Mobile (<768px)**: Single-column layout with collapsible navigation
+- **Touch Interactions**: Optimized touch gestures and mobile-specific UI patterns
 
 **Section sources**
-- [DESIGN.md:1-95](file://leadpilot-ai/leadpilot-ui/DESIGN.md#L1-L95)
-- [code.html:11-74](file://leadpilot-ai/leadpilot-ui/code.html#L11-L74)
+- [dashboard.html:61-68](file://leadpilot-ai/leadpilot-ui/dashboard.html#L61-L68)
+- [dashboard.html:100-145](file://leadpilot-ai/leadpilot-ui/dashboard.html#L100-L145)
+
+## Comprehensive Lead Management Features
+The dashboard provides extensive lead management capabilities:
+
+### Lead Data Management
+- **Real-time Updates**: Automatic data refresh every 10 seconds
+- **Status Tracking**: Four-tier status system with visual indicators
+- **Search and Filter**: Multi-field search with status-based filtering
+- **Bulk Operations**: Future support for bulk lead management operations
+- **Data Visualization**: Statistics cards showing lead distribution metrics
+
+### User Interface Features
+- **Interactive Tables**: Click-to-edit functionality for lead status updates
+- **Visual Indicators**: Color-coded status badges with consistent styling
+- **Empty States**: Graceful handling of empty lead collections
+- **Loading States**: Progress indicators during data operations
+- **Error Handling**: User-friendly error messages and recovery options
+
+### API Integration
+- **RESTful Endpoints**: Standard CRUD operations for lead management
+- **Real-time Sync**: Automatic UI updates when backend data changes
+- **Error Propagation**: Backend errors surfaced appropriately in UI
+- **Loading States**: Proper loading indicators during API operations
+- **Offline Handling**: Graceful degradation when API is unavailable
+
+**Section sources**
+- [dashboard.html:274-533](file://leadpilot-ai/leadpilot-ui/dashboard.html#L274-L533)
 
 ## Dependency Analysis
 The project maintains a focused set of core dependencies optimized for its specific use case:
@@ -544,11 +559,10 @@ The project maintains a focused set of core dependencies optimized for its speci
 - **@supabase/supabase-js**: Database connectivity and operations
 
 ### Frontend Dependencies
-- **Tailwind CSS**: Utility-first CSS framework with plugin support
-- **Material Symbols**: Google's Material Symbols icon library
-- **Inter & Manrope Fonts**: High-quality typography fonts for design system
-- **Forms Plugin**: Tailwind CSS forms plugin for consistent form styling
-- **Container Queries**: Modern responsive design capabilities
+- **Tailwind CSS**: Utility-first CSS framework with CDN integration
+- **Google Fonts**: Inter font family for consistent typography
+- **Font Awesome**: Icon library for UI enhancement
+- **Responsive Framework**: Mobile-first design with breakpoint utilities
 
 ### Development Dependencies
 - **No dedicated test scripts**: Testing infrastructure not yet implemented
@@ -564,24 +578,24 @@ Axios["axios"] --> WhatsAppService["whatsappService.js"]
 Supabase["@supabase/supabase-js"] --> SupabaseClient["supabase.js"]
 Supabase --> LeadsController["leadsController.js"]
 Supabase --> WhatsAppController["whatsappController.js"]
-Tailwind["tailwindcss"] --> MaterialDesign["Material Design Dashboard"]
-MaterialSymbols["material-symbols"] --> Icons["Material Icons"]
-Fonts["google-fonts"] --> Typography["Typography System"]
+Tailwind["tailwindcss"] --> TailwindDashboard["Tailwind CSS Dashboard"]
+GoogleFonts["google-fonts"] --> Typography["Typography System"]
+FontAwesome["font-awesome"] --> Icons["Icon System"]
 ```
 
 **Diagram sources**
 - [package.json:13-20](file://leadpilot-ai/package.json#L13-L20)
-- [server.js:1-29](file://leadpilot-ai/server.js#L1-L29)
+- [server.js:1-35](file://leadpilot-ai/server.js#L1-L35)
 - [whatsappService.js:1-23](file://leadpilot-ai/services/whatsappService.js#L1-L23)
 - [supabase.js:1-9](file://leadpilot-ai/db/supabase.js#L1-L9)
-- [code.html:7-10](file://leadpilot-ai/leadpilot-ui/code.html#L7-L10)
+- [dashboard.html:7-9](file://leadpilot-ai/leadpilot-ui/dashboard.html#L7-L9)
 
 **Section sources**
 - [package.json:13-20](file://leadpilot-ai/package.json#L13-L20)
-- [server.js:1-29](file://leadpilot-ai/server.js#L1-L29)
+- [server.js:1-35](file://leadpilot-ai/server.js#L1-L35)
 - [whatsappService.js:1-23](file://leadpilot-ai/services/whatsappService.js#L1-L23)
 - [supabase.js:1-9](file://leadpilot-ai/db/supabase.js#L1-L9)
-- [code.html:7-10](file://leadpilot-ai/leadpilot-ui/code.html#L7-L10)
+- [dashboard.html:7-9](file://leadpilot-ai/leadpilot-ui/dashboard.html#L7-L9)
 
 ## Performance Considerations
 The modular architecture introduces several performance optimization opportunities:
@@ -613,7 +627,7 @@ The modular architecture introduces several performance optimization opportuniti
 - **Horizontal Scaling**: Modular architecture supports deployment across multiple instances
 - **Database Optimization**: Supabase provides built-in scaling capabilities
 - **API Rate Limiting**: WhatsApp API integration includes automatic rate limiting considerations
-- **UI Scalability**: Material Design system supports easy scaling of components and themes
+- **UI Scalability**: Tailwind CSS system supports easy scaling of components and themes
 
 ## Testing Strategies
 The project currently lacks formal testing infrastructure but provides clear pathways for implementation:
@@ -631,7 +645,7 @@ The project currently lacks formal testing infrastructure but provides clear pat
 - **Service Testing**: Mock external API calls and database operations
 - **Utility Testing**: Test parser functions with various input formats
 - **Database Testing**: Use test database instances for data operations
-- **UI Component Testing**: Test individual Material Design components in isolation
+- **UI Component Testing**: Test individual Tailwind CSS components in isolation
 
 #### Integration Testing Strategy
 - **End-to-End Flows**: Test complete webhook processing from message receipt to database storage
@@ -646,8 +660,8 @@ The project currently lacks formal testing infrastructure but provides clear pat
 - **Event Simulation**: Create test events to validate webhook processing pipeline
 - **UI Interaction Testing**: Test dashboard interactions with simulated backend responses
 
-#### Material Design Testing
-- **Component Consistency**: Verify Material Design components render consistently across themes
+#### Tailwind CSS Testing
+- **Component Consistency**: Verify Tailwind CSS components render consistently across themes
 - **Responsive Behavior**: Test components across different screen sizes and orientations
 - **Accessibility Testing**: Validate WCAG compliance for all interactive elements
 - **Performance Testing**: Measure component rendering performance under load
@@ -711,7 +725,7 @@ The modular architecture provides clear pathways for extending functionality:
 3. **Add Service**: Implement service for external integrations if needed
 4. **Update Server**: Register new route module in server configuration
 5. **Test Integration**: Validate new functionality with existing testing strategies
-6. **UI Integration**: Integrate new features with Material Design dashboard components
+6. **UI Integration**: Integrate new features with Tailwind CSS dashboard components
 
 ### Example Extensions
 - **Multi-language Support**: Extend parser utility for international lead processing
@@ -728,7 +742,7 @@ The modular architecture provides clear pathways for extending functionality:
 - **Indexes**: Optimize database queries with appropriate indexing strategies
 
 ### UI Extensions
-- **New Components**: Add Material Design components for new functionality
+- **New Components**: Add Tailwind CSS components for new functionality
 - **Theme Variants**: Extend theme system for new color schemes
 - **Layout Changes**: Modify responsive layouts for new content types
 - **Animation Effects**: Add micro-interactions and transition effects
@@ -742,7 +756,7 @@ The project follows modern development practices with clear standards:
 - **CommonJS Modules**: Consistent module system for Node.js applications
 - **Environment Variables**: Secure credential management through dotenv
 - **Modular Architecture**: Clear separation of concerns across layers
-- **Material Design Compliance**: Adherence to Material Design principles
+- **Tailwind CSS Compliance**: Adherence to utility-first CSS principles
 - **Theme System**: Consistent theme management across UI components
 
 ### Recommended Improvements
@@ -758,7 +772,7 @@ The project follows modern development practices with clear standards:
 - **Pull Requests**: Code review process for all contributions
 - **Testing Requirements**: Unit tests for new functionality
 - **Documentation Updates**: Update documentation for significant changes
-- **Design Consistency**: Ensure new UI components follow Material Design principles
+- **Design Consistency**: Ensure new UI components follow Tailwind CSS principles
 - **Theme Compatibility**: Verify new features work with both light and dark themes
 
 ### Development Workflow
@@ -766,13 +780,13 @@ The project follows modern development practices with clear standards:
 - **Dependency Management**: Proper dependency versioning and updates
 - **Build Process**: Automated build and deployment processes
 - **Quality Gates**: Automated testing and linting in CI/CD pipelines
-- **UI Testing**: Regular testing of Material Design components and theme system
+- **UI Testing**: Regular testing of Tailwind CSS components and theme system
 
 ## Conclusion
-LeadPilot AI demonstrates a sophisticated, modular architecture that effectively separates concerns across multiple layers while maintaining scalability and maintainability. The implementation showcases modern development practices including controller-based design, centralized database management, and comprehensive Material Design implementation with theme management system. The project's layered architecture with clear separation between server initialization, routing, controllers, services, and UI components provides an excellent foundation for continued development and feature expansion.
+LeadPilot AI demonstrates a sophisticated, modular architecture that effectively separates concerns across multiple layers while maintaining scalability and maintainability. The implementation showcases modern development practices including controller-based design, centralized database management, and comprehensive Tailwind CSS implementation with theme management system. The project's layered architecture with clear separation between server initialization, routing, controllers, services, and UI components provides an excellent foundation for continued development and feature expansion.
 
-The enhanced frontend development with Material Design implementation provides an exceptional user experience with interactive UI components, real-time updates, and comprehensive theme management. The design system ensures consistency and scalability while the theme management system provides users with personalized experiences that persist across sessions.
+The enhanced frontend development with Tailwind CSS implementation provides an exceptional user experience with interactive UI components, real-time updates, and comprehensive theme management. The responsive design system ensures optimal viewing across all device types, while the theme management system provides users with personalized experiences that persist across sessions.
 
 By following the established patterns of layered architecture, environment-driven configuration, service abstraction, and modular design, developers can confidently extend functionality, integrate with additional APIs, implement advanced features like multi-language support and rich media handling, and maintain high code quality standards. The comprehensive error handling, logging strategies, and testing approaches ensure reliability and scalability as the project evolves toward its vision of becoming a comprehensive lead management system that ensures no lead is ever lost.
 
-The Material Design implementation with custom theming, interactive components, and persistent theme switching sets a new standard for SaaS dashboard interfaces, combining professional aesthetics with functional excellence. This foundation enables the project to scale effectively while maintaining user experience quality and development maintainability.
+The Tailwind CSS implementation with custom theming, interactive components, and persistent theme switching sets a new standard for SaaS dashboard interfaces, combining professional aesthetics with functional excellence. This foundation enables the project to scale effectively while maintaining user experience quality and development maintainability.

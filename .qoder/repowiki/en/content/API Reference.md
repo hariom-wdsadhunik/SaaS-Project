@@ -13,15 +13,16 @@
 - [leads.json](file://leadpilot-ai/leads.json)
 - [package.json](file://leadpilot-ai/package.json)
 - [dashboard.html](file://leadpilot-ai/leadpilot-ui/dashboard.html)
+- [index.html](file://leadpilot-ai/leadpilot-ui/index.html)
 </cite>
 
 ## Update Summary
 **Changes Made**
-- Enhanced documentation to include new UI interactions for search, filtering, and manual lead creation
-- Added comprehensive coverage of the real-time dashboard with automatic data refresh
-- Updated webhook endpoint documentation to include manual lead creation capability
-- Expanded lead management API documentation to reflect UI-driven operations
-- Added new UI interaction patterns and client implementation guidelines
+- Enhanced documentation to include comprehensive dashboard UI system with real-time lead management
+- Added detailed coverage of new dashboard.html and index.html files with their real-time features
+- Updated webhook endpoint documentation to include manual lead creation capability through UI interactions
+- Expanded lead management API documentation to reflect UI-driven operations and enhanced filtering
+- Added new UI interaction patterns, client implementation guidelines, and real-time dashboard capabilities
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -30,12 +31,13 @@
 4. [Architecture Overview](#architecture-overview)
 5. [Detailed Component Analysis](#detailed-component-analysis)
 6. [Lead Management API](#lead-management-api)
-7. [UI Interactions and Manual Operations](#ui-interactions-and-manual-operations)
-8. [Dependency Analysis](#dependency-analysis)
-9. [Performance Considerations](#performance-considerations)
-10. [Troubleshooting Guide](#troubleshooting-guide)
-11. [Conclusion](#conclusion)
-12. [Appendices](#appendices)
+7. [Dashboard UI System](#dashboard-ui-system)
+8. [UI Interactions and Manual Operations](#ui-interactions-and-manual-operations)
+9. [Dependency Analysis](#dependency-analysis)
+10. [Performance Considerations](#performance-considerations)
+11. [Troubleshooting Guide](#troubleshooting-guide)
+12. [Conclusion](#conclusion)
+13. [Appendices](#appendices)
 
 ## Introduction
 This document provides comprehensive API documentation for LeadPilot AI's complete API ecosystem. It covers:
@@ -46,11 +48,12 @@ This document provides comprehensive API documentation for LeadPilot AI's comple
 - Supabase database integration for lead storage
 - Parser utility for automated lead information extraction
 - Real-time dashboard UI with search, filtering, and manual operations
+- Enhanced UI system with responsive design, dark mode support, and real-time data synchronization
 - Request/response examples, HTTP status codes, error handling, and rate limiting considerations
 - Client implementation guidelines for webhook setup and testing
 
 ## Project Structure
-The application is a comprehensive Express server that exposes two main route groups: webhooks for WhatsApp integration and leads for CRM functionality. The architecture includes database integration, message parsing, and automated lead processing, along with a sophisticated real-time dashboard UI.
+The application is a comprehensive Express server that exposes two main route groups: webhooks for WhatsApp integration and leads for CRM functionality. The architecture includes database integration, message parsing, and automated lead processing, along with a sophisticated real-time dashboard UI featuring responsive design and dark mode support.
 
 ```mermaid
 graph TB
@@ -70,7 +73,7 @@ UI --> RoutesWebhook
 ```
 
 **Diagram sources**
-- [server.js:1-29](file://leadpilot-ai/server.js#L1-L29)
+- [server.js:1-35](file://leadpilot-ai/server.js#L1-L35)
 - [webhook.js:1-12](file://leadpilot-ai/routes/webhook.js#L1-L12)
 - [leads.js:1-14](file://leadpilot-ai/routes/leads.js#L1-L14)
 - [whatsappController.js:1-78](file://leadpilot-ai/controllers/whatsappController.js#L1-L78)
@@ -78,13 +81,13 @@ UI --> RoutesWebhook
 - [whatsappService.js:1-23](file://leadpilot-ai/services/whatsappService.js#L1-L23)
 - [supabase.js:1-9](file://leadpilot-ai/db/supabase.js#L1-L9)
 - [parser.js:1-37](file://leadpilot-ai/utils/parser.js#L1-L37)
-- [dashboard.html:1-416](file://leadpilot-ai/leadpilot-ui/dashboard.html#L1-L416)
+- [dashboard.html:1-533](file://leadpilot-ai/leadpilot-ui/dashboard.html#L1-L533)
 
 **Section sources**
-- [server.js:1-29](file://leadpilot-ai/server.js#L1-L29)
+- [server.js:1-35](file://leadpilot-ai/server.js#L1-L35)
 - [webhook.js:1-12](file://leadpilot-ai/routes/webhook.js#L1-L12)
 - [leads.js:1-14](file://leadpilot-ai/routes/leads.js#L1-L14)
-- [package.json:1-21](file://leadpilot-ai/package.json#L1-L21)
+- [package.json:1-22](file://leadpilot-ai/package.json#L1-L22)
 
 ## Core Components
 - Express server initializes environment, CORS, JSON body parsing, static file serving, and mounts both webhook and leads route groups.
@@ -93,7 +96,7 @@ UI --> RoutesWebhook
 - Services encapsulate outbound requests to the WhatsApp Cloud API using Bearer token authentication.
 - Database integration via Supabase for persistent lead storage.
 - Parser utility for automated extraction of budget and location information from messages.
-- Real-time dashboard UI with search, filtering, and manual lead creation capabilities.
+- Real-time dashboard UI with search, filtering, and manual lead creation capabilities, featuring responsive design and dark mode support.
 
 Key runtime behaviors:
 - GET /webhook performs challenge-response verification using query parameters.
@@ -103,9 +106,11 @@ Key runtime behaviors:
 - PATCH /leads/:id updates lead status with validation.
 - Manual lead creation via UI triggers POST /webhook with custom payload.
 - Real-time dashboard automatically refreshes lead data every 10 seconds.
+- Dashboard supports responsive design with mobile/tablet/desktop optimization.
+- Dashboard includes dark mode toggle with localStorage persistence.
 
 **Section sources**
-- [server.js:1-29](file://leadpilot-ai/server.js#L1-L29)
+- [server.js:1-35](file://leadpilot-ai/server.js#L1-L35)
 - [webhook.js:1-12](file://leadpilot-ai/routes/webhook.js#L1-L12)
 - [leads.js:1-14](file://leadpilot-ai/routes/leads.js#L1-L14)
 - [whatsappController.js:1-78](file://leadpilot-ai/controllers/whatsappController.js#L1-L78)
@@ -113,7 +118,7 @@ Key runtime behaviors:
 - [whatsappService.js:1-23](file://leadpilot-ai/services/whatsappService.js#L1-L23)
 - [supabase.js:1-9](file://leadpilot-ai/db/supabase.js#L1-L9)
 - [parser.js:1-37](file://leadpilot-ai/utils/parser.js#L1-L37)
-- [dashboard.html:331-378](file://leadpilot-ai/leadpilot-ui/dashboard.html#L331-L378)
+- [dashboard.html:269-533](file://leadpilot-ai/leadpilot-ui/dashboard.html#L269-L533)
 
 ## Architecture Overview
 The API follows a layered architecture with enhanced lead management capabilities and real-time UI interactions:
@@ -123,7 +128,7 @@ The API follows a layered architecture with enhanced lead management capabilitie
 - Services: External API integration with WhatsApp Cloud API
 - Database: Supabase integration for persistent lead storage
 - Utilities: Parser for automated lead information extraction
-- UI Layer: Real-time dashboard with search, filtering, and manual operations
+- UI Layer: Real-time dashboard with search, filtering, and manual operations, featuring responsive design and dark mode
 
 ```mermaid
 sequenceDiagram
@@ -152,7 +157,7 @@ CWebhook-->>FB : "200 OK"
 ```
 
 **Diagram sources**
-- [server.js:1-29](file://leadpilot-ai/server.js#L1-L29)
+- [server.js:1-35](file://leadpilot-ai/server.js#L1-L35)
 - [webhook.js:1-12](file://leadpilot-ai/routes/webhook.js#L1-L12)
 - [whatsappController.js:1-78](file://leadpilot-ai/controllers/whatsappController.js#L1-L78)
 - [parser.js:1-37](file://leadpilot-ai/utils/parser.js#L1-L37)
@@ -411,6 +416,76 @@ Example response:
 - [leadsController.js:40-56](file://leadpilot-ai/controllers/leadsController.js#L40-L56)
 - [leads.js:11](file://leadpilot-ai/routes/leads.js#L11)
 
+## Dashboard UI System
+
+### Real-time Dashboard Features
+The LeadPilot AI dashboard provides comprehensive lead management with real-time updates and interactive features:
+
+**Responsive Design**:
+- Mobile-first responsive design with adaptive layouts for phones, tablets, and desktops
+- Touch-friendly interface with minimum 44px touch targets for accessibility
+- Smooth animations and transitions for enhanced user experience
+
+**Search Functionality**:
+- Real-time search across phone numbers, locations, and messages
+- Live filtering as users type in the search box
+- Case-insensitive matching for improved usability
+
+**Status Filtering**:
+- Quick filtering by lead status (All, New, Contacted, Follow-up, Closed)
+- Visual status badges with color-coded indicators
+- Dynamic button styling to show active filter
+
+**Manual Lead Creation**:
+- Direct lead creation from the dashboard interface
+- Prompts for phone number and requirement description
+- Automatic webhook invocation to process the lead
+- Immediate dashboard refresh after creation
+
+**Automatic Data Refresh**:
+- Leads table automatically refreshes every 10 seconds
+- Real-time statistics updates (total leads, status counts)
+- Live status dropdown for quick updates
+
+**Dark Mode Support**:
+- Toggle between light and dark themes
+- Theme preference persisted in localStorage
+- System-aware theme switching with smooth transitions
+
+**Interactive Elements**:
+- Hover effects and subtle animations for enhanced UX
+- Status dropdowns for inline editing
+- Action buttons with hover states
+- Loading states and error handling
+
+**Section sources**
+- [dashboard.html:100-533](file://leadpilot-ai/leadpilot-ui/dashboard.html#L100-L533)
+
+### Dashboard Navigation and Layout
+The dashboard features a modern navigation system with sidebar and responsive layout:
+
+**Mobile Navigation**:
+- Slide-out sidebar accessible via hamburger menu
+- Overlay background for improved focus
+- Click-outside-to-close functionality
+- Responsive breakpoint at 1024px
+
+**Navigation Items**:
+- Active state highlighting for current page
+- Badge counter showing total lead count
+- Icons for visual recognition
+- Hover states with smooth transitions
+
+**Main Content Area**:
+- Glass-morphism design with backdrop blur
+- Responsive grid system for statistics cards
+- Adaptive table layout with mobile card view
+- Proper spacing and typography hierarchy
+
+**Section sources**
+- [dashboard.html:100-145](file://leadpilot-ai/leadpilot-ui/dashboard.html#L100-L145)
+- [dashboard.html:236-267](file://leadpilot-ai/leadpilot-ui/dashboard.html#L236-L267)
+
 ## UI Interactions and Manual Operations
 
 ### Real-time Dashboard Features
@@ -438,10 +513,8 @@ The LeadPilot AI dashboard provides comprehensive lead management with real-time
 - Live status dropdown for quick updates
 
 **Section sources**
-- [dashboard.html:110-120](file://leadpilot-ai/leadpilot-ui/dashboard.html#L110-L120)
-- [dashboard.html:170-187](file://leadpilot-ai/leadpilot-ui/dashboard.html#L170-L187)
-- [dashboard.html:331-378](file://leadpilot-ai/leadpilot-ui/dashboard.html#L331-L378)
-- [dashboard.html:410-413](file://leadpilot-ai/leadpilot-ui/dashboard.html#L410-L413)
+- [dashboard.html:150-234](file://leadpilot-ai/leadpilot-ui/dashboard.html#L150-L234)
+- [dashboard.html:274-533](file://leadpilot-ai/leadpilot-ui/dashboard.html#L274-L533)
 
 ### Manual Lead Creation Workflow
 The dashboard enables manual lead creation through the following process:
@@ -470,7 +543,29 @@ Payload Structure for Manual Creation:
 ```
 
 **Section sources**
-- [dashboard.html:359-378](file://leadpilot-ai/leadpilot-ui/dashboard.html#L359-L378)
+- [dashboard.html:456-478](file://leadpilot-ai/leadpilot-ui/dashboard.html#L456-L478)
+
+### Dashboard JavaScript Implementation
+The dashboard includes comprehensive JavaScript functionality for real-time operations:
+
+**API Integration**:
+- Configurable API base URL for development and production
+- Error handling with user-friendly notifications
+- Async/await for clean asynchronous operations
+
+**Data Management**:
+- Local state management for lead data
+- Real-time filtering and searching
+- Status update operations with immediate UI feedback
+
+**User Experience Features**:
+- Theme persistence using localStorage
+- Mobile-responsive sidebar with overlay
+- Touch-friendly interface elements
+- Loading states and empty state handling
+
+**Section sources**
+- [dashboard.html:269-533](file://leadpilot-ai/leadpilot-ui/dashboard.html#L269-L533)
 
 ## Dependency Analysis
 External libraries and their roles:
@@ -507,8 +602,8 @@ UI --> RoutesWebhook
 ```
 
 **Diagram sources**
-- [package.json:13-19](file://leadpilot-ai/package.json#L13-L19)
-- [server.js:1-29](file://leadpilot-ai/server.js#L1-L29)
+- [package.json:13-20](file://leadpilot-ai/package.json#L13-L20)
+- [server.js:1-35](file://leadpilot-ai/server.js#L1-L35)
 - [webhook.js:1-12](file://leadpilot-ai/routes/webhook.js#L1-L12)
 - [leads.js:1-14](file://leadpilot-ai/routes/leads.js#L1-L14)
 - [whatsappController.js:1-78](file://leadpilot-ai/controllers/whatsappController.js#L1-L78)
@@ -516,10 +611,10 @@ UI --> RoutesWebhook
 - [whatsappService.js:1-23](file://leadpilot-ai/services/whatsappService.js#L1-L23)
 - [supabase.js:1-9](file://leadpilot-ai/db/supabase.js#L1-L9)
 - [parser.js:1-37](file://leadpilot-ai/utils/parser.js#L1-L37)
-- [dashboard.html:1-416](file://leadpilot-ai/leadpilot-ui/dashboard.html#L1-L416)
+- [dashboard.html:1-533](file://leadpilot-ai/leadpilot-ui/dashboard.html#L1-L533)
 
 **Section sources**
-- [package.json:13-19](file://leadpilot-ai/package.json#L13-L19)
+- [package.json:13-20](file://leadpilot-ai/package.json#L13-L20)
 
 ## Performance Considerations
 - The controller performs synchronous logging and asynchronous outbound API calls. Ensure the service layer handles timeouts and retries appropriately.
@@ -528,6 +623,8 @@ UI --> RoutesWebhook
 - Consider adding circuit breakers and exponential backoff for the WhatsApp Cloud API calls to mitigate transient failures.
 - Database queries are optimized with proper ordering and filtering.
 - The dashboard implements automatic refresh every 10 seconds to balance real-time updates with performance.
+- Responsive design optimizations reduce bandwidth usage on mobile devices.
+- Dark mode reduces battery consumption on OLED displays.
 
 ## Troubleshooting Guide
 Common issues and resolutions:
@@ -552,6 +649,12 @@ Common issues and resolutions:
 - Dashboard UI issues
   - Cause: API base URL mismatch or network connectivity problems.
   - Resolution: Verify API_BASE_URL setting and ensure backend server is reachable.
+- Responsive design issues
+  - Cause: CSS media queries not functioning properly.
+  - Resolution: Check browser compatibility and device viewport settings.
+- Dark mode not persisting
+  - Cause: localStorage not available or blocked.
+  - Resolution: Check browser privacy settings and localStorage availability.
 
 Operational checks:
 - Verify the server is reachable from the internet and the routes are mounted under /webhook and /leads.
@@ -560,6 +663,8 @@ Operational checks:
 - Verify Supabase database is accessible and has the leads table.
 - Test lead parsing functionality with sample messages.
 - Validate dashboard API endpoints are accessible and responding correctly.
+- Check responsive breakpoints and mobile device compatibility.
+- Verify dark mode functionality across different browsers.
 
 **Section sources**
 - [whatsappController.js:7-17](file://leadpilot-ai/controllers/whatsappController.js#L7-L17)
@@ -567,10 +672,10 @@ Operational checks:
 - [leadsController.js:4-56](file://leadpilot-ai/controllers/leadsController.js#L4-L56)
 - [whatsappService.js:3-4](file://leadpilot-ai/services/whatsappService.js#L3-L4)
 - [supabase.js:3-6](file://leadpilot-ai/db/supabase.js#L3-L6)
-- [dashboard.html:215-237](file://leadpilot-ai/leadpilot-ui/dashboard.html#L215-L237)
+- [dashboard.html:269-533](file://leadpilot-ai/leadpilot-ui/dashboard.html#L269-L533)
 
 ## Conclusion
-LeadPilot AI's API provides a comprehensive solution for WhatsApp-based lead management with advanced automation capabilities and rich UI interactions. The enhanced webhook endpoints now include intelligent lead parsing, database integration, automated responses, and manual lead creation capabilities. The new lead management endpoints offer full CRUD operations for lead lifecycle management, complemented by a sophisticated real-time dashboard with search, filtering, and manual operations. The dashboard enables users to create leads manually, search across lead data, filter by status, and monitor lead statistics in real-time. For production deployments, ensure secure environment configuration, implement robust error handling, and consider rate limiting and retry policies for external API calls.
+LeadPilot AI's API provides a comprehensive solution for WhatsApp-based lead management with advanced automation capabilities and rich UI interactions. The enhanced webhook endpoints now include intelligent lead parsing, database integration, automated responses, and manual lead creation capabilities. The new lead management endpoints offer full CRUD operations for lead lifecycle management, complemented by a sophisticated real-time dashboard with search, filtering, and manual operations. The dashboard enables users to create leads manually, search across lead data, filter by status, and monitor lead statistics in real-time. The responsive design ensures optimal user experience across all devices, while dark mode support enhances accessibility. For production deployments, ensure secure environment configuration, implement robust error handling, and consider rate limiting and retry policies for external API calls.
 
 ## Appendices
 
@@ -637,7 +742,7 @@ LeadPilot AI's API provides a comprehensive solution for WhatsApp-based lead man
 - Outbound calls to the WhatsApp Cloud API use Bearer token authentication via Authorization header.
 - Lead management endpoints do not implement authentication; ensure proper access control at deployment level.
 - Database operations use Supabase client with environment-based credentials.
-- Dashboard UI uses API_BASE_URL for backend communication; ensure proper CORS configuration.
+- Dashboard UI uses configurable API_BASE_URL for backend communication; ensure proper CORS configuration.
 
 ### Environment Variables
 - WHATSAPP_TOKEN: Access token for the WhatsApp Business Platform
@@ -701,3 +806,7 @@ LeadPilot AI's API provides a comprehensive solution for WhatsApp-based lead man
 - Manual Lead Creation: Add leads directly from the dashboard interface
 - Real-time Updates: Automatic dashboard refresh every 10 seconds
 - Status Dropdown: Inline editing of lead status from the table view
+- Responsive Design: Adaptive layouts for mobile, tablet, and desktop
+- Dark Mode: Toggle between light and dark themes with persistence
+- Mobile Navigation: Slide-out sidebar with overlay background
+- Touch-friendly Interface: Minimum 44px touch targets for accessibility

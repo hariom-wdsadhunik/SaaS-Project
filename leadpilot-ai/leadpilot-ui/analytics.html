@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Analytics - LeadPilot AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body { background: #f8fafc; }
+        .glass {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1);
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+        .reveal {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s ease;
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        /* Dark mode */
+        body.dark { background: #0f172a; }
+        body.dark .glass { 
+            background: rgba(30, 41, 59, 0.9); 
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        body.dark .bg-white { background-color: #1e293b; }
+        body.dark .text-gray-900 { color: #f1f5f9; }
+        body.dark .text-gray-600 { color: #94a3b8; }
+        body.dark .text-gray-500 { color: #64748b; }
+        body.dark .border-gray-200 { border-color: #334155; }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 glass border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                        <i class="fas fa-rocket text-white text-lg"></i>
+                    </div>
+                    <span class="font-bold text-xl">LeadPilot Analytics</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <a href="/dashboard" class="text-gray-600 hover:text-gray-900 transition-colors">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="pt-24 pb-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto">
+            <!-- Header -->
+            <div class="mb-8 reveal">
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">Analytics Overview</h1>
+                <p class="text-gray-600">Track your lead performance and team metrics</p>
+            </div>
+
+            <!-- Time Range Selector -->
+            <div class="mb-8 reveal">
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="changeTimeRange(7)" class="time-filter px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white" data-days="7">Last 7 Days</button>
+                    <button onclick="changeTimeRange(30)" class="time-filter px-4 py-2 rounded-lg text-sm font-medium bg-white text-gray-600 border border-gray-200" data-days="30">Last 30 Days</button>
+                    <button onclick="changeTimeRange(90)" class="time-filter px-4 py-2 rounded-lg text-sm font-medium bg-white text-gray-600 border border-gray-200" data-days="90">Last 90 Days</button>
+                </div>
+            </div>
+
+            <!-- Key Metrics -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-8">
+                <div class="bg-white rounded-2xl p-6 card-hover border border-gray-100 reveal stagger-1">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
+                            <i class="fas fa-users text-blue-600 text-xl"></i>
+                        </div>
+                        <span class="text-green-500 text-sm font-medium">+12%</span>
+                    </div>
+                    <h3 class="text-3xl font-bold text-gray-900" id="totalLeads">0</h3>
+                    <p class="text-gray-500 text-sm">Total Leads</p>
+                </div>
+
+                <div class="bg-white rounded-2xl p-6 card-hover border border-gray-100 reveal stagger-2">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center">
+                            <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                        </div>
+                        <span class="text-gray-400 text-sm font-medium">Rate</span>
+                    </div>
+                    <h3 class="text-3xl font-bold text-gray-900" id="conversionRate">0%</h3>
+                    <p class="text-gray-500 text-sm">Conversion Rate</p>
+                </div>
+
+                <div class="bg-white rounded-2xl p-6 card-hover border border-gray-100 reveal stagger-3">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center">
+                            <i class="fas fa-star text-purple-600 text-xl"></i>
+                        </div>
+                        <span class="text-gray-400 text-sm font-medium">Avg</span>
+                    </div>
+                    <h3 class="text-3xl font-bold text-gray-900" id="avgScore">0</h3>
+                    <p class="text-gray-500 text-sm">AI Score</p>
+                </div>
+
+                <div class="bg-white rounded-2xl p-6 card-hover border border-gray-100 reveal stagger-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center">
+                            <i class="fas fa-fire text-amber-600 text-xl"></i>
+                        </div>
+                        <span class="text-gray-400 text-sm font-medium">Hot</span>
+                    </div>
+                    <h3 class="text-3xl font-bold text-gray-900" id="hotLeads">0</h3>
+                    <p class="text-gray-500 text-sm">High Priority</p>
+                </div>
+            </div>
+
+            <!-- Charts Row 1 -->
+            <div class="grid lg:grid-cols-2 gap-6 mb-8">
+                <!-- Lead Trends Chart -->
+                <div class="bg-white rounded-2xl p-6 border border-gray-100 reveal">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">Lead Trends</h3>
+                    <div class="chart-container">
+                        <canvas id="trendsChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Status Distribution -->
+                <div class="bg-white rounded-2xl p-6 border border-gray-100 reveal">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">Lead Status Distribution</h3>
+                    <div class="chart-container">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row 2 -->
+            <div class="grid lg:grid-cols-2 gap-6 mb-8">
+                <!-- AI Score Distribution -->
+                <div class="bg-white rounded-2xl p-6 border border-gray-100 reveal">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">AI Lead Score Distribution</h3>
+                    <div class="chart-container">
+                        <canvas id="scoreChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Top Locations -->
+                <div class="bg-white rounded-2xl p-6 border border-gray-100 reveal">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">Top Locations</h3>
+                    <div id="locationsList" class="space-y-3">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Insights -->
+            <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-6 text-white mb-8 reveal">
+                <h3 class="text-xl font-bold mb-4"><i class="fas fa-robot mr-2"></i>AI Insights</h3>
+                <div id="aiInsights" class="grid md:grid-cols-2 gap-4">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Team Performance (if team exists) -->
+            <div id="teamSection" class="bg-white rounded-2xl p-6 border border-gray-100 mb-8 reveal" style="display: none;">
+                <h3 class="text-lg font-bold text-gray-900 mb-4">Team Performance</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-gray-200">
+                                <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">Team Member</th>
+                                <th class="text-center py-3 px-4 text-sm font-semibold text-gray-600">Assigned</th>
+                                <th class="text-center py-3 px-4 text-sm font-semibold text-gray-600">Closed</th>
+                                <th class="text-center py-3 px-4 text-sm font-semibold text-gray-600">Conversion</th>
+                            </tr>
+                        </thead>
+                        <tbody id="teamTable">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="bg-white rounded-2xl p-6 border border-gray-100 reveal">
+                <h3 class="text-lg font-bold text-gray-900 mb-4">Recent Activity</h3>
+                <div id="activityList" class="space-y-3">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_BASE_URL = window.location.hostname === 'localhost' 
+            ? 'http://localhost:80' 
+            : window.location.origin;
+
+        let currentDays = 30;
+        let charts = {};
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAnalytics();
+            setupScrollReveal();
+        });
+
+        // Load analytics data
+        async function loadAnalytics() {
+            try {
+                const token = localStorage.getItem('token');
+                const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+                // Load dashboard analytics
+                const response = await fetch(`${API_BASE_URL}/analytics/dashboard?days=${currentDays}`, { headers });
+                const data = await response.json();
+
+                if (response.ok) {
+                    updateMetrics(data.metrics);
+                    updateCharts(data);
+                    updateLocations(data.sources);
+                    updateAIInsights(data);
+                    updateActivity(data.recentActivity);
+                }
+
+                // Load team performance
+                const teamResponse = await fetch(`${API_BASE_URL}/analytics/performance`, { headers });
+                const teamData = await teamResponse.json();
+                
+                if (teamResponse.ok && teamData.memberPerformance) {
+                    updateTeamPerformance(teamData.memberPerformance);
+                }
+
+            } catch (error) {
+                console.error('Failed to load analytics:', error);
+            }
+        }
+
+        // Update metrics
+        function updateMetrics(metrics) {
+            document.getElementById('totalLeads').textContent = metrics.totalLeads.toLocaleString();
+            document.getElementById('conversionRate').textContent = metrics.conversionRate + '%';
+        }
+
+        // Update charts
+        function updateCharts(data) {
+            // Destroy existing charts
+            Object.values(charts).forEach(chart => chart.destroy());
+
+            // Lead Trends Chart
+            const trendsCtx = document.getElementById('trendsChart').getContext('2d');
+            charts.trends = new Chart(trendsCtx, {
+                type: 'line',
+                data: {
+                    labels: data.leadsByDay.map(d => new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })),
+                    datasets: [
+                        {
+                            label: 'New',
+                            data: data.leadsByDay.map(d => d.new),
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Contacted',
+                            data: data.leadsByDay.map(d => d.contacted),
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Closed',
+                            data: data.leadsByDay.map(d => d.closed),
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Status Distribution Chart
+            const statusCtx = document.getElementById('statusChart').getContext('2d');
+            charts.status = new Chart(statusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.statusDistribution.map(s => s.name),
+                    datasets: [{
+                        data: data.statusDistribution.map(s => s.value),
+                        backgroundColor: data.statusDistribution.map(s => s.color),
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+            // AI Score Distribution
+            const scoreData = data.scoreDistribution;
+            document.getElementById('avgScore').textContent = scoreData.averageScore;
+            document.getElementById('hotLeads').textContent = scoreData.distribution.hot;
+
+            const scoreCtx = document.getElementById('scoreChart').getContext('2d');
+            charts.score = new Chart(scoreCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Hot (80-100)', 'Warm (60-79)', 'Cold (40-59)', 'Nurture (<40)'],
+                    datasets: [{
+                        label: 'Leads',
+                        data: [
+                            scoreData.distribution.hot,
+                            scoreData.distribution.warm,
+                            scoreData.distribution.cold,
+                            scoreData.distribution.nurture
+                        ],
+                        backgroundColor: ['#dc2626', '#f59e0b', '#3b82f6', '#6b7280'],
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update locations list
+        function updateLocations(sources) {
+            const container = document.getElementById('locationsList');
+            if (!sources || sources.length === 0) {
+                container.innerHTML = '<p class="text-gray-500">No location data available</p>';
+                return;
+            }
+
+            const maxCount = Math.max(...sources.map(s => s.count));
+            
+            container.innerHTML = sources.map(source => {
+                const percentage = (source.count / maxCount) * 100;
+                return `
+                    <div class="flex items-center gap-3">
+                        <span class="text-sm text-gray-600 w-24 truncate">${source.name}</span>
+                        <div class="flex-1 bg-gray-100 rounded-full h-2">
+                            <div class="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full" style="width: ${percentage}%"></div>
+                        </div>
+                        <span class="text-sm font-semibold text-gray-900 w-8 text-right">${source.count}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Update AI insights
+        function updateAIInsights(data) {
+            const container = document.getElementById('aiInsights');
+            
+            // Fetch AI insights
+            fetch(`${API_BASE_URL}/analytics/insights`)
+                .then(res => res.json())
+                .then(insights => {
+                    container.innerHTML = `
+                        <div class="bg-white/10 rounded-xl p-4">
+                            <h4 class="font-semibold mb-2">Budget Distribution</h4>
+                            <div class="space-y-2 text-sm">
+                                ${Object.entries(insights.budgetRanges || {}).map(([range, count]) => `
+                                    <div class="flex justify-between">
+                                        <span>${range}</span>
+                                        <span class="font-semibold">${count}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        <div class="bg-white/10 rounded-xl p-4">
+                            <h4 class="font-semibold mb-2">Recommendations</h4>
+                            <ul class="space-y-2 text-sm">
+                                ${(insights.recommendations || ['No recommendations at this time']).map(rec => `
+                                    <li class="flex items-start gap-2">
+                                        <i class="fas fa-lightbulb mt-1 text-yellow-300"></i>
+                                        <span>${rec}</span>
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        </div>
+                    `;
+                })
+                .catch(() => {
+                    container.innerHTML = '<p class="text-white/80">AI insights loading...</p>';
+                });
+        }
+
+        // Update team performance
+        function updateTeamPerformance(members) {
+            const section = document.getElementById('teamSection');
+            const table = document.getElementById('teamTable');
+            
+            if (!members || members.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+
+            section.style.display = 'block';
+            table.innerHTML = members.map(member => `
+                <tr class="border-b border-gray-100 hover:bg-gray-50">
+                    <td class="py-3 px-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-sm font-semibold">
+                                ${member.name.charAt(0).toUpperCase()}
+                            </div>
+                            <span class="font-medium text-gray-900">${member.name}</span>
+                        </div>
+                    </td>
+                    <td class="py-3 px-4 text-center text-gray-600">${member.totalAssigned}</td>
+                    <td class="py-3 px-4 text-center text-gray-600">${member.closed}</td>
+                    <td class="py-3 px-4 text-center">
+                        <span class="px-3 py-1 rounded-full text-xs font-semibold ${member.conversionRate >= 50 ? 'bg-green-100 text-green-700' : member.conversionRate >= 25 ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'}">
+                            ${member.conversionRate}%
+                        </span>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Update activity
+        function updateActivity(activities) {
+            const container = document.getElementById('activityList');
+            if (!activities || activities.length === 0) {
+                container.innerHTML = '<p class="text-gray-500">No recent activity</p>';
+                return;
+            }
+
+            container.innerHTML = activities.slice(0, 5).map(activity => `
+                <div class="flex items-center gap-4 p-3 bg-gray-50 rounded-xl">
+                    <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                        <i class="fas fa-${activity.icon || 'info'} text-blue-600"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-gray-900">${activity.description}</p>
+                        <p class="text-xs text-gray-500">${new Date(activity.created_at).toLocaleString()}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Change time range
+        function changeTimeRange(days) {
+            currentDays = days;
+            
+            // Update button styles
+            document.querySelectorAll('.time-filter').forEach(btn => {
+                if (parseInt(btn.dataset.days) === days) {
+                    btn.classList.remove('bg-white', 'text-gray-600', 'border', 'border-gray-200');
+                    btn.classList.add('bg-blue-600', 'text-white');
+                } else {
+                    btn.classList.add('bg-white', 'text-gray-600', 'border', 'border-gray-200');
+                    btn.classList.remove('bg-blue-600', 'text-white');
+                }
+            });
+
+            loadAnalytics();
+        }
+
+        // Scroll reveal
+        function setupScrollReveal() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('active');
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+        }
+    </script>
+</body>
+</html>

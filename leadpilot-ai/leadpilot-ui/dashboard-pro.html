@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LeadPilot AI - Pro Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body { background: #f8fafc; }
+        
+        .glass {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.15); }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        /* AI Score Ring */
+        .score-ring {
+            width: 48px; height: 48px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 12px; position: relative;
+            background: conic-gradient(var(--color) var(--score), #e5e7eb 0);
+        }
+        .score-ring::before {
+            content: ''; position: absolute; inset: 4px;
+            border-radius: 50%; background: white;
+        }
+        .score-ring span { position: relative; z-index: 1; }
+        
+        /* Kanban */
+        .kanban-board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+        @media (max-width: 1024px) { .kanban-board { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 640px) { .kanban-board { grid-template-columns: 1fr; } }
+        
+        .kanban-column { background: #f1f5f9; border-radius: 16px; padding: 16px; min-height: 400px; }
+        .kanban-column.drag-over { background: #dbeafe; border: 2px dashed #3b82f6; }
+        
+        .kanban-card {
+            background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: grab; transition: all 0.2s;
+        }
+        .kanban-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.15); transform: translateY(-2px); }
+        .kanban-card.dragging { opacity: 0.5; }
+        
+        /* Timeline */
+        .timeline { position: relative; padding-left: 24px; }
+        .timeline::before { content: ''; position: absolute; left: 6px; top: 0; bottom: 0; width: 2px; background: linear-gradient(to bottom, #3b82f6, #8b5cf6); }
+        .timeline-item { position: relative; padding-bottom: 20px; }
+        .timeline-item::before { content: ''; position: absolute; left: -22px; top: 4px; width: 10px; height: 10px; border-radius: 50%; background: white; border: 2px solid #3b82f6; }
+        .timeline-item.completed::before { background: #10b981; border-color: #10b981; }
+        
+        /* Bulk selection */
+        .bulk-checkbox { width: 18px; height: 18px; border-radius: 4px; border: 2px solid #d1d5db; cursor: pointer; }
+        .bulk-checkbox:checked { background: #3b82f6; border-color: #3b82f6; }
+        .lead-row.selected { background: #eff6ff; border-left: 3px solid #3b82f6; }
+        
+        /* Templates */
+        .template-card { border: 2px solid #e5e7eb; border-radius: 12px; padding: 16px; cursor: pointer; transition: all 0.2s; }
+        .template-card:hover { border-color: #3b82f6; transform: translateY(-2px); }
+        .template-card.selected { border-color: #3b82f6; background: #eff6ff; }
+        
+        /* View toggle */
+        .view-btn { padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 500; }
+        .view-btn.active { background: #3b82f6; color: white; }
+        .view-btn:not(.active) { background: white; color: #6b7280; border: 1px solid #e5e7eb; }
+        
+        /* Progress */
+        .progress-bar { height: 6px; border-radius: 3px; background: #e5e7eb; overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
+        
+        /* Modal */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; border-radius: 24px; max-width: 800px; width: 100%; max-height: 90vh; overflow-y: auto; animation: modalSlide 0.3s ease; }
+        @keyframes modalSlide { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Dark mode */
+        body.dark { background: #0f172a; }
+        body.dark .glass { background: rgba(30, 41, 59, 0.9); border-color: rgba(255,255,255,0.1); }
+        body.dark .bg-white { background-color: #1e293b; }
+        body.dark .text-gray-900 { color: #f1f5f9; }
+        body.dark .text-gray-600 { color: #94a3b8; }
+        body.dark .kanban-column { background: #1e293b; }
+        body.dark .kanban-card { background: #334155; }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 glass border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                        <i class="fas fa-rocket text-white text-lg"></i>
+                    </div>
+                    <span class="font-bold text-xl">LeadPilot Pro</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="toggleTheme()" class="p-2 rounded-lg hover:bg-gray-100">
+                        <i class="fas fa-moon text-gray-600" id="themeIcon"></i>
+                    </button>
+                    <a href="/analytics.html" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium">
+                        <i class="fas fa-chart-bar mr-2"></i>Analytics
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="pt-20 pb-8 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto">
+            <!-- Header -->
+            <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-6">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Lead Management</h1>
+                    <p class="text-gray-500 mt-1">Organize and convert your real estate leads</p>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <div class="relative">
+                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" id="searchInput" placeholder="Search leads..." 
+                            class="pl-11 pr-4 py-3 w-full sm:w-64 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
+                            oninput="searchLeads(this.value)">
+                    </div>
+                    <button onclick="showAddLeadModal()" class="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-xl flex items-center justify-center gap-2">
+                        <i class="fas fa-plus"></i>Add Lead
+                    </button>
+                </div>
+            </div>
+
+            <!-- View Toggle & Bulk Actions -->
+            <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+                <div class="flex gap-2">
+                    <button onclick="switchView('list')" class="view-btn active" id="listViewBtn">
+                        <i class="fas fa-list mr-2"></i>List
+                    </button>
+                    <button onclick="switchView('kanban')" class="view-btn" id="kanbanViewBtn">
+                        <i class="fas fa-columns mr-2"></i>Kanban
+                    </button>
+                </div>
+                
+                <!-- Bulk Actions Bar (hidden by default) -->
+                <div id="bulkActionsBar" class="hidden flex items-center gap-3 bg-blue-50 px-4 py-2 rounded-xl">
+                    <span class="text-sm font-medium text-blue-700"><span id="selectedCount">0</span> selected</span>
+                    <div class="h-4 w-px bg-blue-300"></div>
+                    <button onclick="bulkChangeStatus('contacted')" class="text-sm text-blue-700 hover:text-blue-800 font-medium">Mark Contacted</button>
+                    <button onclick="bulkChangeStatus('closed')" class="text-sm text-blue-700 hover:text-blue-800 font-medium">Mark Closed</button>
+                    <button onclick="bulkDelete()" class="text-sm text-red-600 hover:text-red-700 font-medium">Delete</button>
+                    <button onclick="clearSelection()" class="text-sm text-gray-600 hover:text-gray-700">Cancel</button>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" id="bulkMode" onchange="toggleBulkMode()" class="rounded border-gray-300">
+                    <label for="bulkMode" class="text-sm text-gray-600">Bulk Select</label>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="flex flex-wrap items-center gap-2 mb-6">
+                <button onclick="filterByStatus('all')" class="filter-btn px-4 py-2 rounded-full text-sm font-medium bg-blue-600 text-white" data-filter="all">All</button>
+                <button onclick="filterByStatus('new')" class="filter-btn px-4 py-2 rounded-full text-sm font-medium bg-white text-gray-600 border border-gray-200" data-filter="new">New</button>
+                <button onclick="filterByStatus('contacted')" class="filter-btn px-4 py-2 rounded-full text-sm font-medium bg-white text-gray-600 border border-gray-200" data-filter="contacted">Contacted</button>
+                <button onclick="filterByStatus('follow-up')" class="filter-btn px-4 py-2 rounded-full text-sm font-medium bg-white text-gray-600 border border-gray-200" data-filter="follow-up">Follow-up</button>
+                <button onclick="filterByStatus('closed')" class="filter-btn px-4 py-2 rounded-full text-sm font-medium bg-white text-gray-600 border border-gray-200" data-filter="closed">Closed</button>
+                <div class="ml-auto">
+                    <select onchange="sortLeads(this.value)" class="px-3 py-2 rounded-lg border border-gray-200 text-sm">
+                        <option value="newest">Newest First</option>
+                        <option value="score">AI Score</option>
+                        <option value="budget">Budget</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- List View -->
+            <div id="listView" class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-gray-200 bg-gray-50">
+                                <th class="w-10 px-4 py-4"><input type="checkbox" id="selectAll" class="bulk-checkbox hidden" onchange="toggleSelectAll()"></th>
+                                <th class="text-left px-4 py-4 text-xs font-semibold text-gray-500 uppercase">Lead</th>
+                                <th class="text-left px-4 py-4 text-xs font-semibold text-gray-500 uppercase">AI Score</th>
+                                <th class="text-left px-4 py-4 text-xs font-semibold text-gray-500 uppercase">Details</th>
+                                <th class="text-left px-4 py-4 text-xs font-semibold text-gray-500 uppercase">Status</th>
+                                <th class="text-left px-4 py-4 text-xs font-semibold text-gray-500 uppercase">Date</th>
+                                <th class="text-left px-4 py-4 text-xs font-semibold text-gray-500 uppercase">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leadsTable" class="divide-y divide-gray-100"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Kanban View -->
+            <div id="kanbanView" class="hidden kanban-board">
+                <div class="kanban-column" data-status="new" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-bold text-gray-900"><i class="fas fa-inbox text-blue-500 mr-2"></i>New</h3>
+                        <span class="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 rounded-full" id="count-new">0</span>
+                    </div>
+                    <div id="kanban-new" class="min-h-[300px]"></div>
+                </div>
+                <div class="kanban-column" data-status="contacted" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-bold text-gray-900"><i class="fas fa-phone text-amber-500 mr-2"></i>Contacted</h3>
+                        <span class="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-1 rounded-full" id="count-contacted">0</span>
+                    </div>
+                    <div id="kanban-contacted" class="min-h-[300px]"></div>
+                </div>
+                <div class="kanban-column" data-status="follow-up" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-bold text-gray-900"><i class="fas fa-clock text-purple-500 mr-2"></i>Follow-up</h3>
+                        <span class="bg-purple-100 text-purple-700 text-xs font-bold px-2 py-1 rounded-full" id="count-follow-up">0</span>
+                    </div>
+                    <div id="kanban-follow-up" class="min-h-[300px]"></div>
+                </div>
+                <div class="kanban-column" data-status="closed" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-bold text-gray-900"><i class="fas fa-check-circle text-green-500 mr-2"></i>Closed</h3>
+                        <span class="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded-full" id="count-closed">0</span>
+                    </div>
+                    <div id="kanban-closed" class="min-h-[300px]"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Lead Detail Modal with Timeline -->
+    <div class="modal" id="leadModal">
+        <div class="modal-content">
+            <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-xl font-bold text-gray-900">Lead Details</h3>
+                <button onclick="closeModal()" class="p-2 hover:bg-gray-100 rounded-lg"><i class="fas fa-times text-gray-500"></i></button>
+            </div>
+            <div class="p-6" id="modalContent"></div>
+        </div>
+    </div>
+
+    <!-- Email Templates Modal -->
+    <div class="modal" id="templatesModal">
+        <div class="modal-content">
+            <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-xl font-bold text-gray-900">Email Templates</h3>
+                <button onclick="closeTemplatesModal()" class="p-2 hover:bg-gray-100 rounded-lg"><i class="fas fa-times text-gray-500"></i></button>
+            </div>
+            <div class="p-6">
+                <div class="grid gap-4" id="templatesList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = window.location.hostname === 'localhost' ? 'http://localhost:80' : window.location.origin;
+        let allLeads = [], filteredLeads = [], currentFilter = 'all', currentView = 'list', bulkMode = false, selectedLeads = new Set();
+
+        const sampleLeads = [
+            { id: '1', phone: '919876543210', message: 'Looking for 3BHK in Delhi under 1.5Cr', budget: '1.5Cr', location: 'Delhi', status: 'new', ai_score: 85, ai_priority: 'hot', created_at: new Date().toISOString(), activities: [{type: 'created', time: new Date().toISOString(), text: 'Lead created from WhatsApp'}] },
+            { id: '2', phone: '919988776655', message: '2BHK in Mumbai, budget 80L', budget: '80L', location: 'Mumbai', status: 'contacted', ai_score: 72, ai_priority: 'warm', created_at: new Date(Date.now()-86400000).toISOString(), activities: [{type: 'created', time: new Date(Date.now()-86400000).toISOString(), text: 'Lead created'}, {type: 'contacted', time: new Date().toISOString(), text: 'Called lead, discussed requirements'}] },
+            { id: '3', phone: '919911223344', message: 'Need 1BHK in Bangalore urgently', budget: null, location: 'Bangalore', status: 'new', ai_score: 45, ai_priority: 'cold', created_at: new Date(Date.now()-172800000).toISOString(), activities: [{type: 'created', time: new Date(Date.now()-172800000).toISOString(), text: 'Lead created'}] },
+            { id: '4', phone: '919955667788', message: '4BHK villa in Pune, 3Cr budget', budget: '3Cr', location: 'Pune', status: 'follow-up', ai_score: 92, ai_priority: 'hot', created_at: new Date(Date.now()-259200000).toISOString(), activities: [{type: 'created', time: new Date(Date.now()-259200000).toISOString(), text: 'Lead created'}, {type: 'contacted', time: new Date(Date.now()-86400000).toISOString(), text: 'Initial call completed'}, {type: 'followup', time: new Date().toISOString(), text: 'Sent property listings'}] },
+            { id: '5', phone: '919944556677', message: 'Looking for investment property', budget: '2Cr', location: 'Hyderabad', status: 'closed', ai_score: 78, ai_priority: 'warm', created_at: new Date(Date.now()-345600000).toISOString(), activities: [{type: 'created', time: new Date(Date.now()-345600000).toISOString(), text: 'Lead created'}, {type: 'contacted', time: new Date(Date.now()-259200000).toISOString(), text: 'Property visit scheduled'}, {type: 'closed', time: new Date().toISOString(), text: 'Deal closed!'}] },
+        ];
+
+        const emailTemplates = [
+            { id: 1, name: 'Initial Response', subject: 'Thanks for your interest!', content: 'Hi there,\n\nThank you for reaching out about properties. I\'d love to help you find the perfect match.\n\nCould you share more details about:\n- Your preferred location\n- Budget range\n- Property type (1BHK/2BHK/3BHK)\n\nBest regards' },
+            { id: 2, name: 'Property Suggestions', subject: 'Properties matching your requirements', content: 'Hi,\n\nBased on your requirements, I\'ve found some great options:\n\n[Property Listings]\n\nWould you like to schedule a visit?\n\nBest regards' },
+            { id: 3, name: 'Follow-up', subject: 'Following up on your property search', content: 'Hi,\n\nJust wanted to follow up on your property search. Have you had a chance to review the options I sent?\n\nI\'m here to answer any questions!\n\nBest regards' },
+            { id: 4, name: 'Visit Confirmation', subject: 'Property visit confirmed', content: 'Hi,\n\nYour property visit is confirmed for [DATE] at [TIME].\n\nAddress: [PROPERTY ADDRESS]\n\nLooking forward to meeting you!\n\nBest regards' },
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => { loadLeads(); loadTheme(); });
+
+        async function loadLeads() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/leads`);
+                const data = await response.json();
+                allLeads = data.length > 0 ? data : sampleLeads;
+            } catch (e) { allLeads = sampleLeads; }
+            filteredLeads = [...allLeads];
+            renderLeads();
+            renderKanban();
+        }
+
+        function renderLeads() {
+            const tbody = document.getElementById('leadsTable');
+            if (filteredLeads.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-12 text-center text-gray-400"><i class="fas fa-inbox text-4xl mb-3"></i><p>No leads found</p></td></tr>'; return; }
+            
+            tbody.innerHTML = filteredLeads.map(lead => {
+                const scoreColor = lead.ai_score >= 80 ? '#dc2626' : lead.ai_score >= 60 ? '#f59e0b' : lead.ai_score >= 40 ? '#3b82f6' : '#6b7280';
+                const isSelected = selectedLeads.has(lead.id);
+                return `
+                    <tr class="lead-row ${isSelected ? 'selected' : ''}" data-id="${lead.id}">
+                        <td class="px-4 py-4"><input type="checkbox" class="bulk-checkbox ${bulkMode ? '' : 'hidden'}" ${isSelected ? 'checked' : ''} onchange="toggleLeadSelection('${lead.id}')"></td>
+                        <td class="px-4 py-4" onclick="showLeadDetail('${lead.id}')">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-semibold text-sm">${getInitials(lead.phone)}</div>
+                                <div><p class="font-semibold text-gray-900">${lead.phone}</p><p class="text-xs text-gray-500 truncate max-w-[150px]">${lead.message || 'No message'}</p></div>
+                            </div>
+                        </td>
+                        <td class="px-4 py-4" onclick="showLeadDetail('${lead.id}')"><div class="score-ring" style="--score: ${(lead.ai_score||0)*3.6}deg; --color: ${scoreColor}"><span style="color:${scoreColor}">${lead.ai_score||'-'}</span></div></td>
+                        <td class="px-4 py-4" onclick="showLeadDetail('${lead.id}')"><div class="text-sm"><p class="font-semibold text-gray-900">${lead.budget||'N/A'}</p><p class="text-gray-500">${lead.location||'N/A'}</p></div></td>
+                        <td class="px-4 py-4" onclick="showLeadDetail('${lead.id}')"><span class="px-3 py-1 rounded-full text-xs font-semibold ${getStatusClass(lead.status)}">${lead.status}</span></td>
+                        <td class="px-4 py-4 text-sm text-gray-500" onclick="showLeadDetail('${lead.id}')">${formatDate(lead.created_at)}</td>
+                        <td class="px-4 py-4">
+                            <button onclick="event.stopPropagation(); showTemplatesModal('${lead.id}')" class="text-blue-500 hover:text-blue-700 mr-2" title="Send Email"><i class="fas fa-envelope"></i></button>
+                            <button onclick="event.stopPropagation(); deleteLead('${lead.id}')" class="text-gray-400 hover:text-red-500"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            updateCounts();
+        }
+
+        function renderKanban() {
+            ['new', 'contacted', 'follow-up', 'closed'].forEach(status => {
+                const container = document.getElementById(`kanban-${status}`);
+                const leads = allLeads.filter(l => l.status === status);
+                document.getElementById(`count-${status}`).textContent = leads.length;
+                container.innerHTML = leads.map(lead => `
+                    <div class="kanban-card" draggable="true" ondragstart="drag(event)" data-id="${lead.id}" onclick="showLeadDetail('${lead.id}')">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-semibold text-gray-500">${lead.phone}</span>
+                            <span class="text-xs font-bold ${lead.ai_score >= 80 ? 'text-red-500' : lead.ai_score >= 60 ? 'text-amber-500' : 'text-blue-500'}">${lead.ai_score || '-'}</span>
+                        </div>
+                        <p class="text-sm text-gray-700 mb-2 line-clamp-2">${lead.message || 'No message'}</p>
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="text-gray-500">${lead.budget || 'N/A'}</span>
+                            <span class="text-gray-400">${lead.location || 'N/A'}</span>
+                        </div>
+                    </div>
+                `).join('');
+            });
+        }
+
+        // View switching
+        function switchView(view) {
+            currentView = view;
+            document.getElementById('listView').classList.toggle('hidden', view !== 'list');
+            document.getElementById('kanbanView').classList.toggle('hidden', view !== 'kanban');
+            document.getElementById('listViewBtn').classList.toggle('active', view === 'list');
+            document.getElementById('kanbanViewBtn').classList.toggle('active', view === 'kanban');
+            if (view === 'kanban') renderKanban();
+        }
+
+        // Drag and Drop
+        function drag(e) { e.dataTransfer.setData('leadId', e.target.dataset.id); e.target.classList.add('dragging'); }
+        function allowDrop(e) { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+        function dragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+        function drop(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('drag-over');
+            const leadId = e.dataTransfer.getData('leadId');
+            const newStatus = e.currentTarget.dataset.status;
+            updateLeadStatus(leadId, newStatus);
+            document.querySelector(`[data-id="${leadId}"]`).classList.remove('dragging');
+        }
+
+        // Bulk actions
+        function toggleBulkMode() {
+            bulkMode = !bulkMode;
+            document.querySelectorAll('.bulk-checkbox').forEach(cb => cb.classList.toggle('hidden', !bulkMode));
+            document.getElementById('selectAll').classList.toggle('hidden', !bulkMode);
+            if (!bulkMode) { selectedLeads.clear(); updateBulkBar(); renderLeads(); }
+        }
+
+        function toggleLeadSelection(leadId) {
+            if (selectedLeads.has(leadId)) selectedLeads.delete(leadId); else selectedLeads.add(leadId);
+            updateBulkBar();
+            renderLeads();
+        }
+
+        function toggleSelectAll() {
+            const allSelected = document.getElementById('selectAll').checked;
+            if (allSelected) filteredLeads.forEach(l => selectedLeads.add(l.id)); else selectedLeads.clear();
+            updateBulkBar();
+            renderLeads();
+        }
+
+        function updateBulkBar() {
+            const count = selectedLeads.size;
+            document.getElementById('selectedCount').textContent = count;
+            document.getElementById('bulkActionsBar').classList.toggle('hidden', count === 0);
+        }
+
+        function clearSelection() { selectedLeads.clear(); document.getElementById('selectAll').checked = false; updateBulkBar(); renderLeads(); }
+
+        function bulkChangeStatus(status) {
+            selectedLeads.forEach(id => { const lead = allLeads.find(l => l.id === id); if (lead) lead.status = status; });
+            clearSelection();
+            renderKanban();
+        }
+
+        function bulkDelete() {
+            if (confirm(`Delete ${selectedLeads.size} leads?`)) {
+                allLeads = allLeads.filter(l => !selectedLeads.has(l.id));
+                clearSelection();
+                filterByStatus(currentFilter);
+            }
+        }
+
+        // Lead detail with timeline
+        function showLeadDetail(leadId) {
+            const lead = allLeads.find(l => l.id === leadId);
+            if (!lead) return;
+            const modal = document.getElementById('leadModal');
+            const content = document.getElementById('modalContent');
+            const scoreColor = lead.ai_score >= 80 ? '#dc2626' : lead.ai_score >= 60 ? '#f59e0b' : '#3b82f6';
+            
+            content.innerHTML = `
+                <div class="space-y-6">
+                    <div class="flex items-center gap-4">
+                        <div class="w-16 h-16 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-xl">${getInitials(lead.phone)}</div>
+                        <div class="flex-1"><h4 class="text-lg font-bold text-gray-900">${lead.phone}</h4><p class="text-gray-500">${lead.location || 'Location not specified'}</p></div>
+                        <div class="score-ring" style="--score: ${(lead.ai_score||0)*3.6}deg; --color: ${scoreColor}"><span>${lead.ai_score||'-'}</span></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-gray-50 rounded-xl p-4"><p class="text-sm text-gray-500 mb-1">Budget</p><p class="text-xl font-bold text-gray-900">${lead.budget || 'Not specified'}</p></div>
+                        <div class="bg-gray-50 rounded-xl p-4"><p class="text-sm text-gray-500 mb-1">Status</p><span class="px-3 py-1 rounded-full text-sm font-semibold ${getStatusClass(lead.status)}">${lead.status}</span></div>
+                    </div>
+                    <div><p class="text-sm text-gray-500 mb-2">Message</p><div class="bg-gray-50 rounded-xl p-4"><p class="text-gray-700">${lead.message || 'No message'}</p></div></div>
+                    <div><p class="text-sm text-gray-500 mb-3">Activity Timeline</p><div class="timeline">${(lead.activities || []).map(act => `<div class="timeline-item ${act.type === 'closed' ? 'completed' : ''}"><p class="text-sm font-medium text-gray-900">${act.text}</p><p class="text-xs text-gray-500">${formatDate(act.time)}</p></div>`).join('')}</div></div>
+                    <div class="flex gap-3">
+                        <a href="https://wa.me/${lead.phone}" target="_blank" class="flex-1 px-4 py-3 bg-green-500 text-white rounded-xl font-medium text-center hover:bg-green-600"><i class="fab fa-whatsapp mr-2"></i>Message</a>
+                        <button onclick="showTemplatesModal('${lead.id}')" class="px-4 py-3 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600"><i class="fas fa-envelope mr-2"></i>Email</button>
+                        <select onchange="updateLeadStatus('${lead.id}', this.value); closeModal();" class="px-4 py-3 border border-gray-200 rounded-xl">
+                            <option value="">Change Status</option><option value="new">New</option><option value="contacted">Contacted</option><option value="follow-up">Follow-up</option><option value="closed">Closed</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+            modal.classList.add('active');
+        }
+
+        // Email templates
+        function showTemplatesModal(leadId) {
+            const modal = document.getElementById('templatesModal');
+            const list = document.getElementById('templatesList');
+            list.innerHTML = emailTemplates.map(t => `
+                <div class="template-card" onclick="useTemplate(${t.id}, '${leadId}')">
+                    <h4 class="font-semibold text-gray-900 mb-1">${t.name}</h4>
+                    <p class="text-sm text-gray-500 truncate">${t.subject}</p>
+                </div>
+            `).join('');
+            modal.classList.add('active');
+        }
+
+        function useTemplate(templateId, leadId) {
+            const template = emailTemplates.find(t => t.id === templateId);
+            const lead = allLeads.find(l => l.id === leadId);
+            const mailto = `mailto:?subject=${encodeURIComponent(template.subject)}&body=${encodeURIComponent(template.content)}`;
+            window.open(mailto, '_blank');
+            closeTemplatesModal();
+        }
+
+        function closeModal() { document.getElementById('leadModal').classList.remove('active'); }
+        function closeTemplatesModal() { document.getElementById('templatesModal').classList.remove('active'); }
+
+        // Other functions
+        function filterByStatus(status) {
+            currentFilter = status;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                const isActive = btn.dataset.filter === status;
+                btn.classList.toggle('bg-blue-600', isActive); btn.classList.toggle('text-white', isActive);
+                btn.classList.toggle('bg-white', !isActive); btn.classList.toggle('text-gray-600', !isActive);
+            });
+            filteredLeads = status === 'all' ? [...allLeads] : allLeads.filter(l => l.status === status);
+            renderLeads();
+        }
+
+        function searchLeads(query) {
+            if (!query) { filterByStatus(currentFilter); return; }
+            const q = query.toLowerCase();
+            filteredLeads = allLeads.filter(l => l.phone?.toLowerCase().includes(q) || l.message?.toLowerCase().includes(q) || l.location?.toLowerCase().includes(q));
+            renderLeads();
+        }
+
+        function sortLeads(by) {
+            switch(by) {
+                case 'newest': filteredLeads.sort((a,b) => new Date(b.created_at) - new Date(a.created_at)); break;
+                case 'score': filteredLeads.sort((a,b) => (b.ai_score||0) - (a.ai_score||0)); break;
+                case 'budget': filteredLeads.sort((a,b) => parseBudget(b.budget) - parseBudget(a.budget)); break;
+            }
+            renderLeads();
+        }
+
+        function updateLeadStatus(id, status) {
+            const lead = allLeads.find(l => l.id === id);
+            if (lead) {
+                lead.status = status;
+                if (!lead.activities) lead.activities = [];
+                lead.activities.push({type: status, time: new Date().toISOString(), text: `Status changed to ${status}`});
+                renderLeads(); renderKanban();
+            }
+        }
+
+        function deleteLead(id) { if (confirm('Delete this lead?')) { allLeads = allLeads.filter(l => l.id !== id); filterByStatus(currentFilter); renderKanban(); } }
+        function showAddLeadModal() { /* Implementation */ alert('Add lead form - integrate with your modal'); }
+        function getInitials(p) { return p ? p.slice(-2).toUpperCase() : '??'; }
+        function getStatusClass(s) { const c = {new:'bg-blue-100 text-blue-700',contacted:'bg-amber-100 text-amber-700','follow-up':'bg-purple-100 text-purple-700',closed:'bg-green-100 text-green-700'}; return c[s] || 'bg-gray-100 text-gray-700'; }
+        function formatDate(d) { return d ? new Date(d).toLocaleDateString('en-US', {month:'short', day:'numeric'}) : '-'; }
+        function parseBudget(b) { if (!b) return 0; const n = parseFloat(b.replace(/[^0-9.]/g, '')); return b.toLowerCase().includes('cr') ? n*100 : n; }
+        function updateCounts() { ['new','contacted','follow-up','closed'].forEach(s => document.getElementById(`count-${s}`).textContent = allLeads.filter(l => l.status === s).length); }
+        function toggleTheme() { document.body.classList.toggle('dark'); const isDark = document.body.classList.contains('dark'); localStorage.setItem('theme', isDark ? 'dark' : 'light'); document.getElementById('themeIcon').className = isDark ? 'fas fa-sun text-yellow-400' : 'fas fa-moon text-gray-600'; }
+        function loadTheme() { if (localStorage.getItem('theme') === 'dark') { document.body.classList.add('dark'); document.getElementById('themeIcon').className = 'fas fa-sun text-yellow-400'; } }
+
+        document.querySelectorAll('.modal').forEach(m => m.addEventListener('click', e => { if (e.target === m) m.classList.remove('active'); }));
+    </script>
+</body>
+</html>
