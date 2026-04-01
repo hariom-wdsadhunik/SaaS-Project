@@ -117,12 +117,40 @@
         body.dark .bg-surface,
         body.dark .bg-surface-container,
         body.dark .bg-surface-container-low,
-        body.dark .bg-surface-container-lowest {
+        body.dark .bg-surface-container-lowest,
+        body.dark .bg-primary-container,
+        body.dark .bg-secondary-container,
+        body.dark .bg-tertiary-container {
           background-color: #1e293b;
         }
         
+        body.dark .bg-primary {
+          background-color: #3b82f6;
+        }
+        
         body.dark .text-on-surface,
-        body.dark .text-on-surface-variant {
+        body.dark .text-on-surface-variant,
+        body.dark .text-on-primary-container,
+        body.dark .text-on-secondary-container,
+        body.dark .text-on-tertiary-container {
+          color: #e2e8f0;
+        }
+        
+        body.dark .text-primary {
+          color: #60a5fa;
+        }
+        
+        body.dark .border-outline-variant {
+          border-color: #475569;
+        }
+        
+        body.dark select {
+          background-color: #334155;
+          color: #e2e8f0;
+        }
+        
+        body.dark select option {
+          background-color: #1e293b;
           color: #e2e8f0;
         }
         
@@ -134,21 +162,21 @@
 </head>
 <body>
 <!-- SideNavBar -->
-<aside class="h-screen w-64 fixed left-0 top-0 bg-surface-container-low flex flex-col p-4 gap-2 z-50 border-r border-outline-variant">
+<aside class="h-screen w-64 fixed left-0 top-0 bg-gray-100 dark:bg-slate-800 flex flex-col p-4 gap-2 z-50 border-r border-gray-200 dark:border-slate-700">
 <div class="mb-8 px-4 py-2">
-<h1 class="text-xl font-bold font-headline text-primary">LeadPilot AI</h1>
-<p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Elite Management</p>
+<h1 class="text-xl font-bold font-headline text-blue-600 dark:text-blue-400">LeadPilot AI</h1>
+<p class="text-[10px] uppercase tracking-widest text-gray-500 dark:text-gray-400 font-bold">Elite Management</p>
 </div>
 <nav class="flex flex-col gap-1">
-<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-primary transition-colors hover:bg-surface-container-high/50 rounded-lg" href="#">
+<a class="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors hover:bg-gray-200 dark:hover:bg-slate-700 rounded-lg" href="#">
 <span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
 <span class="text-sm font-medium">Dashboard</span>
 </a>
-<a class="flex items-center gap-3 px-4 py-3 text-on-surface font-semibold bg-surface-container rounded-lg shadow-sm scale-[0.98] transition-all duration-150" href="#">
+<a class="flex items-center gap-3 px-4 py-3 text-gray-900 dark:text-white font-semibold bg-white dark:bg-slate-700 rounded-lg shadow-sm scale-[0.98] transition-all duration-150" href="#">
 <span class="material-symbols-outlined" data-icon="group">group</span>
 <span class="text-sm font-medium">Leads</span>
 </a>
-<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-primary transition-colors hover:bg-surface-container-high/50 rounded-lg" href="#">
+<a class="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors hover:bg-gray-200 dark:hover:bg-slate-700 rounded-lg" href="#">
 <span class="material-symbols-outlined" data-icon="settings">settings</span>
 <span class="text-sm font-medium">Settings</span>
 </a>
@@ -167,20 +195,20 @@
 </div>
 </aside>
 <!-- TopNavBar -->
-<header class="sticky top-0 z-40 w-full ml-64 bg-surface/80 backdrop-blur-md border-b border-outline-variant/50 shadow-sm">
+<header class="sticky top-0 z-40 w-full ml-64 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-gray-200 dark:border-slate-700 shadow-sm">
 <div class="flex justify-between items-center h-16 px-8 max-w-[calc(100%-16rem)]">
 <div class="flex items-center flex-1 max-w-md">
 <div class="relative w-full">
-<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg" data-icon="search">search</span>
-<input id="searchInput" class="w-full pl-10 pr-4 py-2 bg-surface-container border-none rounded-xl text-sm text-on-surface placeholder-on-surface-variant focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Search leads, properties, or agents..." type="text" oninput="searchLeads(this.value)"/>
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg" data-icon="search">search</span>
+<input id="searchInput" class="w-full pl-10 pr-4 py-2 bg-gray-100 dark:bg-slate-800 border-none rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500/20 transition-all" placeholder="Search leads, properties, or agents..." type="text" oninput="searchLeads(this.value)"/>
 </div>
 </div>
 <div class="flex items-center gap-6">
-<button class="relative text-on-surface-variant hover:text-primary transition-all active:scale-95">
+<button class="relative text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all active:scale-95">
 <span class="material-symbols-outlined" data-icon="notifications">notifications</span>
-<span class="absolute top-0 right-0 w-2 h-2 bg-error rounded-full border-2 border-surface"></span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-900"></span>
 </button>
-<button class="text-on-surface-variant hover:text-primary transition-all active:scale-95">
+<button class="text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all active:scale-95">
 <span class="material-symbols-outlined" data-icon="help">help</span>
 </button>
 <button id="themeToggle" onclick="toggleTheme()" class="text-sm font-medium text-on-surface-variant hover:text-primary transition-all active:scale-95 px-3 py-1 rounded-lg hover:bg-surface-container" title="Toggle Dark/Light Mode">
@@ -194,39 +222,39 @@
 </div>
 </header>
 <!-- Main Canvas -->
-<main class="ml-64 p-12 min-h-screen bg-surface text-on-surface">
+<main class="ml-64 p-12 min-h-screen bg-gray-50 dark:bg-slate-900 text-gray-900 dark:text-white">
 <header class="mb-12 flex justify-between items-end">
 <div>
-<h1 class="text-4xl font-extrabold font-headline text-on-surface tracking-tight mb-2">Leads</h1>
-<p class="text-on-surface-variant font-body">Manage your editorial-grade real estate opportunities.</p>
+<h1 class="text-4xl font-extrabold font-headline text-gray-900 dark:text-white tracking-tight mb-2">Leads</h1>
+<p class="text-gray-500 dark:text-gray-400 font-body">Manage your editorial-grade real estate opportunities.</p>
 </div>
-<button onclick="addLead()" class="px-6 py-3 bg-gradient-to-br from-primary to-primary-container text-white font-bold rounded-xl flex items-center gap-2 hover:opacity-90 transition-all cursor-pointer">
+<button onclick="addLead()" class="px-6 py-3 bg-gradient-to-br from-blue-600 to-blue-800 text-white font-bold rounded-xl flex items-center gap-2 hover:opacity-90 transition-all cursor-pointer">
 <span class="material-symbols-outlined text-sm" data-icon="add">add</span>
                 Add New Lead
             </button>
 </header>
 <!-- Stats Overview (Asymmetric Grid) -->
 <div class="grid grid-cols-12 gap-6 mb-16">
-<div class="col-span-12 md:col-span-7 bg-surface-container-lowest p-8 rounded-xl shadow-sm border border-outline-variant/10">
-<p class="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-6">Lead Velocity</p>
+<div class="col-span-12 md:col-span-7 bg-white dark:bg-slate-800 p-8 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700">
+<p class="text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-6">Lead Velocity</p>
 <div class="flex items-end gap-1 h-32">
-<div class="flex-1 bg-primary/10 h-[40%] rounded-t-lg"></div>
-<div class="flex-1 bg-primary/10 h-[60%] rounded-t-lg"></div>
-<div class="flex-1 bg-primary/20 h-[55%] rounded-t-lg"></div>
-<div class="flex-1 bg-primary/40 h-[85%] rounded-t-lg"></div>
-<div class="flex-1 bg-primary/30 h-[70%] rounded-t-lg"></div>
-<div class="flex-1 bg-primary h-full rounded-t-lg"></div>
-<div class="flex-1 bg-primary/60 h-[75%] rounded-t-lg"></div>
+<div class="flex-1 bg-blue-200 dark:bg-blue-900 h-[40%] rounded-t-lg"></div>
+<div class="flex-1 bg-blue-200 dark:bg-blue-900 h-[60%] rounded-t-lg"></div>
+<div class="flex-1 bg-blue-300 dark:bg-blue-800 h-[55%] rounded-t-lg"></div>
+<div class="flex-1 bg-blue-400 dark:bg-blue-700 h-[85%] rounded-t-lg"></div>
+<div class="flex-1 bg-blue-300 dark:bg-blue-800 h-[70%] rounded-t-lg"></div>
+<div class="flex-1 bg-blue-600 dark:bg-blue-600 h-full rounded-t-lg"></div>
+<div class="flex-1 bg-blue-500 dark:bg-blue-700 h-[75%] rounded-t-lg"></div>
 </div>
-<div class="mt-4 flex justify-between text-[10px] font-bold text-on-surface-variant uppercase tracking-tighter">
+<div class="mt-4 flex justify-between text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-tighter">
 <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
 </div>
 </div>
-<div class="col-span-12 md:col-span-5 bg-primary p-8 rounded-xl text-white overflow-hidden relative">
+<div class="col-span-12 md:col-span-5 bg-blue-600 p-8 rounded-xl text-white overflow-hidden relative">
 <div class="relative z-10">
 <p class="text-xs font-bold uppercase tracking-widest opacity-70 mb-2">Pipeline Value</p>
 <h2 class="text-5xl font-extrabold font-headline mb-4">$4.2M</h2>
-<div class="flex items-center gap-2 text-primary-fixed font-bold text-sm">
+<div class="flex items-center gap-2 text-blue-200 font-bold text-sm">
 <span class="material-symbols-outlined text-sm" data-icon="trending_up">trending_up</span>
 <span>+12.5% from last month</span>
 </div>
@@ -237,42 +265,42 @@
 </div>
 <!-- Leads Table Container -->
 <div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
-<div class="p-6 border-b border-surface-container-high flex justify-between items-center">
+<div class="p-6 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center">
 <div class="flex gap-4">
-<button onclick="filterByStatus('all')" class="px-4 py-2 text-sm font-bold bg-surface-container text-on-surface rounded-lg hover:bg-primary/10 transition-colors">All Leads</button>
-<button onclick="filterByStatus('new')" class="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors">New</button>
-<button onclick="filterByStatus('contacted')" class="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors">Contacted</button>
-<button onclick="filterByStatus('follow-up')" class="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors">Follow-up</button>
-<button onclick="filterByStatus('closed')" class="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors">Closed</button>
+<button onclick="filterByStatus('all')" class="px-4 py-2 text-sm font-bold bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white rounded-lg hover:bg-blue-100 dark:hover:bg-slate-600 transition-colors">All Leads</button>
+<button onclick="filterByStatus('new')" class="px-4 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">New</button>
+<button onclick="filterByStatus('contacted')" class="px-4 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Contacted</button>
+<button onclick="filterByStatus('follow-up')" class="px-4 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Follow-up</button>
+<button onclick="filterByStatus('closed')" class="px-4 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Closed</button>
 </div>
-<button class="p-2 hover:bg-surface-container-low rounded-lg transition-all">
-<span class="material-symbols-outlined text-on-surface-variant" data-icon="filter_list">filter_list</span>
+<button class="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-all">
+<span class="material-symbols-outlined text-gray-500 dark:text-gray-400" data-icon="filter_list">filter_list</span>
 </button>
 </div>
 <div class="overflow-x-auto">
 <table class="w-full text-left border-collapse">
 <thead>
-<tr class="bg-surface-container-low/50">
-<th class="px-8 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-widest">Name</th>
-<th class="px-6 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-widest">Phone</th>
-<th class="px-6 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-widest">Budget</th>
-<th class="px-6 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-widest">Location</th>
-<th class="px-6 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-widest">Status</th>
-<th class="px-6 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-widest">Created At</th>
+<tr class="bg-gray-50 dark:bg-slate-800/50">
+<th class="px-8 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Name</th>
+<th class="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Phone</th>
+<th class="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Budget</th>
+<th class="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Location</th>
+<th class="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Status</th>
+<th class="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Created At</th>
 <th class="px-8 py-4"></th>
 </tr>
 </thead>
-<tbody class="divide-y divide-surface-container-high">
+<tbody class="divide-y divide-gray-200 dark:divide-slate-700">
 <!-- Leads will be loaded dynamically -->
-<tr><td colspan="7" class="px-8 py-6 text-center text-on-surface-variant">Loading leads...</td></tr>
+<tr><td colspan="7" class="px-8 py-6 text-center text-gray-500 dark:text-gray-400">Loading leads...</td></tr>
 </tbody>
 </table>
 </div>
-<div class="p-6 bg-surface-container-low/20 flex justify-between items-center text-sm font-medium text-on-surface-variant">
+<div class="p-6 bg-gray-50 dark:bg-slate-800/50 flex justify-between items-center text-sm font-medium text-gray-500 dark:text-gray-400">
 <p>Showing 4 of 128 leads</p>
 <div class="flex gap-2">
-<button class="px-4 py-2 hover:bg-surface-container rounded-lg transition-all">Previous</button>
-<button class="px-4 py-2 bg-primary text-white rounded-lg shadow-sm">Next</button>
+<button class="px-4 py-2 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-lg transition-all">Previous</button>
+<button class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-sm">Next</button>
 </div>
 </div>
 </div>
@@ -360,10 +388,10 @@ function getInitials(phone) {
 // Get status color class
 function getStatusColor(status) {
   const colors = {
-    'new': 'bg-primary/10 text-on-primary-fixed-variant',
-    'contacted': 'bg-secondary-fixed text-on-secondary-fixed-variant',
-    'follow-up': 'bg-tertiary-fixed text-on-tertiary-fixed-variant',
-    'closed': 'bg-on-surface/5 text-on-surface'
+    'new': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+    'contacted': 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200',
+    'follow-up': 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
+    'closed': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
   };
   return colors[status] || colors['new'];
 }
@@ -374,7 +402,7 @@ function renderLeads(leads) {
   
   if (!leads || leads.length === 0) {
     tbody.innerHTML = `
-      <tr><td colspan="7" class="px-8 py-6 text-center text-on-surface-variant">
+      <tr><td colspan="7" class="px-8 py-6 text-center text-gray-500 dark:text-gray-400">
         No leads yet. Send a WhatsApp message to add leads.
       </td></tr>
     `;
@@ -382,25 +410,25 @@ function renderLeads(leads) {
   }
 
   tbody.innerHTML = leads.map(lead => `
-    <tr class="group hover:bg-surface-container-low/30 transition-colors">
+    <tr class="group hover:bg-gray-100 dark:hover:bg-slate-800/50 transition-colors">
       <td class="px-8 py-6">
         <div class="flex items-center gap-4">
-          <div class="w-10 h-10 rounded-xl bg-primary-container flex items-center justify-center text-on-primary-container font-bold">
+          <div class="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-800 dark:text-blue-200 font-bold">
             ${getInitials(lead.phone)}
           </div>
           <div>
-            <p class="font-bold text-on-surface leading-none">Lead from ${lead.phone || 'Unknown'}</p>
-            <p class="text-xs text-on-surface-variant mt-1 truncate max-w-[200px]">${lead.message || 'No message'}</p>
+            <p class="font-bold text-gray-900 dark:text-white leading-none">Lead from ${lead.phone || 'Unknown'}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate max-w-[200px]">${lead.message || 'No message'}</p>
           </div>
         </div>
       </td>
-      <td class="px-6 py-6 text-sm text-on-surface font-medium">${lead.phone || '-'}</td>
-      <td class="px-6 py-6 text-sm text-on-surface font-bold">${lead.budget || '-'}</td>
-      <td class="px-6 py-6 text-sm text-on-surface-variant">${lead.location || '-'}</td>
+      <td class="px-6 py-6 text-sm text-gray-900 dark:text-white font-medium">${lead.phone || '-'}</td>
+      <td class="px-6 py-6 text-sm text-gray-900 dark:text-white font-bold">${lead.budget || '-'}</td>
+      <td class="px-6 py-6 text-sm text-gray-500 dark:text-gray-400">${lead.location || '-'}</td>
       <td class="px-6 py-6">
         <div class="relative inline-block">
           <select 
-            class="appearance-none ${getStatusColor(lead.status)} text-[11px] font-bold px-4 py-1.5 rounded-full pr-8 border-none focus:ring-1 focus:ring-primary cursor-pointer transition-all"
+            class="appearance-none ${getStatusColor(lead.status)} text-[11px] font-bold px-4 py-1.5 rounded-full pr-8 border-none focus:ring-1 focus:ring-blue-500 cursor-pointer transition-all"
             onchange="updateLeadStatus('${lead.id}', this.value)"
           >
             <option value="new" ${lead.status === 'new' ? 'selected' : ''}>New</option>
@@ -408,12 +436,12 @@ function renderLeads(leads) {
             <option value="follow-up" ${lead.status === 'follow-up' ? 'selected' : ''}>Follow-up</option>
             <option value="closed" ${lead.status === 'closed' ? 'selected' : ''}>Closed</option>
           </select>
-          <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-sm pointer-events-none" data-icon="expand_more">expand_more</span>
+          <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-sm pointer-events-none text-gray-400" data-icon="expand_more">expand_more</span>
         </div>
       </td>
-      <td class="px-6 py-6 text-sm text-on-surface-variant">${formatDate(lead.created_at)}</td>
+      <td class="px-6 py-6 text-sm text-gray-500 dark:text-gray-400">${formatDate(lead.created_at)}</td>
       <td class="px-8 py-6 text-right">
-        <button class="text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">
+        <button class="text-gray-400 dark:text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity">
           <span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
         </button>
       </td>
@@ -421,7 +449,7 @@ function renderLeads(leads) {
   `).join('');
 
   // Update the "Showing X of Y leads" text
-  const showingText = document.querySelector('.text-on-surface-variant.text-sm');
+  const showingText = document.querySelector('.text-gray-500.dark\\:text-gray-400.text-sm');
   if (showingText) {
     showingText.textContent = `Showing ${leads.length} of ${leads.length} leads`;
   }

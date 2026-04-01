@@ -15,11 +15,11 @@ app.use("/leads", leadsRoutes);
 
 // Serve dashboard from leadpilot-ui
 app.get("/", (req, res) => {
-  res.sendFile(__dirname + "/leadpilot-ui/code.html");
+  res.sendFile(__dirname + "/leadpilot-ui/dashboard.html");
 });
 
 app.get("/dashboard", (req, res) => {
-  res.sendFile(__dirname + "/leadpilot-ui/code.html");
+  res.sendFile(__dirname + "/leadpilot-ui/dashboard.html");
 });
 
 const PORT = process.env.PORT || 3000;

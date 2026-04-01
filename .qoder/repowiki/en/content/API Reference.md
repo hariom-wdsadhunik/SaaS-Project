@@ -4,10 +4,24 @@
 **Referenced Files in This Document**
 - [server.js](file://leadpilot-ai/server.js)
 - [webhook.js](file://leadpilot-ai/routes/webhook.js)
+- [leads.js](file://leadpilot-ai/routes/leads.js)
 - [whatsappController.js](file://leadpilot-ai/controllers/whatsappController.js)
+- [leadsController.js](file://leadpilot-ai/controllers/leadsController.js)
 - [whatsappService.js](file://leadpilot-ai/services/whatsappService.js)
+- [supabase.js](file://leadpilot-ai/db/supabase.js)
+- [parser.js](file://leadpilot-ai/utils/parser.js)
+- [leads.json](file://leadpilot-ai/leads.json)
 - [package.json](file://leadpilot-ai/package.json)
+- [dashboard.html](file://leadpilot-ai/leadpilot-ui/dashboard.html)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Enhanced documentation to include new UI interactions for search, filtering, and manual lead creation
+- Added comprehensive coverage of the real-time dashboard with automatic data refresh
+- Updated webhook endpoint documentation to include manual lead creation capability
+- Expanded lead management API documentation to reflect UI-driven operations
+- Added new UI interaction patterns and client implementation guidelines
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -15,90 +29,134 @@
 3. [Core Components](#core-components)
 4. [Architecture Overview](#architecture-overview)
 5. [Detailed Component Analysis](#detailed-component-analysis)
-6. [Dependency Analysis](#dependency-analysis)
-7. [Performance Considerations](#performance-considerations)
-8. [Troubleshooting Guide](#troubleshooting-guide)
-9. [Conclusion](#conclusion)
-10. [Appendices](#appendices)
+6. [Lead Management API](#lead-management-api)
+7. [UI Interactions and Manual Operations](#ui-interactions-and-manual-operations)
+8. [Dependency Analysis](#dependency-analysis)
+9. [Performance Considerations](#performance-considerations)
+10. [Troubleshooting Guide](#troubleshooting-guide)
+11. [Conclusion](#conclusion)
+12. [Appendices](#appendices)
 
 ## Introduction
-This document provides comprehensive API documentation for LeadPilot AI’s webhook endpoints. It covers:
+This document provides comprehensive API documentation for LeadPilot AI's complete API ecosystem. It covers:
 - GET /webhook for Facebook challenge-response verification
-- POST /webhook for inbound message processing
+- POST /webhook for inbound message processing with lead extraction and database integration, including manual lead creation
+- GET /leads, GET /leads/:id, and PATCH /leads/:id for lead management operations
 - WhatsApp Cloud API integration patterns and authentication
+- Supabase database integration for lead storage
+- Parser utility for automated lead information extraction
+- Real-time dashboard UI with search, filtering, and manual operations
 - Request/response examples, HTTP status codes, error handling, and rate limiting considerations
 - Client implementation guidelines for webhook setup and testing
 
 ## Project Structure
-The application is a minimal Express server that exposes a single route group for webhooks. Routing delegates to a controller, which orchestrates service calls to the WhatsApp Cloud API.
+The application is a comprehensive Express server that exposes two main route groups: webhooks for WhatsApp integration and leads for CRM functionality. The architecture includes database integration, message parsing, and automated lead processing, along with a sophisticated real-time dashboard UI.
 
 ```mermaid
 graph TB
-Server["server.js<br/>Express app, middleware, routes"] --> Routes["routes/webhook.js<br/>GET /webhook, POST /webhook"]
-Routes --> Controller["controllers/whatsappController.js<br/>verifyWebhook(), handleMessage()"]
-Controller --> Service["services/whatsappService.js<br/>sendMessage()"]
-Service --> WA["WhatsApp Cloud API<br/>Graph API v18.0"]
+Server["server.js<br/>Express app, middleware, routes"] --> RoutesWebhook["routes/webhook.js<br/>GET /webhook, POST /webhook"]
+Server --> RoutesLeads["routes/leads.js<br/>GET /leads, GET /leads/:id, PATCH /leads/:id"]
+RoutesWebhook --> ControllerWebhook["controllers/whatsappController.js<br/>verifyWebhook(), handleMessage()"]
+RoutesLeads --> ControllerLeads["controllers/leadsController.js<br/>getLeads(), getSingleLead(), updateLeadStatus()"]
+ControllerWebhook --> ServiceWhatsApp["services/whatsappService.js<br/>sendMessage()"]
+ControllerWebhook --> Parser["utils/parser.js<br/>parseMessage()"]
+ControllerWebhook --> Database["db/supabase.js<br/>Supabase client"]
+ControllerLeads --> Database
+ServiceWhatsApp --> WA["WhatsApp Cloud API<br/>Graph API v18.0"]
+Database --> SupabaseDB["Supabase Database<br/>leads table"]
+UI["leadpilot-ui/dashboard.html<br/>Real-time dashboard with search, filters, manual operations"]
+UI --> RoutesLeads
+UI --> RoutesWebhook
 ```
 
 **Diagram sources**
-- [server.js:1-19](file://leadpilot-ai/server.js#L1-L19)
+- [server.js:1-29](file://leadpilot-ai/server.js#L1-L29)
 - [webhook.js:1-12](file://leadpilot-ai/routes/webhook.js#L1-L12)
-- [whatsappController.js:1-40](file://leadpilot-ai/controllers/whatsappController.js#L1-L40)
+- [leads.js:1-14](file://leadpilot-ai/routes/leads.js#L1-L14)
+- [whatsappController.js:1-78](file://leadpilot-ai/controllers/whatsappController.js#L1-L78)
+- [leadsController.js:1-57](file://leadpilot-ai/controllers/leadsController.js#L1-L57)
 - [whatsappService.js:1-23](file://leadpilot-ai/services/whatsappService.js#L1-L23)
+- [supabase.js:1-9](file://leadpilot-ai/db/supabase.js#L1-L9)
+- [parser.js:1-37](file://leadpilot-ai/utils/parser.js#L1-L37)
+- [dashboard.html:1-416](file://leadpilot-ai/leadpilot-ui/dashboard.html#L1-L416)
 
 **Section sources**
-- [server.js:1-19](file://leadpilot-ai/server.js#L1-L19)
+- [server.js:1-29](file://leadpilot-ai/server.js#L1-L29)
 - [webhook.js:1-12](file://leadpilot-ai/routes/webhook.js#L1-L12)
+- [leads.js:1-14](file://leadpilot-ai/routes/leads.js#L1-L14)
 - [package.json:1-21](file://leadpilot-ai/package.json#L1-L21)
 
 ## Core Components
-- Express server initializes environment, JSON body parsing, and mounts the webhook route group.
-- Route module defines GET and POST handlers for the webhook endpoint.
-- Controller implements verification and message handling logic.
-- Service encapsulates outbound requests to the WhatsApp Cloud API using Bearer token authentication.
+- Express server initializes environment, CORS, JSON body parsing, static file serving, and mounts both webhook and leads route groups.
+- Route modules define handlers for webhook verification and message processing, plus lead management operations.
+- Controllers implement business logic for verification, message handling with lead extraction, and lead CRUD operations.
+- Services encapsulate outbound requests to the WhatsApp Cloud API using Bearer token authentication.
+- Database integration via Supabase for persistent lead storage.
+- Parser utility for automated extraction of budget and location information from messages.
+- Real-time dashboard UI with search, filtering, and manual lead creation capabilities.
 
 Key runtime behaviors:
 - GET /webhook performs challenge-response verification using query parameters.
-- POST /webhook processes incoming message events and auto-replies via the WhatsApp Cloud API.
+- POST /webhook processes incoming messages, parses lead information, saves to database, and auto-replies.
+- GET /leads retrieves all leads with sorting by creation date.
+- GET /leads/:id retrieves a specific lead by ID.
+- PATCH /leads/:id updates lead status with validation.
+- Manual lead creation via UI triggers POST /webhook with custom payload.
+- Real-time dashboard automatically refreshes lead data every 10 seconds.
 
 **Section sources**
-- [server.js:1-19](file://leadpilot-ai/server.js#L1-L19)
+- [server.js:1-29](file://leadpilot-ai/server.js#L1-L29)
 - [webhook.js:1-12](file://leadpilot-ai/routes/webhook.js#L1-L12)
-- [whatsappController.js:1-40](file://leadpilot-ai/controllers/whatsappController.js#L1-L40)
+- [leads.js:1-14](file://leadpilot-ai/routes/leads.js#L1-L14)
+- [whatsappController.js:1-78](file://leadpilot-ai/controllers/whatsappController.js#L1-L78)
+- [leadsController.js:1-57](file://leadpilot-ai/controllers/leadsController.js#L1-L57)
 - [whatsappService.js:1-23](file://leadpilot-ai/services/whatsappService.js#L1-L23)
+- [supabase.js:1-9](file://leadpilot-ai/db/supabase.js#L1-L9)
+- [parser.js:1-37](file://leadpilot-ai/utils/parser.js#L1-L37)
+- [dashboard.html:331-378](file://leadpilot-ai/leadpilot-ui/dashboard.html#L331-L378)
 
 ## Architecture Overview
-The webhook endpoints follow a layered architecture:
-- HTTP transport: Express server
-- Routing: Route module
-- Controllers: Business logic for verification and message handling
+The API follows a layered architecture with enhanced lead management capabilities and real-time UI interactions:
+- HTTP transport: Express server with CORS and body parsing
+- Routing: Separate route modules for webhooks and leads
+- Controllers: Business logic for verification, message processing with lead extraction, and lead management
 - Services: External API integration with WhatsApp Cloud API
+- Database: Supabase integration for persistent lead storage
+- Utilities: Parser for automated lead information extraction
+- UI Layer: Real-time dashboard with search, filtering, and manual operations
 
 ```mermaid
 sequenceDiagram
 participant FB as "Facebook Webhook"
 participant Srv as "Express Server"
-participant R as "Route /webhook"
-participant C as "Controller"
-participant W as "WhatsApp Service"
+participant RWebhook as "Route /webhook"
+participant CWebhook as "Webhook Controller"
+participant Parser as "Parser Utility"
+participant DB as "Supabase Database"
+participant SWA as "WhatsApp Service"
 participant WA as "WhatsApp Cloud API"
 FB->>Srv : "GET /webhook?hub.mode=subscribe&hub.verify_token=...&hub.challenge=..."
-Srv->>R : "Dispatch GET"
-R->>C : "verifyWebhook()"
-C-->>FB : "200 OK with challenge or 403 Forbidden"
+Srv->>RWebhook : "Dispatch GET"
+RWebhook->>CWebhook : "verifyWebhook()"
+CWebhook-->>FB : "200 OK with challenge or 403 Forbidden"
 FB->>Srv : "POST /webhook (JSON)"
-Srv->>R : "Dispatch POST"
-R->>C : "handleMessage()"
-C->>W : "sendMessage(to, text)"
-W->>WA : "POST /messages (Bearer)"
-WA-->>W : "Response"
-C-->>FB : "200 OK"
+Srv->>RWebhook : "Dispatch POST"
+RWebhook->>CWebhook : "handleMessage()"
+CWebhook->>Parser : "parseMessage(text)"
+Parser-->>CWebhook : "Parsed budget & location"
+CWebhook->>DB : "Insert lead record"
+CWebhook->>SWA : "sendMessage(to, text)"
+SWA->>WA : "POST /messages (Bearer)"
+WA-->>SWA : "Response"
+CWebhook-->>FB : "200 OK"
 ```
 
 **Diagram sources**
-- [server.js:1-19](file://leadpilot-ai/server.js#L1-L19)
+- [server.js:1-29](file://leadpilot-ai/server.js#L1-L29)
 - [webhook.js:1-12](file://leadpilot-ai/routes/webhook.js#L1-L12)
-- [whatsappController.js:1-40](file://leadpilot-ai/controllers/whatsappController.js#L1-L40)
+- [whatsappController.js:1-78](file://leadpilot-ai/controllers/whatsappController.js#L1-L78)
+- [parser.js:1-37](file://leadpilot-ai/utils/parser.js#L1-L37)
+- [supabase.js:1-9](file://leadpilot-ai/db/supabase.js#L1-L9)
 - [whatsappService.js:1-23](file://leadpilot-ai/services/whatsappService.js#L1-L23)
 
 ## Detailed Component Analysis
@@ -140,24 +198,47 @@ Notes:
 - The verify token is a constant in the controller; ensure it matches the value configured in the Facebook webhook subscription.
 
 **Section sources**
-- [whatsappController.js:4-14](file://leadpilot-ai/controllers/whatsappController.js#L4-L14)
+- [whatsappController.js:7-17](file://leadpilot-ai/controllers/whatsappController.js#L7-L17)
 
-### POST /webhook — Message Processing
+### POST /webhook — Enhanced Message Processing with Lead Management
 Purpose:
-- Receive inbound messages from the WhatsApp Cloud API and respond accordingly.
+- Receive inbound messages from the WhatsApp Cloud API, extract lead information, save to database, and respond accordingly.
+
+Enhanced Processing Logic:
+- Extracts message from nested Facebook webhook structure
+- Parses lead information using the parser utility (budget, location)
+- Saves lead to both file backup and Supabase database
+- Sends auto-reply via WhatsApp Cloud API
+- Handles various error scenarios gracefully
+
+**Updated** Enhanced with manual lead creation capability through UI interactions.
+
+Manual Lead Creation:
+- The UI can trigger manual lead creation by calling this endpoint with custom payloads
+- Payload structure allows creating leads without actual WhatsApp messages
+- Maintains the same processing pipeline for consistency
 
 Request body schema:
 - The endpoint expects a JSON payload conforming to the Facebook webhook event structure.
 - The controller extracts the first message from the nested structure:
   - entry[0].changes[0].value.messages[0]
 - Message fields used:
-  - from: sender’s phone number
+  - from: sender's phone number
   - text.body: message text content
 
-Processing logic:
-- If a message is present, logs the phone number and text
-- Sends an auto-reply via the WhatsApp Cloud API using the service layer
-- Responds with HTTP 200 regardless of whether a message was processed
+Lead Extraction Process:
+- Uses parser utility to extract budget information (e.g., "3L", "80L", "1.5Cr")
+- Extracts location information using pattern matching
+- Creates structured lead object with phone, message, budget, location, and timestamp
+
+Database Operations:
+- Inserts lead record into Supabase leads table with status "new"
+- Fields stored: phone, message, budget, location, status, created_at
+- Handles database insertion errors gracefully
+
+Auto-reply Mechanism:
+- Sends automated response to confirm receipt of message
+- Skips auto-reply if WhatsApp API connection fails
 
 Response handling:
 - Success: 200 OK
@@ -182,7 +263,7 @@ Rate limiting considerations:
 - Facebook may apply platform-level rate limits; design clients to handle retries with backoff.
 
 **Section sources**
-- [whatsappController.js:16-39](file://leadpilot-ai/controllers/whatsappController.js#L16-L39)
+- [whatsappController.js:19-77](file://leadpilot-ai/controllers/whatsappController.js#L19-L77)
 
 ### WhatsApp Cloud API Integration
 Integration pattern:
@@ -211,41 +292,242 @@ Example request:
 **Section sources**
 - [whatsappService.js:6-22](file://leadpilot-ai/services/whatsappService.js#L6-L22)
 
+## Lead Management API
+
+### GET /leads — Retrieve All Leads
+Purpose:
+- Fetch all leads from the database with newest first ordering.
+
+Behavior:
+- Queries the Supabase leads table
+- Returns all records ordered by created_at in descending order
+- Handles database errors gracefully
+
+Response format:
+- Status: 200 OK
+- Body: Array of lead objects sorted by creation date
+
+Lead object structure:
+- id: Unique identifier
+- phone: Customer phone number
+- message: Original message content
+- budget: Extracted budget information
+- location: Extracted location information
+- status: Current lead status (default: "new")
+- created_at: Timestamp of creation
+
+Example response:
+```json
+[
+  {
+    "id": 1,
+    "phone": "919999999999",
+    "message": "Looking for 3BHK in Delhi under 1.5Cr",
+    "budget": "3",
+    "location": "Delhi",
+    "status": "new",
+    "created_at": "2026-03-31T17:11:45.710Z"
+  }
+]
+```
+
+Error handling:
+- Database errors: 500 Internal Server Error with error message
+
+**Section sources**
+- [leadsController.js:4-18](file://leadpilot-ai/controllers/leadsController.js#L4-L18)
+- [leads.js:9](file://leadpilot-ai/routes/leads.js#L9)
+
+### GET /leads/:id — Retrieve Single Lead
+Purpose:
+- Fetch a specific lead by its unique identifier.
+
+Behavior:
+- Queries the Supabase leads table for the specified ID
+- Returns single lead object if found
+- Handles case where lead doesn't exist
+
+Response format:
+- Status: 200 OK
+- Body: Lead object matching the ID
+
+Error handling:
+- Not found: 500 Internal Server Error with "Lead not found" message
+- Database errors: 500 Internal Server Error with error message
+
+Example response:
+```json
+{
+  "id": 1,
+  "phone": "919999999999",
+  "message": "Looking for 3BHK in Delhi under 1.5Cr",
+  "budget": "3",
+  "location": "Delhi",
+  "status": "new",
+  "created_at": "2026-03-31T17:11:45.710Z"
+}
+```
+
+**Section sources**
+- [leadsController.js:21-37](file://leadpilot-ai/controllers/leadsController.js#L21-L37)
+- [leads.js:10](file://leadpilot-ai/routes/leads.js#L10)
+
+### PATCH /leads/:id — Update Lead Status
+Purpose:
+- Update the status of a specific lead.
+
+Behavior:
+- Extracts ID from URL parameters
+- Extracts status from request body
+- Updates the lead record in the database
+- Returns success message upon completion
+
+Request body schema:
+- status: String representing the new lead status (e.g., "new", "contacted", "converted")
+
+Response format:
+- Status: 200 OK
+- Body: { message: "Status updated" }
+
+Error handling:
+- Database errors: 500 Internal Server Error with "Failed to update status" message
+- Invalid status values: Handled by database constraints
+
+Example request:
+```json
+{
+  "status": "contacted"
+}
+```
+
+Example response:
+```json
+{
+  "message": "Status updated"
+}
+```
+
+**Section sources**
+- [leadsController.js:40-56](file://leadpilot-ai/controllers/leadsController.js#L40-L56)
+- [leads.js:11](file://leadpilot-ai/routes/leads.js#L11)
+
+## UI Interactions and Manual Operations
+
+### Real-time Dashboard Features
+The LeadPilot AI dashboard provides comprehensive lead management with real-time updates and interactive features:
+
+**Search Functionality**:
+- Real-time search across phone numbers, locations, and messages
+- Live filtering as users type in the search box
+- Case-insensitive matching for improved usability
+
+**Status Filtering**:
+- Quick filtering by lead status (All, New, Contacted, Follow-up, Closed)
+- Visual status badges with color-coded indicators
+- Dynamic button styling to show active filter
+
+**Manual Lead Creation**:
+- Direct lead creation from the dashboard interface
+- Prompts for phone number and requirement description
+- Automatic webhook invocation to process the lead
+- Immediate dashboard refresh after creation
+
+**Automatic Data Refresh**:
+- Leads table automatically refreshes every 10 seconds
+- Real-time statistics updates (total leads, status counts)
+- Live status dropdown for quick updates
+
+**Section sources**
+- [dashboard.html:110-120](file://leadpilot-ai/leadpilot-ui/dashboard.html#L110-L120)
+- [dashboard.html:170-187](file://leadpilot-ai/leadpilot-ui/dashboard.html#L170-L187)
+- [dashboard.html:331-378](file://leadpilot-ai/leadpilot-ui/dashboard.html#L331-L378)
+- [dashboard.html:410-413](file://leadpilot-ai/leadpilot-ui/dashboard.html#L410-L413)
+
+### Manual Lead Creation Workflow
+The dashboard enables manual lead creation through the following process:
+
+1. User clicks "Add Lead" button
+2. System prompts for phone number and requirement description
+3. Frontend constructs webhook payload with provided data
+4. Calls POST /webhook endpoint with custom message structure
+5. Backend processes the manual lead through the same pipeline
+6. Dashboard automatically refreshes to show new lead
+
+Payload Structure for Manual Creation:
+```javascript
+{
+  entry: [{
+    changes: [{
+      value: {
+        messages: [{
+          from: "USER_PROVIDED_PHONE",
+          text: { body: "USER_PROVIDED_MESSAGE" }
+        }]
+      }
+    }]
+  }]
+}
+```
+
+**Section sources**
+- [dashboard.html:359-378](file://leadpilot-ai/leadpilot-ui/dashboard.html#L359-L378)
+
 ## Dependency Analysis
 External libraries and their roles:
 - express: HTTP server and routing framework
 - body-parser: JSON body parsing middleware
+- cors: Cross-origin resource sharing support
 - dotenv: Environment variable loading
 - axios: HTTP client for external API calls
+- @supabase/supabase-js: Database client for Supabase integration
 
 ```mermaid
 graph LR
 Pkg["package.json<br/>Dependencies"] --> Express["express"]
 Pkg --> BodyParser["body-parser"]
+Pkg --> Cors["cors"]
 Pkg --> Dotenv["dotenv"]
 Pkg --> Axios["axios"]
+Pkg --> Supabase["@supabase/supabase-js"]
 Server["server.js"] --> Express
 Server --> BodyParser
-Server --> Routes["routes/webhook.js"]
-Routes --> Controller["controllers/whatsappController.js"]
-Controller --> Service["services/whatsappService.js"]
-Service --> Axios
+Server --> Cors
+Server --> RoutesWebhook["routes/webhook.js"]
+Server --> RoutesLeads["routes/leads.js"]
+RoutesWebhook --> ControllerWebhook["controllers/whatsappController.js"]
+RoutesLeads --> ControllerLeads["controllers/leadsController.js"]
+ControllerWebhook --> ServiceWhatsApp["services/whatsappService.js"]
+ControllerWebhook --> Parser["utils/parser.js"]
+ControllerWebhook --> Database["db/supabase.js"]
+ControllerLeads --> Database
+ServiceWhatsApp --> Axios
+Database --> Supabase
+UI["leadpilot-ui/dashboard.html"] --> RoutesLeads
+UI --> RoutesWebhook
 ```
 
 **Diagram sources**
 - [package.json:13-19](file://leadpilot-ai/package.json#L13-L19)
-- [server.js:1-19](file://leadpilot-ai/server.js#L1-L19)
+- [server.js:1-29](file://leadpilot-ai/server.js#L1-L29)
 - [webhook.js:1-12](file://leadpilot-ai/routes/webhook.js#L1-L12)
-- [whatsappController.js:1-40](file://leadpilot-ai/controllers/whatsappController.js#L1-L40)
+- [leads.js:1-14](file://leadpilot-ai/routes/leads.js#L1-L14)
+- [whatsappController.js:1-78](file://leadpilot-ai/controllers/whatsappController.js#L1-L78)
+- [leadsController.js:1-57](file://leadpilot-ai/controllers/leadsController.js#L1-L57)
 - [whatsappService.js:1-23](file://leadpilot-ai/services/whatsappService.js#L1-L23)
+- [supabase.js:1-9](file://leadpilot-ai/db/supabase.js#L1-L9)
+- [parser.js:1-37](file://leadpilot-ai/utils/parser.js#L1-L37)
+- [dashboard.html:1-416](file://leadpilot-ai/leadpilot-ui/dashboard.html#L1-L416)
 
 **Section sources**
 - [package.json:13-19](file://leadpilot-ai/package.json#L13-L19)
 
 ## Performance Considerations
 - The controller performs synchronous logging and asynchronous outbound API calls. Ensure the service layer handles timeouts and retries appropriately.
-- Avoid blocking operations in the request handler; the current implementation delegates to an async service.
+- Database operations are performed asynchronously to avoid blocking the request handler.
+- The parser utility uses efficient regular expressions for lead information extraction.
 - Consider adding circuit breakers and exponential backoff for the WhatsApp Cloud API calls to mitigate transient failures.
+- Database queries are optimized with proper ordering and filtering.
+- The dashboard implements automatic refresh every 10 seconds to balance real-time updates with performance.
 
 ## Troubleshooting Guide
 Common issues and resolutions:
@@ -259,26 +541,42 @@ Common issues and resolutions:
   - Cause: Exception thrown during message processing or service call.
   - Resolution: Check server logs for errors and ensure environment variables are set for the WhatsApp token and phone ID.
 - Missing environment variables
-  - Cause: WHATSAPP_TOKEN or PHONE_ID not configured.
+  - Cause: WHATSAPP_TOKEN, PHONE_ID, SUPABASE_URL, or SUPABASE_KEY not configured.
   - Resolution: Set environment variables and restart the server.
+- Database connection issues
+  - Cause: Supabase credentials or network connectivity problems.
+  - Resolution: Verify Supabase credentials and network connectivity.
+- Lead management errors
+  - Cause: Invalid lead ID or database constraints violation.
+  - Resolution: Check lead ID format and status values.
+- Dashboard UI issues
+  - Cause: API base URL mismatch or network connectivity problems.
+  - Resolution: Verify API_BASE_URL setting and ensure backend server is reachable.
 
 Operational checks:
-- Verify the server is reachable from the internet and the route is mounted under /webhook.
-- Confirm the verify token used in the webhook subscription matches the controller’s constant.
+- Verify the server is reachable from the internet and the routes are mounted under /webhook and /leads.
+- Confirm the verify token used in the webhook subscription matches the controller's constant.
 - Ensure the WhatsApp Cloud API credentials and phone ID are correct.
+- Verify Supabase database is accessible and has the leads table.
+- Test lead parsing functionality with sample messages.
+- Validate dashboard API endpoints are accessible and responding correctly.
 
 **Section sources**
-- [whatsappController.js:4-14](file://leadpilot-ai/controllers/whatsappController.js#L4-L14)
-- [whatsappController.js:16-39](file://leadpilot-ai/controllers/whatsappController.js#L16-L39)
+- [whatsappController.js:7-17](file://leadpilot-ai/controllers/whatsappController.js#L7-L17)
+- [whatsappController.js:19-77](file://leadpilot-ai/controllers/whatsappController.js#L19-L77)
+- [leadsController.js:4-56](file://leadpilot-ai/controllers/leadsController.js#L4-L56)
 - [whatsappService.js:3-4](file://leadpilot-ai/services/whatsappService.js#L3-L4)
+- [supabase.js:3-6](file://leadpilot-ai/db/supabase.js#L3-L6)
+- [dashboard.html:215-237](file://leadpilot-ai/leadpilot-ui/dashboard.html#L215-L237)
 
 ## Conclusion
-LeadPilot AI’s webhook endpoints provide a straightforward integration with Facebook’s webhook platform and the WhatsApp Cloud API. The GET endpoint validates subscriptions using challenge-response, while the POST endpoint processes inbound messages and auto-replies. For production deployments, ensure secure environment configuration, implement robust error handling, and consider rate limiting and retry policies for external API calls.
+LeadPilot AI's API provides a comprehensive solution for WhatsApp-based lead management with advanced automation capabilities and rich UI interactions. The enhanced webhook endpoints now include intelligent lead parsing, database integration, automated responses, and manual lead creation capabilities. The new lead management endpoints offer full CRUD operations for lead lifecycle management, complemented by a sophisticated real-time dashboard with search, filtering, and manual operations. The dashboard enables users to create leads manually, search across lead data, filter by status, and monitor lead statistics in real-time. For production deployments, ensure secure environment configuration, implement robust error handling, and consider rate limiting and retry policies for external API calls.
 
 ## Appendices
 
 ### Endpoint Definitions
 
+#### Webhook Endpoints
 - GET /webhook
   - Purpose: Verify webhook subscription
   - Query parameters:
@@ -292,7 +590,7 @@ LeadPilot AI’s webhook endpoints provide a straightforward integration with Fa
     - Status: 403
 
 - POST /webhook
-  - Purpose: Process inbound message events
+  - Purpose: Process inbound message events with lead extraction
   - Request body:
     - entry[0].changes[0].value.messages[0].from
     - entry[0].changes[0].value.messages[0].text.body
@@ -301,17 +599,55 @@ LeadPilot AI’s webhook endpoints provide a straightforward integration with Fa
   - Error responses:
     - Status: 500
 
+#### Lead Management Endpoints
+- GET /leads
+  - Purpose: Retrieve all leads
+  - Query parameters: None
+  - Success response:
+    - Status: 200
+    - Body: Array of lead objects
+  - Error responses:
+    - Status: 500
+
+- GET /leads/:id
+  - Purpose: Retrieve a specific lead
+  - Path parameters:
+    - id: Lead identifier
+  - Success response:
+    - Status: 200
+    - Body: Lead object
+  - Error responses:
+    - Status: 500
+
+- PATCH /leads/:id
+  - Purpose: Update lead status
+  - Path parameters:
+    - id: Lead identifier
+  - Request body:
+    - status: New lead status
+  - Success response:
+    - Status: 200
+    - Body: { message: "Status updated" }
+  - Error responses:
+    - Status: 500
+
 ### Authentication and Security Notes
 - GET /webhook uses a constant verify token in the controller. Align this with the value configured in the Facebook webhook subscription.
-- POST /webhook does not implement endpoint-level authentication; rely on Facebook’s delivery mechanism.
+- POST /webhook does not implement endpoint-level authentication; rely on Facebook's delivery mechanism.
 - Outbound calls to the WhatsApp Cloud API use Bearer token authentication via Authorization header.
+- Lead management endpoints do not implement authentication; ensure proper access control at deployment level.
+- Database operations use Supabase client with environment-based credentials.
+- Dashboard UI uses API_BASE_URL for backend communication; ensure proper CORS configuration.
 
 ### Environment Variables
 - WHATSAPP_TOKEN: Access token for the WhatsApp Business Platform
 - PHONE_ID: Phone ID associated with the business account
+- SUPABASE_URL: Supabase project URL
+- SUPABASE_KEY: Supabase project API key
 
 ### Example Requests and Responses
 
+#### Webhook Examples
 - GET /webhook
   - Request: GET /webhook?hub.mode=subscribe&hub.verify_token=leadpilot_token&hub.challenge=challenge_value
   - Success response: 200 OK with body challenge_value
@@ -324,13 +660,44 @@ LeadPilot AI’s webhook endpoints provide a straightforward integration with Fa
   - Success response: 200 OK
   - Error response: 500 Internal Server Error
 
-- WhatsApp Cloud API
-  - Request:
-    - POST https://graph.facebook.com/v18.0/{PHONE_ID}/messages
-    - Headers: Authorization: Bearer {WHATSAPP_TOKEN}, Content-Type: application/json
-    - Body: { messaging_product: "whatsapp", to: "+1234567890", type: "text", text: { body: "Hello" } }
+#### Lead Management Examples
+- GET /leads
+  - Request: GET /leads
+  - Success response: 200 OK with array of lead objects
+  - Error response: 500 Internal Server Error
+
+- GET /leads/:id
+  - Request: GET /leads/1
+  - Success response: 200 OK with lead object
+  - Error response: 500 Internal Server Error
+
+- PATCH /leads/:id
+  - Request: PATCH /leads/1 { "status": "contacted" }
+  - Success response: 200 OK with { message: "Status updated" }
+  - Error response: 500 Internal Server Error
+
+#### WhatsApp Cloud API
+- Request:
+  - POST https://graph.facebook.com/v18.0/{PHONE_ID}/messages
+  - Headers: Authorization: Bearer {WHATSAPP_TOKEN}, Content-Type: application/json
+  - Body: { messaging_product: "whatsapp", to: "+1234567890", type: "text", text: { body: "Hello" } }
+
+### Parser Utility Functions
+- parseMessage(text): Extracts budget and location information from WhatsApp messages
+- Budget extraction patterns: Numbers followed by "L", "lakh", or currency indicators
+- Location extraction pattern: Text following "in " keyword
+- Returns object with budget and location properties
 
 ### Rate Limiting and Reliability
 - No built-in rate limiting in the controller or service.
 - Design clients to handle retries with exponential backoff for transient failures.
 - Monitor external API quotas and adjust throughput accordingly.
+- Database operations should implement proper error handling and retry logic.
+- Dashboard implements automatic refresh every 10 seconds to balance performance and real-time updates.
+
+### UI Interaction Patterns
+- Search: Real-time filtering as users type in the search box
+- Status Filtering: Click buttons to filter by different lead statuses
+- Manual Lead Creation: Add leads directly from the dashboard interface
+- Real-time Updates: Automatic dashboard refresh every 10 seconds
+- Status Dropdown: Inline editing of lead status from the table view
