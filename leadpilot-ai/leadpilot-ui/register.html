@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Register - LeadPilot AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+        .input-field {
+            transition: all 0.3s ease;
+        }
+        .input-field:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px -10px rgba(102, 126, 234, 0.3);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px -10px rgba(102, 126, 234, 0.5);
+        }
+        .floating-shape {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            animation: float 20s infinite ease-in-out;
+        }
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -30px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+        }
+        .step-indicator {
+            transition: all 0.3s ease;
+        }
+        .step-indicator.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .password-strength {
+            height: 4px;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center p-4 relative overflow-hidden">
+    <!-- Floating Background Shapes -->
+    <div class="floating-shape w-64 h-64 -top-20 -left-20" style="animation-delay: 0s;"></div>
+    <div class="floating-shape w-48 h-48 top-1/2 -right-10" style="animation-delay: -5s;"></div>
+    <div class="floating-shape w-32 h-32 bottom-20 left-1/4" style="animation-delay: -10s;"></div>
+
+    <!-- Main Card -->
+    <div class="glass rounded-3xl shadow-2xl w-full max-w-md p-8 relative z-10">
+        <!-- Logo -->
+        <div class="text-center mb-6">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <i class="fas fa-rocket text-white text-2xl"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-900">Create Account</h1>
+            <p class="text-gray-500 mt-1">Start your 14-day free trial</p>
+        </div>
+
+        <!-- Step Indicators -->
+        <div class="flex items-center justify-center gap-4 mb-6">
+            <div class="step-indicator active w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold" id="step1">1</div>
+            <div class="w-12 h-0.5 bg-gray-200" id="line1"></div>
+            <div class="step-indicator w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold" id="step2">2</div>
+        </div>
+
+        <!-- Error Message -->
+        <div id="errorMessage" class="hidden bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-4">
+            <i class="fas fa-exclamation-circle mr-2"></i>
+            <span id="errorText">Registration failed</span>
+        </div>
+
+        <!-- Step 1: Basic Info -->
+        <form id="step1Form" onsubmit="goToStep2(event)" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                <div class="relative">
+                    <i class="fas fa-user absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                    <input type="text" id="fullName" required 
+                        class="input-field w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
+                        placeholder="John Doe">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                <div class="relative">
+                    <i class="fas fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                    <input type="email" id="email" required 
+                        class="input-field w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
+                        placeholder="you@example.com">
+                </div>
+            </div>
+
+            <button type="submit" class="btn-primary w-full py-3 rounded-xl text-white font-semibold flex items-center justify-center gap-2">
+                <span>Continue</span>
+                <i class="fas fa-arrow-right"></i>
+            </button>
+        </form>
+
+        <!-- Step 2: Password & Company -->
+        <form id="step2Form" onsubmit="handleRegister(event)" class="space-y-4 hidden">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                <div class="relative">
+                    <i class="fas fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                    <input type="password" id="password" required 
+                        class="input-field w-full pl-12 pr-12 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
+                        placeholder="••••••••" oninput="checkPasswordStrength()">
+                    <button type="button" onclick="togglePassword('password')" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-eye" id="eyeIcon1"></i>
+                    </button>
+                </div>
+                <div class="mt-2">
+                    <div class="password-strength bg-gray-200" id="strengthBar"></div>
+                    <p class="text-xs text-gray-500 mt-1" id="strengthText">Password strength</p>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
+                <div class="relative">
+                    <i class="fas fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                    <input type="password" id="confirmPassword" required 
+                        class="input-field w-full pl-12 pr-12 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
+                        placeholder="••••••••">
+                    <button type="button" onclick="togglePassword('confirmPassword')" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-eye" id="eyeIcon2"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Company Name (Optional)</label>
+                <div class="relative">
+                    <i class="fas fa-building absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                    <input type="text" id="company" 
+                        class="input-field w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
+                        placeholder="Your Real Estate Company">
+                </div>
+            </div>
+
+            <div class="flex items-start gap-3">
+                <input type="checkbox" id="terms" required class="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                <label for="terms" class="text-sm text-gray-600">
+                    I agree to the <a href="#" class="text-blue-600 hover:underline">Terms of Service</a> and 
+                    <a href="#" class="text-blue-600 hover:underline">Privacy Policy</a>
+                </label>
+            </div>
+
+            <div class="flex gap-3">
+                <button type="button" onclick="goToStep1()" class="flex-1 py-3 border border-gray-200 rounded-xl text-gray-700 font-semibold hover:bg-gray-50">
+                    Back
+                </button>
+                <button type="submit" id="registerBtn" class="btn-primary flex-1 py-3 rounded-xl text-white font-semibold flex items-center justify-center gap-2">
+                    <span>Create Account</span>
+                    <i class="fas fa-check"></i>
+                </button>
+            </div>
+        </form>
+
+        <!-- Divider -->
+        <div class="relative my-6">
+            <div class="absolute inset-0 flex items-center">
+                <div class="w-full border-t border-gray-200"></div>
+            </div>
+            <div class="relative flex justify-center text-sm">
+                <span class="px-4 bg-white text-gray-500">Or sign up with</span>
+            </div>
+        </div>
+
+        <!-- Social Login -->
+        <div class="grid grid-cols-2 gap-3">
+            <button onclick="socialRegister('google')" class="flex items-center justify-center gap-2 px-4 py-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+                <i class="fab fa-google text-red-500"></i>
+                <span class="text-sm font-medium text-gray-700">Google</span>
+            </button>
+            <button onclick="socialRegister('github')" class="flex items-center justify-center gap-2 px-4 py-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+                <i class="fab fa-github text-gray-900"></i>
+                <span class="text-sm font-medium text-gray-700">GitHub</span>
+            </button>
+        </div>
+
+        <!-- Login Link -->
+        <p class="text-center mt-6 text-gray-600">
+            Already have an account? 
+            <a href="/login.html" class="text-blue-600 hover:text-blue-700 font-semibold">Sign in</a>
+        </p>
+    </div>
+
+    <script>
+        const API_BASE_URL = window.location.hostname === 'localhost' ? 'http://localhost:80' : window.location.origin;
+
+        // Check if already logged in
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('token');
+            if (token) {
+                window.location.href = '/dashboard';
+            }
+        });
+
+        function goToStep2(e) {
+            e.preventDefault();
+            document.getElementById('step1Form').classList.add('hidden');
+            document.getElementById('step2Form').classList.remove('hidden');
+            document.getElementById('step1').classList.remove('active');
+            document.getElementById('step2').classList.add('active');
+            document.getElementById('line1').classList.add('bg-blue-500');
+        }
+
+        function goToStep1() {
+            document.getElementById('step2Form').classList.add('hidden');
+            document.getElementById('step1Form').classList.remove('hidden');
+            document.getElementById('step2').classList.remove('active');
+            document.getElementById('step1').classList.add('active');
+            document.getElementById('line1').classList.remove('bg-blue-500');
+        }
+
+        function checkPasswordStrength() {
+            const password = document.getElementById('password').value;
+            const strengthBar = document.getElementById('strengthBar');
+            const strengthText = document.getElementById('strengthText');
+            
+            let strength = 0;
+            if (password.length >= 8) strength++;
+            if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength++;
+            if (password.match(/[0-9]/)) strength++;
+            if (password.match(/[^a-zA-Z0-9]/)) strength++;
+
+            const colors = ['bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-green-500'];
+            const texts = ['Weak', 'Fair', 'Good', 'Strong'];
+            
+            strengthBar.className = `password-strength ${colors[strength - 1] || 'bg-gray-200'}`;
+            strengthBar.style.width = `${(strength / 4) * 100}%`;
+            strengthText.textContent = texts[strength - 1] || 'Password strength';
+            strengthText.className = `text-xs mt-1 ${strength >= 3 ? 'text-green-600' : 'text-gray-500'}`;
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('fullName').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const company = document.getElementById('company').value;
+            const registerBtn = document.getElementById('registerBtn');
+            const errorDiv = document.getElementById('errorMessage');
+
+            // Validation
+            if (password !== confirmPassword) {
+                document.getElementById('errorText').textContent = 'Passwords do not match';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            if (password.length < 8) {
+                document.getElementById('errorText').textContent = 'Password must be at least 8 characters';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            // Show loading
+            registerBtn.disabled = true;
+            registerBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating account...';
+            errorDiv.classList.add('hidden');
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password, company })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Auto login after registration
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    window.location.href = '/dashboard';
+                } else {
+                    throw new Error(data.error || 'Registration failed');
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                document.getElementById('errorText').textContent = error.message || 'Registration failed. Please try again.';
+                errorDiv.classList.remove('hidden');
+                
+                registerBtn.disabled = false;
+                registerBtn.innerHTML = '<span>Create Account</span><i class="fas fa-check"></i>';
+            }
+        }
+
+        function togglePassword(fieldId) {
+            const input = document.getElementById(fieldId);
+            const icon = document.getElementById(fieldId === 'password' ? 'eyeIcon1' : 'eyeIcon2');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        function socialRegister(provider) {
+            alert(`${provider} registration coming soon!`);
+        }
+    </script>
+</body>
+</html>

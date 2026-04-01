@@ -35,6 +35,29 @@ app.get("/landing", (req, res) => {
   res.sendFile(__dirname + "/leadpilot-ui/landing.html");
 });
 
+// Serve analytics page
+app.get("/analytics.html", (req, res) => {
+  res.sendFile(__dirname + "/leadpilot-ui/analytics.html");
+});
+
+// Serve login page
+app.get("/login", (req, res) => {
+  res.sendFile(__dirname + "/leadpilot-ui/login.html");
+});
+
+app.get("/login.html", (req, res) => {
+  res.sendFile(__dirname + "/leadpilot-ui/login.html");
+});
+
+// Serve register page
+app.get("/register", (req, res) => {
+  res.sendFile(__dirname + "/leadpilot-ui/register.html");
+});
+
+app.get("/register.html", (req, res) => {
+  res.sendFile(__dirname + "/leadpilot-ui/register.html");
+});
+
 const PORT = process.env.PORT || 3000;
 
 // Export for Vercel serverless

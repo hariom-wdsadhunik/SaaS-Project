@@ -115,6 +115,31 @@
                     <a href="/analytics.html" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium">
                         <i class="fas fa-chart-bar mr-2"></i>Analytics
                     </a>
+                    <div class="relative group">
+                        <button class="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-sm font-bold" id="userAvatar">
+                                JD
+                            </div>
+                            <i class="fas fa-chevron-down text-gray-400 text-xs"></i>
+                        </button>
+                        <div class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+                            <div class="p-3 border-b border-gray-100">
+                                <p class="font-semibold text-gray-900" id="userName">John Doe</p>
+                                <p class="text-xs text-gray-500" id="userEmail">john@example.com</p>
+                            </div>
+                            <a href="#" onclick="showProfileModal()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                <i class="fas fa-user mr-2"></i>Profile
+                            </a>
+                            <a href="#" onclick="showSettingsModal()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                <i class="fas fa-cog mr-2"></i>Settings
+                            </a>
+                            <div class="border-t border-gray-100">
+                                <button onclick="logout()" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                                    <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -282,7 +307,48 @@
             { id: 4, name: 'Visit Confirmation', subject: 'Property visit confirmed', content: 'Hi,\n\nYour property visit is confirmed for [DATE] at [TIME].\n\nAddress: [PROPERTY ADDRESS]\n\nLooking forward to meeting you!\n\nBest regards' },
         ];
 
-        document.addEventListener('DOMContentLoaded', () => { loadLeads(); loadTheme(); });
+        // Check authentication
+                document.addEventListener('DOMContentLoaded', () => {
+                    checkAuth();
+                    loadLeads();
+                    loadTheme();
+                    loadUserInfo();
+                });
+        
+                function checkAuth() {
+                    const token = localStorage.getItem('token');
+                    if (!token) {
+                        window.location.href = '/login.html';
+                        return;
+                    }
+                }
+        
+                function loadUserInfo() {
+                    const user = JSON.parse(localStorage.getItem('user') || '{}');
+                    if (user.name) {
+                        document.getElementById('userName').textContent = user.name;
+                        document.getElementById('userAvatar').textContent = user.name.split(' ').map(n => n[0]).join('').toUpperCase();
+                    }
+                    if (user.email) {
+                        document.getElementById('userEmail').textContent = user.email;
+                    }
+                }
+        
+                function logout() {
+                    if (confirm('Are you sure you want to logout?')) {
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('user');
+                        window.location.href = '/login.html';
+                    }
+                }
+        
+                function showProfileModal() {
+                    alert('Profile settings coming soon!');
+                }
+        
+                function showSettingsModal() {
+                    alert('Settings coming soon!');
+                }
 
         async function loadLeads() {
             try {
