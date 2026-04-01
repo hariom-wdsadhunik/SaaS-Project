@@ -1,5 +1,5 @@
 const bcrypt = require('bcryptjs');
-const supabase = require('../db/supabase');
+const { supabase } = require('../db/supabase');
 const { generateToken } = require('../middleware/auth');
 
 // Register new user
@@ -75,22 +75,6 @@ exports.login = async (req, res) => {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    // Demo mode: allow admin@leadpilot.ai / admin123
-    if (email === 'admin@leadpilot.ai' && password === 'admin123') {
-      const demoUser = {
-        id: 'demo-admin-id',
-        email: 'admin@leadpilot.ai',
-        name: 'Admin User',
-        role: 'admin'
-      };
-      const token = generateToken(demoUser);
-      return res.json({
-        message: 'Login successful (Demo Mode)',
-        token,
-        user: demoUser
-      });
-    }
-
     // Get user
     const { data: user, error } = await supabase
       .from('users')
@@ -111,7 +95,7 @@ exports.login = async (req, res) => {
     // Update last login
     await supabase
       .from('users')
-      .update({ last_login: new Date() })
+      .update({ last_login: new Date().toISOString() })
       .eq('id', user.id);
 
     // Generate token

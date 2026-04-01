@@ -1,4 +1,4 @@
-const supabase = require("../db/supabase");
+const { supabase } = require("../db/supabase");
 
 // Get all notes for a lead
 exports.getNotes = async (req, res) => {

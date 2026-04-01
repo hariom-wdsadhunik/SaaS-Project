@@ -2,7 +2,7 @@ const fs = require("fs");
 const VERIFY_TOKEN = "leadpilot_token";
 const { sendMessage } = require("../services/whatsappService");
 const { parseMessage } = require("../utils/parser");
-const supabase = require("../db/supabase");
+const { supabase } = require("../db/supabase");
 const leadScoringService = require("../services/leadScoringService");
 const emailService = require("../services/emailService");
 

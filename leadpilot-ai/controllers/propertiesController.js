@@ -1,4 +1,4 @@
-const supabase = require("../db/supabase");
+const { supabase } = require("../db/supabase");
 
 // Get all properties with filters
 exports.getProperties = async (req, res) => {

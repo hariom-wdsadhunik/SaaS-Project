@@ -1,4 +1,4 @@
-const supabase = require('../db/supabase');
+const { supabase } = require('../db/supabase');
 const bcrypt = require('bcryptjs');
 const { generateToken } = require('../middleware/auth');
 

@@ -1,4 +1,4 @@
-const supabase = require("../db/supabase");
+const { supabase } = require("../db/supabase");
 
 // Get all documents
 exports.getDocuments = async (req, res) => {

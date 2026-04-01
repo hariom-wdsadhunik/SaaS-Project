@@ -2237,48 +2237,87 @@
         }
 
         // WhatsApp Integration Functions
-        function loadWhatsAppStatus() {
-            const whatsappConfig = JSON.parse(localStorage.getItem('whatsapp_config') || '{}');
-            const isConnected = whatsappConfig.connected || false;
-            
-            const headerStatus = document.getElementById('whatsappStatusHeader');
-            const statusText = document.getElementById('whatsappStatusText');
-            
-            if (isConnected) {
-                headerStatus.classList.remove('disconnected');
-                headerStatus.classList.add('connected');
-                statusText.textContent = 'WhatsApp Connected';
-            } else {
-                headerStatus.classList.remove('connected');
-                headerStatus.classList.add('disconnected');
-                statusText.textContent = 'Connect WhatsApp';
+        async function loadWhatsAppStatus() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/whatsapp/status`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const headerStatus = document.getElementById('whatsappStatusHeader');
+                    const statusText = document.getElementById('whatsappStatusText');
+                    
+                    if (data.connected) {
+                        headerStatus.classList.remove('disconnected');
+                        headerStatus.classList.add('connected');
+                        statusText.textContent = 'WhatsApp Connected';
+                    } else {
+                        headerStatus.classList.remove('connected');
+                        headerStatus.classList.add('disconnected');
+                        statusText.textContent = 'Connect WhatsApp';
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading WhatsApp status:', error);
             }
         }
 
-        function showWhatsAppModal() {
+        async function showWhatsAppModal() {
             const modal = document.getElementById('whatsappModal');
-            const config = JSON.parse(localStorage.getItem('whatsapp_config') || '{}');
             
-            // Load saved settings
-            document.getElementById('autoReplyEnabled').checked = config.autoReply || false;
-            document.getElementById('welcomeMessageEnabled').checked = config.welcomeMessageEnabled !== false;
-            document.getElementById('welcomeMessage').value = config.welcomeMessage || 'Thank you for contacting us! We\'ll get back to you shortly with property options.';
+            try {
+                // Load settings from API
+                const settingsResponse = await fetch(`${API_BASE_URL}/whatsapp/settings`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (settingsResponse.ok) {
+                    const settings = await settingsResponse.json();
+                    document.getElementById('autoReplyEnabled').checked = settings.autoReply;
+                    document.getElementById('welcomeMessageEnabled').checked = settings.welcomeMessageEnabled;
+                    document.getElementById('welcomeMessage').value = settings.welcomeMessage;
+                }
+                
+                // Load status
+                const statusResponse = await fetch(`${API_BASE_URL}/whatsapp/status`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (statusResponse.ok) {
+                    const status = await statusResponse.json();
+                    updateWhatsAppUI(status.connected, status);
+                }
+            } catch (error) {
+                console.error('Error loading WhatsApp data:', error);
+            }
             
-            updateWhatsAppUI(config.connected || false);
             modal.classList.add('active');
         }
 
-        function closeWhatsAppModal() {
+        async function closeWhatsAppModal() {
             document.getElementById('whatsappModal').classList.remove('active');
-            // Save settings
-            const config = JSON.parse(localStorage.getItem('whatsapp_config') || '{}');
-            config.autoReply = document.getElementById('autoReplyEnabled').checked;
-            config.welcomeMessageEnabled = document.getElementById('welcomeMessageEnabled').checked;
-            config.welcomeMessage = document.getElementById('welcomeMessage').value;
-            localStorage.setItem('whatsapp_config', JSON.stringify(config));
+            
+            // Save settings to API
+            try {
+                await fetch(`${API_BASE_URL}/whatsapp/settings`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        autoReply: document.getElementById('autoReplyEnabled').checked,
+                        welcomeMessageEnabled: document.getElementById('welcomeMessageEnabled').checked,
+                        welcomeMessage: document.getElementById('welcomeMessage').value
+                    })
+                });
+            } catch (error) {
+                console.error('Error saving settings:', error);
+            }
         }
 
-        function updateWhatsAppUI(isConnected) {
+        function updateWhatsAppUI(isConnected, data = {}) {
             const statusBadge = document.getElementById('whatsappStatusBadge');
             const qrSection = document.getElementById('qrCodeSection');
             const stepsSection = document.getElementById('connectionSteps');
@@ -2295,11 +2334,10 @@
                 connectBtn.classList.add('hidden');
                 disconnectBtn.classList.remove('hidden');
                 
-                // Load stats
-                const config = JSON.parse(localStorage.getItem('whatsapp_config') || '{}');
-                document.getElementById('connectedPhone').textContent = config.phone || '+91 98765 43210';
-                document.getElementById('whatsappMessagesSent').textContent = config.messagesSent || 0;
-                document.getElementById('whatsappLeads').textContent = config.leadsCount || 0;
+                // Load stats from API data
+                document.getElementById('connectedPhone').textContent = data.phoneNumber || '+91 98765 43210';
+                document.getElementById('whatsappMessagesSent').textContent = data.messageCount || 0;
+                document.getElementById('whatsappLeads').textContent = data.leadsCount || 0;
             } else {
                 statusBadge.className = 'inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-red-100 text-red-700';
                 statusBadge.innerHTML = '<i class="fas fa-times-circle"></i><span>Not Connected</span>';
@@ -2311,12 +2349,11 @@
             }
         }
 
-        function connectWhatsApp() {
+        async function connectWhatsApp() {
             // Show QR code section
             document.getElementById('qrCodeSection').classList.remove('hidden');
             document.getElementById('connectionSteps').classList.remove('hidden');
             
-            // Simulate QR code generation
             const qrDiv = document.querySelector('.whatsapp-qr');
             qrDiv.innerHTML = `
                 <div class="text-center">
@@ -2325,48 +2362,87 @@
                 </div>
             `;
             
-            // Simulate connection after 3 seconds (for demo)
-            setTimeout(() => {
+            try {
+                const response = await fetch(`${API_BASE_URL}/whatsapp/connect`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Show QR code placeholder
+                    qrDiv.innerHTML = `
+                        <div class="text-center p-4">
+                            <i class="fas fa-qrcode text-8xl text-gray-800 mb-2"></i>
+                            <p class="text-xs text-gray-500 mt-2">Scan with WhatsApp</p>
+                        </div>
+                    `;
+                    
+                    // Poll for connection status
+                    pollWhatsAppStatus();
+                }
+            } catch (error) {
+                console.error('Error connecting WhatsApp:', error);
                 qrDiv.innerHTML = `
-                    <div class="text-center p-4">
-                        <i class="fas fa-qrcode text-8xl text-gray-800 mb-2"></i>
-                        <p class="text-xs text-gray-500 mt-2">Scan with WhatsApp</p>
+                    <div class="text-center p-4 text-red-500">
+                        <i class="fas fa-exclamation-circle text-4xl mb-2"></i>
+                        <p class="text-sm">Failed to connect</p>
                     </div>
                 `;
-                
-                // Auto-connect for demo after 5 seconds
-                setTimeout(() => {
-                    const config = {
-                        connected: true,
-                        phone: '+91 98765 43210',
-                        messagesSent: Math.floor(Math.random() * 50) + 10,
-                        leadsCount: Math.floor(Math.random() * 20) + 5,
-                        autoReply: document.getElementById('autoReplyEnabled').checked,
-                        welcomeMessageEnabled: document.getElementById('welcomeMessageEnabled').checked,
-                        welcomeMessage: document.getElementById('welcomeMessage').value,
-                        connectedAt: new Date().toISOString()
-                    };
-                    localStorage.setItem('whatsapp_config', JSON.stringify(config));
-                    updateWhatsAppUI(true);
-                    loadWhatsAppStatus();
-                    
-                    // Show success message
-                    alert('WhatsApp connected successfully! You can now receive leads from WhatsApp.');
-                }, 5000);
-            }, 1500);
+            }
         }
 
-        function disconnectWhatsApp() {
+        async function pollWhatsAppStatus() {
+            const maxAttempts = 30;
+            let attempts = 0;
+            
+            const interval = setInterval(async () => {
+                attempts++;
+                
+                try {
+                    const response = await fetch(`${API_BASE_URL}/whatsapp/status`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        
+                        if (data.connected) {
+                            clearInterval(interval);
+                            updateWhatsAppUI(true, data);
+                            loadWhatsAppStatus();
+                            alert('WhatsApp connected successfully!');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error polling status:', error);
+                }
+                
+                if (attempts >= maxAttempts) {
+                    clearInterval(interval);
+                }
+            }, 2000);
+        }
+
+        async function disconnectWhatsApp() {
             if (!confirm('Are you sure you want to disconnect WhatsApp? You will no longer receive leads from WhatsApp.')) {
                 return;
             }
             
-            const config = JSON.parse(localStorage.getItem('whatsapp_config') || '{}');
-            config.connected = false;
-            localStorage.setItem('whatsapp_config', JSON.stringify(config));
-            
-            updateWhatsAppUI(false);
-            loadWhatsAppStatus();
+            try {
+                const response = await fetch(`${API_BASE_URL}/whatsapp/disconnect`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    updateWhatsAppUI(false);
+                    loadWhatsAppStatus();
+                }
+            } catch (error) {
+                console.error('Error disconnecting WhatsApp:', error);
+            }
         }
     </script>
 </body>

@@ -1,4 +1,4 @@
-const supabase = require("../db/supabase");
+const { supabase } = require("../db/supabase");
 
 // Get all appointments with filters
 exports.getAppointments = async (req, res) => {

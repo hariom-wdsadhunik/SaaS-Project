@@ -177,43 +177,6 @@
             errorDiv.classList.add('hidden');
 
             try {
-                // For demo, check demo credentials
-                if ((email === 'demo@leadpilot.ai' && password === 'demo123') || 
-                    (email === 'admin@leadpilot.ai' && password === 'admin123')) {
-                    // Create demo token
-                    const demoToken = 'demo_token_' + Date.now();
-                    const demoUser = {
-                        id: 'demo',
-                        email: email,
-                        name: 'Admin User',
-                        role: 'admin'
-                    };
-                    
-                    localStorage.setItem('token', demoToken);
-                    localStorage.setItem('user', JSON.stringify(demoUser));
-                    
-                    window.location.href = '/dashboard';
-                    return;
-                }
-
-                // Check localStorage demo users first
-                const demoUsers = JSON.parse(localStorage.getItem('demo_users') || '[]');
-                const demoUser = demoUsers.find(u => u.email === email);
-                if (demoUser) {
-                    // In real app, verify password hash. For demo, accept any password
-                    const demoToken = 'demo_token_' + Date.now();
-                    localStorage.setItem('token', demoToken);
-                    localStorage.setItem('user', JSON.stringify({
-                        id: demoUser.id,
-                        email: demoUser.email,
-                        name: demoUser.name,
-                        role: demoUser.role
-                    }));
-                    window.location.href = '/dashboard';
-                    return;
-                }
-
-                // Try API login
                 const response = await fetch(`${API_BASE_URL}/auth/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
