@@ -243,3 +243,146 @@ ALTER PUBLICATION supabase_realtime ADD TABLE leads;
 ALTER PUBLICATION supabase_realtime ADD TABLE tasks;
 ALTER PUBLICATION supabase_realtime ADD TABLE appointments;
 ALTER PUBLICATION supabase_realtime ADD TABLE whatsapp_logs;
+
+-- ============================================
+-- GOALS TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS goals (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    team_id UUID REFERENCES teams(id) ON DELETE CASCADE,
+    created_by UUID REFERENCES users(id),
+    name VARCHAR(255) NOT NULL,
+    metric VARCHAR(50) NOT NULL CHECK (metric IN ('leads', 'converted_leads', 'revenue', 'calls', 'meetings', 'deals_won')),
+    target_value DECIMAL(15, 2) NOT NULL,
+    current_value DECIMAL(15, 2) DEFAULT 0,
+    period VARCHAR(20) NOT NULL CHECK (period IN ('monthly', 'quarterly', 'yearly')),
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE goals ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Team goals viewable by team"
+ON goals FOR SELECT
+USING (
+    team_id IS NULL OR
+    EXISTS (
+        SELECT 1 FROM users
+        WHERE users.id = auth.uid()
+        AND users.team_id = goals.team_id
+    )
+);
+
+CREATE POLICY "Admins can manage team goals"
+ON goals FOR ALL
+USING (
+    EXISTS (
+        SELECT 1 FROM users
+        WHERE users.id = auth.uid()
+        AND users.team_id = goals.team_id
+        AND users.role = 'admin'
+    )
+);
+
+-- ============================================
+-- SMS_LOGS TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS sms_logs (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    lead_id UUID REFERENCES leads(id),
+    user_id UUID REFERENCES users(id),
+    team_id UUID REFERENCES teams(id),
+    phone VARCHAR(20) NOT NULL,
+    message TEXT NOT NULL,
+    direction VARCHAR(20) DEFAULT 'outbound' CHECK (direction IN ('inbound', 'outbound')),
+    status VARCHAR(50) DEFAULT 'sent',
+    twilio_sid VARCHAR(255),
+    error_message TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE sms_logs ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Team sms logs viewable by team"
+ON sms_logs FOR SELECT
+USING (
+    user_id = auth.uid() OR
+    EXISTS (
+        SELECT 1 FROM users
+        WHERE users.id = auth.uid()
+        AND users.team_id = sms_logs.team_id
+    )
+);
+
+CREATE POLICY "Users can insert sms logs"
+ON sms_logs FOR INSERT
+WITH CHECK (user_id = auth.uid() OR user_id IS NULL);
+
+CREATE INDEX idx_sms_logs_lead_id ON sms_logs(lead_id);
+CREATE INDEX idx_sms_logs_created_at ON sms_logs(created_at);
+
+-- ============================================
+-- SEQUENCE_ENROLLMENTS TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS sequence_enrollments (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    lead_id UUID REFERENCES leads(id) ON DELETE CASCADE,
+    sequence_id UUID REFERENCES sequences(id) ON DELETE CASCADE,
+    status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'completed', 'stopped', 'failed')),
+    current_step INTEGER DEFAULT 0,
+    last_action_at TIMESTAMP WITH TIME ZONE,
+    enrolled_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    completed_at TIMESTAMP WITH TIME ZONE,
+    error_message TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(lead_id, sequence_id)
+);
+
+ALTER TABLE sequence_enrollments ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view their enrollments"
+ON sequence_enrollments FOR SELECT
+USING (
+    EXISTS (
+        SELECT 1 FROM leads
+        WHERE leads.id = sequence_enrollments.lead_id
+        AND EXISTS (
+            SELECT 1 FROM users
+            WHERE users.id = auth.uid()
+            AND users.team_id = leads.team_id
+        )
+    )
+);
+
+CREATE INDEX idx_sequence_enrollments_lead_id ON sequence_enrollments(lead_id);
+CREATE INDEX idx_sequence_enrollments_sequence_id ON sequence_enrollments(sequence_id);
+
+-- ============================================
+-- SEQUENCE_STEPS TABLE (for better step management)
+-- ============================================
+CREATE TABLE IF NOT EXISTS sequence_steps (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    sequence_id UUID REFERENCES sequences(id) ON DELETE CASCADE,
+    step_order INTEGER NOT NULL,
+    action VARCHAR(50) NOT NULL CHECK (action IN ('email', 'sms', 'note', 'update_status', 'assign', 'delay')),
+    delay_days INTEGER DEFAULT 0,
+    delay_hours INTEGER DEFAULT 0,
+    subject VARCHAR(500),
+    body TEXT,
+    template_id UUID,
+    note_content TEXT,
+    status VARCHAR(50),
+    user_id UUID,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE sequence_steps ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Team can view sequence steps"
+ON sequence_steps FOR SELECT
+USING (true);
+
+CREATE INDEX idx_sequence_steps_sequence_id ON sequence_steps(sequence_id);

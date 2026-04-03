@@ -23,6 +23,10 @@ const whatsappRoutes = require("./routes/whatsapp");
 const settingsRoutes = require("./routes/settings");
 const emailRoutes = require("./routes/email");
 const smsRoutes = require("./routes/sms");
+const sequencesRoutes = require("./routes/sequences");
+const importRoutes = require("./routes/import");
+const reportsRoutes = require("./routes/reports");
+const goalsRoutes = require("./routes/goals");
 
 const app = express();
 
@@ -91,6 +95,10 @@ app.use("/api/whatsapp", whatsappRoutes);
 app.use("/api/settings", settingsRoutes);
 app.use("/api/email", emailRoutes);
 app.use("/api/sms", smsRoutes);
+app.use("/api/sequences", sequencesRoutes);
+app.use("/api/import", importRoutes);
+app.use("/api/reports", reportsRoutes);
+app.use("/api/goals", goalsRoutes);
 
 // Health check endpoint
 app.get("/health", (req, res) => {
