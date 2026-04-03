@@ -21,6 +21,8 @@ const documentsRoutes = require("./routes/documents");
 const dealsRoutes = require("./routes/deals");
 const whatsappRoutes = require("./routes/whatsapp");
 const settingsRoutes = require("./routes/settings");
+const emailRoutes = require("./routes/email");
+const smsRoutes = require("./routes/sms");
 
 const app = express();
 
@@ -87,6 +89,8 @@ app.use("/api/documents", documentsRoutes);
 app.use("/api/deals", dealsRoutes);
 app.use("/api/whatsapp", whatsappRoutes);
 app.use("/api/settings", settingsRoutes);
+app.use("/api/email", emailRoutes);
+app.use("/api/sms", smsRoutes);
 
 // Health check endpoint
 app.get("/health", (req, res) => {
@@ -155,6 +159,11 @@ app.get("/settings", (req, res) => {
 
 app.get("/settings.html", (req, res) => {
   res.sendFile(__dirname + "/leadpilot-ui/settings.html");
+});
+
+// Serve email templates page
+app.get("/email-templates", (req, res) => {
+  res.sendFile(__dirname + "/leadpilot-ui/email-templates.html");
 });
 
 // 404 handler
