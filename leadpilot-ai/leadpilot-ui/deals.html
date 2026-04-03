@@ -2,28 +2,46 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Deals Pipeline - LeadPilot AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * { font-family: 'Inter', sans-serif; }
-        .pipeline-board { display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; overflow-x: auto; }
-        @media (max-width: 1400px) { .pipeline-board { grid-template-columns: repeat(4, minmax(250px, 1fr)); } }
-        .pipeline-column { background: #f8fafc; border-radius: 12px; padding: 12px; min-height: 400px; }
+        .pipeline-board { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; overflow-x: auto; }
+        @media (max-width: 1400px) { .pipeline-board { grid-template-columns: repeat(3, minmax(250px, 1fr)); } }
+        @media (max-width: 768px) { .pipeline-board { grid-template-columns: repeat(2, minmax(200px, 1fr)); } }
+        @media (max-width: 480px) { .pipeline-board { grid-template-columns: 1fr; } }
+        .pipeline-column { background: #f8fafc; border-radius: 12px; padding: 12px; min-height: 300px; }
         .deal-card { background: white; border-radius: 10px; padding: 14px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); cursor: pointer; transition: all 0.2s; }
         .deal-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.12); transform: translateY(-2px); }
         .deal-value { font-size: 12px; font-weight: 600; }
         .column-total { font-size: 14px; font-weight: 700; color: #1f2937; }
         .won-card { border-left: 4px solid #10b981; }
         .lost-card { border-left: 4px solid #ef4444; }
+        .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 40; }
+        .sidebar-overlay.active { display: block; }
+        .touch-btn { min-height: 44px; min-width: 44px; }
+        @media (max-width: 1024px) {
+            aside { transform: translateX(-100%); transition: transform 0.3s ease; z-index: 50; }
+            aside.open { transform: translateX(0); }
+            main { margin-left: 0 !important; padding: 1rem !important; }
+        }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
+    <!-- Mobile Menu Button -->
+    <button id="mobileMenuBtn" class="lg:hidden fixed top-4 left-4 z-50 p-3 rounded-xl bg-white shadow-lg touch-btn">
+        <i class="fas fa-bars text-gray-700"></i>
+    </button>
+    
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    
     <div class="flex">
         <!-- Sidebar -->
-        <aside class="w-64 bg-white border-r border-gray-200 min-h-screen fixed left-0 top-0">
+        <aside id="sidebar" class="w-64 bg-white border-r border-gray-200 min-h-screen fixed left-0 top-0">
             <div class="p-6 border-b border-gray-200">
                 <a href="/dashboard" class="flex items-center gap-2">
                     <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
@@ -65,7 +83,7 @@
             </div>
 
             <!-- Stats -->
-            <div class="grid grid-cols-5 gap-4 mb-6">
+            <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
                 <div class="bg-white rounded-xl p-4 shadow-sm">
                     <p class="text-sm text-gray-500">Total Pipeline</p>
                     <p class="text-2xl font-bold text-gray-900" id="stat-pipeline">₹0</p>
@@ -386,6 +404,17 @@
         });
 
         loadDeals();
+        
+        // Mobile sidebar toggle
+        document.getElementById('mobileMenuBtn').addEventListener('click', function() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('sidebarOverlay').classList.toggle('active');
+        });
+        
+        document.getElementById('sidebarOverlay').addEventListener('click', function() {
+            document.getElementById('sidebar').classList.remove('open');
+            this.classList.remove('active');
+        });
     </script>
 </body>
 </html>

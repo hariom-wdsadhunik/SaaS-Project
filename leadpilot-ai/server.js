@@ -199,6 +199,11 @@ app.get("/documents", (req, res) => {
   res.sendFile(__dirname + "/leadpilot-ui/documents.html");
 });
 
+// Serve onboarding page
+app.get("/onboarding", (req, res) => {
+  res.sendFile(__dirname + "/leadpilot-ui/onboarding.html");
+});
+
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({ error: 'Not found' });
