@@ -1,11 +1,13 @@
 require('dotenv').config();
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 const config = {
   env: process.env.NODE_ENV || 'development',
   port: parseInt(process.env.PORT, 10) || 3000,
   
   jwt: {
-    secret: process.env.JWT_SECRET || 'fallback_secret_change_in_production',
+    secret: process.env.JWT_SECRET,
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
   },
   
@@ -20,7 +22,7 @@ const config = {
     businessAccountId: process.env.WHATSAPP_BUSINESS_ACCOUNT_ID,
     phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID,
     accessToken: process.env.WHATSAPP_ACCESS_TOKEN,
-    webhookVerifyToken: process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN,
+    webhookVerifyToken: process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN || 'leadpilot_webhook_verify_token',
   },
   
   email: {
@@ -38,30 +40,48 @@ const config = {
   },
   
   rateLimit: {
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
+    windowMs: 15 * 60 * 1000,
+    max: 100,
   },
 };
 
-// Validate required configuration
 const validateConfig = () => {
-  const required = [
-    'supabase.url',
-    'supabase.serviceKey',
-    'jwt.secret',
-  ];
-  
-  const missing = required.filter(key => {
-    const value = key.split('.').reduce((obj, k) => obj?.[k], config);
-    return !value || value.includes('your_') || value.includes('fallback_');
-  });
-  
-  if (missing.length > 0) {
-    console.warn('⚠️  Missing configuration:', missing.join(', '));
-    console.warn('Some features may not work correctly.');
+  const critical = [];
+  const warnings = [];
+
+  if (!config.jwt.secret) {
+    critical.push('jwt.secret');
+  } else if (config.jwt.secret.includes('fallback_')) {
+    critical.push('jwt.secret (using insecure fallback)');
   }
-  
-  return missing.length === 0;
+
+  if (!config.supabase.url) critical.push('supabase.url');
+  if (!config.supabase.serviceKey) critical.push('supabase.serviceKey');
+
+  const optional = [];
+  if (!config.supabase.anonKey) optional.push('supabase.anonKey');
+  if (!config.email.apiKey) optional.push('email.apiKey (emails will not be sent)');
+  if (!config.redis.url) optional.push('redis.url (caching disabled)');
+
+  if (critical.length > 0) {
+    const errorMsg = `Critical configuration missing:\n  - ${critical.join('\n  - ')}`;
+    if (isProduction) {
+      throw new Error(errorMsg);
+    } else {
+      console.error('❌', errorMsg);
+      console.warn('⚠️  Application may not function correctly in production.');
+    }
+  }
+
+  if (optional.length > 0) {
+    console.warn('⚠️  Optional configuration missing:', optional.join(', '));
+  }
+
+  if (critical.length === 0) {
+    console.log('✅ All critical configuration validated');
+  }
+
+  return critical.length === 0;
 };
 
 module.exports = { config, validateConfig };

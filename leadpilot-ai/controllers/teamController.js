@@ -1,6 +1,7 @@
 const { supabase } = require('../db/supabase');
 const bcrypt = require('bcryptjs');
 const { generateToken } = require('../middleware/auth');
+const emailService = require('../services/emailService');
 
 // Create a new team
 exports.createTeam = async (req, res) => {
@@ -155,7 +156,17 @@ exports.inviteMember = async (req, res) => {
 
     if (createError) throw createError;
 
-    // TODO: Send invitation email with temp password
+    // Get team and inviter info for email
+    const { data: team } = await supabase
+      .from('teams')
+      .select('name')
+      .eq('id', teamId)
+      .single();
+
+    const inviterName = req.user.name || 'Team Admin';
+
+    // Send invitation email
+    await emailService.sendTeamInvitation(email, name, team?.name || 'Your Team', inviterName, tempPassword);
 
     res.status(201).json({
       message: 'Invitation sent successfully',

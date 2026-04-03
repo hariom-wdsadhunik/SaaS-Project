@@ -100,9 +100,18 @@ app.get("/", (req, res) => {
   res.sendFile(__dirname + "/leadpilot-ui/landing.html");
 });
 
-// Serve dashboard
+// Unified dashboard - serves the Pro dashboard
 app.get("/dashboard", (req, res) => {
   res.sendFile(__dirname + "/leadpilot-ui/dashboard-pro.html");
+});
+
+// Legacy dashboard redirects
+app.get("/dashboard-legacy", (req, res) => {
+  res.sendFile(__dirname + "/leadpilot-ui/dashboard.html");
+});
+
+app.get("/dashboard-enhanced", (req, res) => {
+  res.sendFile(__dirname + "/leadpilot-ui/dashboard-enhanced.html");
 });
 
 // Serve landing page explicitly
@@ -112,6 +121,10 @@ app.get("/landing", (req, res) => {
 
 // Serve analytics page
 app.get("/analytics.html", (req, res) => {
+  res.sendFile(__dirname + "/leadpilot-ui/analytics.html");
+});
+
+app.get("/analytics", (req, res) => {
   res.sendFile(__dirname + "/leadpilot-ui/analytics.html");
 });
 

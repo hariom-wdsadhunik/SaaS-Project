@@ -100,6 +100,29 @@ class EmailService {
     }
   }
 
+  /**
+   * Send team invitation email
+   */
+  async sendTeamInvitation(inviteeEmail, inviteeName, teamName, inviterName, tempPassword) {
+    const loginUrl = process.env.APP_URL || 'http://localhost:80';
+    
+    const mailOptions = {
+      from: `"LeadPilot AI" <${this.fromEmail}>`,
+      to: inviteeEmail,
+      subject: `You've been invited to join ${teamName} on LeadPilot AI`,
+      html: this.getTeamInvitationTemplate(inviteeName, teamName, inviterName, tempPassword, loginUrl)
+    };
+
+    try {
+      await this.transporter.sendMail(mailOptions);
+      console.log(`Team invitation sent to ${inviteeEmail}`);
+      return true;
+    } catch (error) {
+      console.error('Team invitation email failed:', error);
+      return false;
+    }
+  }
+
   // Email Templates
   getNewLeadTemplate(lead, scoreData) {
     const priorityEmoji = scoreData.priority === 'hot' ? '🔥' : scoreData.priority === 'warm' ? '⚡' : '📋';
@@ -246,6 +269,52 @@ class EmailService {
               </a>
             </div>
           </div>
+        </div>
+      </div>
+    `;
+  }
+
+  getTeamInvitationTemplate(inviteeName, teamName, inviterName, tempPassword, loginUrl) {
+    return `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #3b82f6, #8b5cf6); padding: 30px; text-align: center; color: white;">
+          <h1 style="margin: 0; font-size: 28px;">You've Been Invited!</h1>
+          <p style="margin: 10px 0 0 0; opacity: 0.9;">Join ${teamName} on LeadPilot AI</p>
+        </div>
+        
+        <div style="padding: 30px; background: #f9fafb;">
+          <div style="background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <p style="color: #374151; font-size: 16px; margin-top: 0;">
+              Hi <strong>${inviteeName}</strong>,
+            </p>
+            <p style="color: #374151; font-size: 16px;">
+              <strong>${inviterName}</strong> has invited you to join <strong>${teamName}</strong> on LeadPilot AI, 
+              an AI-powered Real Estate CRM.
+            </p>
+            <p style="color: #374151; font-size: 16px;">
+              Your temporary password is: <code style="background: #f3f4f6; padding: 4px 8px; border-radius: 4px; font-family: monospace;">${tempPassword}</code>
+            </p>
+            <p style="color: #6b7280; font-size: 14px; margin-bottom: 20px;">
+              Please log in and change your password immediately.
+            </p>
+            
+            <div style="text-align: center; margin-top: 30px;">
+              <a href="${loginUrl}/login.html" 
+                 style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">
+                Get Started
+              </a>
+            </div>
+          </div>
+
+          <div style="background: #fffbeb; border-radius: 12px; padding: 16px; border-left: 4px solid #f59e0b;">
+            <p style="margin: 0; color: #92400e; font-size: 14px;">
+              <strong>Security Tip:</strong> For your account security, please change your password after your first login.
+            </p>
+          </div>
+        </div>
+        
+        <div style="padding: 20px; text-align: center; color: #9ca3af; font-size: 12px;">
+          <p>© 2024 LeadPilot AI. All rights reserved.</p>
         </div>
       </div>
     `;

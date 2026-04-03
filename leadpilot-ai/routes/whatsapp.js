@@ -10,8 +10,23 @@ router.use(authenticateToken);
 // Get connection status
 router.get("/status", async (req, res) => {
   try {
-    // Get settings from database
     const { supabase } = require("../db/supabase");
+    
+    const isConfigured = !!(config.whatsapp.accessToken && config.whatsapp.phoneNumberId);
+    
+    if (!isConfigured) {
+      return res.json({
+        configured: false,
+        connected: false,
+        message: 'WhatsApp Business API not configured. Please add credentials in .env file.',
+        credentials: {
+          accessToken: !!config.whatsapp.accessToken,
+          phoneNumberId: !!config.whatsapp.phoneNumberId,
+          businessAccountId: !!config.whatsapp.businessAccountId
+        }
+      });
+    }
+
     const { data: settings } = await supabase
       .from('settings')
       .select('*')
@@ -20,11 +35,13 @@ router.get("/status", async (req, res) => {
       .single();
 
     res.json({
+      configured: true,
       connected: settings?.value?.connected || false,
-      phoneNumber: settings?.value?.phoneNumber || null,
+      phoneNumber: settings?.value?.phoneNumber || config.whatsapp.phoneNumberId,
       connectedAt: settings?.value?.connectedAt || null,
       messageCount: settings?.value?.messageCount || 0,
-      leadsCount: settings?.value?.leadsCount || 0
+      leadsCount: settings?.value?.leadsCount || 0,
+      webhookUrl: `/api/whatsapp/webhook`
     });
   } catch (error) {
     console.error('Error getting WhatsApp status:', error);
@@ -32,23 +49,73 @@ router.get("/status", async (req, res) => {
   }
 });
 
-// Connect WhatsApp (initiates connection process)
+// Connect WhatsApp (verify credentials and enable connection)
 router.post("/connect", async (req, res) => {
   try {
-    // In a real implementation, this would:
-    // 1. Generate a QR code from WhatsApp Business API
-    // 2. Store the connection request
-    // 3. Return the QR code for the user to scan
+    const { supabase } = require("../db/supabase");
     
-    // For now, we'll simulate the connection process
-    res.json({
-      status: 'pending',
-      message: 'Connection initiated. Please scan the QR code.',
-      expiresIn: 60 // seconds
-    });
+    if (!config.whatsapp.accessToken || !config.whatsapp.phoneNumberId) {
+      return res.status(503).json({
+        status: 'not_configured',
+        message: 'WhatsApp Business API credentials not configured. Please set WHATSAPP_ACCESS_TOKEN and WHATSAPP_PHONE_NUMBER_ID in your .env file.',
+        setupInstructions: [
+          '1. Create a Meta Business Account',
+          '2. Set up a WhatsApp Business Account',
+          '3. Add a phone number to your WhatsApp Business Account',
+          '4. Generate a permanent access token',
+          '5. Add WHATSAPP_ACCESS_TOKEN and WHATSAPP_PHONE_NUMBER_ID to .env'
+        ]
+      });
+    }
+
+    // Verify credentials by testing the API
+    try {
+      const response = await fetch(
+        `${config.whatsapp.apiVersion}/${config.whatsapp.phoneNumberId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${config.whatsapp.accessToken}`
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Invalid credentials');
+      }
+
+      const data = await response.json();
+      
+      // Update connection status in database
+      await supabase
+        .from('settings')
+        .upsert({
+          user_id: req.user.id,
+          key: 'whatsapp_connection',
+          value: {
+            connected: true,
+            phoneNumber: data.PhoneNumber || config.whatsapp.phoneNumberId,
+            connectedAt: new Date().toISOString(),
+            messageCount: 0,
+            leadsCount: 0
+          },
+          updated_at: new Date().toISOString()
+        });
+
+      res.json({
+        status: 'connected',
+        message: 'WhatsApp Business API connected successfully',
+        phoneNumber: data.PhoneNumber,
+        accountName: data.PhoneNumber
+      });
+    } catch (apiError) {
+      return res.status(401).json({
+        status: 'invalid_credentials',
+        message: 'WhatsApp API credentials are invalid or expired. Please regenerate your access token.'
+      });
+    }
   } catch (error) {
     console.error('Error connecting WhatsApp:', error);
-    res.status(500).json({ error: 'Failed to initiate connection' });
+    res.status(500).json({ error: 'Failed to connect WhatsApp' });
   }
 });
 
