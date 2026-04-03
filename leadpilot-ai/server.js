@@ -20,6 +20,7 @@ const notesRoutes = require("./routes/notes");
 const documentsRoutes = require("./routes/documents");
 const dealsRoutes = require("./routes/deals");
 const whatsappRoutes = require("./routes/whatsapp");
+const settingsRoutes = require("./routes/settings");
 
 const app = express();
 
@@ -85,6 +86,7 @@ app.use("/api/notes", notesRoutes);
 app.use("/api/documents", documentsRoutes);
 app.use("/api/deals", dealsRoutes);
 app.use("/api/whatsapp", whatsappRoutes);
+app.use("/api/settings", settingsRoutes);
 
 // Health check endpoint
 app.get("/health", (req, res) => {
@@ -144,6 +146,15 @@ app.get("/register", (req, res) => {
 
 app.get("/register.html", (req, res) => {
   res.sendFile(__dirname + "/leadpilot-ui/register.html");
+});
+
+// Serve settings page
+app.get("/settings", (req, res) => {
+  res.sendFile(__dirname + "/leadpilot-ui/settings.html");
+});
+
+app.get("/settings.html", (req, res) => {
+  res.sendFile(__dirname + "/leadpilot-ui/settings.html");
 });
 
 // 404 handler

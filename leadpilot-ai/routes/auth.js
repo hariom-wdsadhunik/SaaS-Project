@@ -3,12 +3,11 @@ const router = express.Router();
 const authController = require('../controllers/authController');
 const { authenticateToken } = require('../middleware/auth');
 
-// Public routes
 router.post('/register', authController.register);
 router.post('/login', authController.login);
 
-// Protected routes
 router.get('/me', authenticateToken, authController.getCurrentUser);
 router.patch('/profile', authenticateToken, authController.updateProfile);
+router.post('/change-password', authenticateToken, authController.changePassword);
 
 module.exports = router;

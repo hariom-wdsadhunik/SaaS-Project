@@ -118,18 +118,33 @@ exports.login = async (req, res) => {
   }
 };
 
-// Get current user
+// Get current user with team info
 exports.getCurrentUser = async (req, res) => {
   try {
     const { data: user, error } = await supabase
       .from('users')
-      .select('id, email, name, role, team_id, created_at')
+      .select('id, email, name, role, team_id, phone, avatar_url, email_notifications, created_at, last_login')
       .eq('id', req.user.id)
       .single();
 
     if (error) throw error;
 
-    res.json({ user });
+    let team = null;
+    if (user.team_id) {
+      const { data: teamData } = await supabase
+        .from('teams')
+        .select('id, name, description')
+        .eq('id', user.team_id)
+        .single();
+      team = teamData;
+    }
+
+    res.json({ 
+      user: {
+        ...user,
+        team
+      }
+    });
   } catch (error) {
     console.error('Get user error:', error);
     res.status(500).json({ error: 'Failed to get user' });
@@ -139,32 +154,80 @@ exports.getCurrentUser = async (req, res) => {
 // Update user profile
 exports.updateProfile = async (req, res) => {
   try {
-    const { name, email } = req.body;
+    const { name, email, phone, avatar_url, email_notifications } = req.body;
     const updates = {};
     
-    if (name) updates.name = name;
-    if (email) updates.email = email;
+    if (name !== undefined) updates.name = name;
+    if (email !== undefined) updates.email = email;
+    if (phone !== undefined) updates.phone = phone;
+    if (avatar_url !== undefined) updates.avatar_url = avatar_url;
+    if (email_notifications !== undefined) updates.email_notifications = email_notifications;
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ error: 'No fields to update' });
+    }
+
+    updates.updated_at = new Date().toISOString();
 
     const { data: user, error } = await supabase
       .from('users')
       .update(updates)
       .eq('id', req.user.id)
-      .select()
+      .select('id, email, name, role, team_id, phone, avatar_url, email_notifications')
       .single();
 
     if (error) throw error;
 
     res.json({
       message: 'Profile updated',
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role
-      }
+      user
     });
   } catch (error) {
     console.error('Update profile error:', error);
     res.status(500).json({ error: 'Failed to update profile' });
+  }
+};
+
+// Change password
+exports.changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Current and new password are required' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'New password must be at least 6 characters' });
+    }
+
+    const { data: user } = await supabase
+      .from('users')
+      .select('password')
+      .eq('id', req.user.id)
+      .single();
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const isValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isValid) {
+      return res.status(401).json({ error: 'Current password is incorrect' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    const { error } = await supabase
+      .from('users')
+      .update({ password: hashedPassword, updated_at: new Date().toISOString() })
+      .eq('id', req.user.id);
+
+    if (error) throw error;
+
+    res.json({ message: 'Password changed successfully' });
+  } catch (error) {
+    console.error('Change password error:', error);
+    res.status(500).json({ error: 'Failed to change password' });
   }
 };
