@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deals Pipeline - LeadPilot AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        .pipeline-board { display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; overflow-x: auto; }
+        @media (max-width: 1400px) { .pipeline-board { grid-template-columns: repeat(4, minmax(250px, 1fr)); } }
+        .pipeline-column { background: #f8fafc; border-radius: 12px; padding: 12px; min-height: 400px; }
+        .deal-card { background: white; border-radius: 10px; padding: 14px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); cursor: pointer; transition: all 0.2s; }
+        .deal-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.12); transform: translateY(-2px); }
+        .deal-value { font-size: 12px; font-weight: 600; }
+        .column-total { font-size: 14px; font-weight: 700; color: #1f2937; }
+        .won-card { border-left: 4px solid #10b981; }
+        .lost-card { border-left: 4px solid #ef4444; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="flex">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white border-r border-gray-200 min-h-screen fixed left-0 top-0">
+            <div class="p-6 border-b border-gray-200">
+                <a href="/dashboard" class="flex items-center gap-2">
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-rocket text-white"></i>
+                    </div>
+                    <span class="text-xl font-bold">LeadPilot</span>
+                </a>
+            </div>
+            <nav class="p-4 space-y-1">
+                <a href="/dashboard" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl transition">
+                    <i class="fas fa-home w-5"></i> Dashboard
+                </a>
+                <a href="/calendar" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl transition">
+                    <i class="fas fa-calendar w-5"></i> Calendar
+                </a>
+                <a href="/tasks" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl transition">
+                    <i class="fas fa-tasks w-5"></i> Tasks
+                </a>
+                <a href="/deals" class="flex items-center gap-3 px-4 py-3 bg-blue-50 text-blue-600 rounded-xl font-medium">
+                    <i class="fas fa-handshake w-5"></i> Deals
+                </a>
+                <a href="/settings" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl transition">
+                    <i class="fas fa-cog w-5"></i> Settings
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 ml-64 p-8">
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Deals Pipeline</h1>
+                    <p class="text-gray-500 mt-1">Track your deals and commissions</p>
+                </div>
+                <button onclick="openDealModal()" class="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl font-medium hover:opacity-90 transition">
+                    <i class="fas fa-plus mr-2"></i>New Deal
+                </button>
+            </div>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-5 gap-4 mb-6">
+                <div class="bg-white rounded-xl p-4 shadow-sm">
+                    <p class="text-sm text-gray-500">Total Pipeline</p>
+                    <p class="text-2xl font-bold text-gray-900" id="stat-pipeline">₹0</p>
+                </div>
+                <div class="bg-white rounded-xl p-4 shadow-sm">
+                    <p class="text-sm text-gray-500">Won (This Month)</p>
+                    <p class="text-2xl font-bold text-green-600" id="stat-won">₹0</p>
+                </div>
+                <div class="bg-white rounded-xl p-4 shadow-sm">
+                    <p class="text-sm text-gray-500">Lost (This Month)</p>
+                    <p class="text-2xl font-bold text-red-600" id="stat-lost">₹0</p>
+                </div>
+                <div class="bg-white rounded-xl p-4 shadow-sm">
+                    <p class="text-sm text-gray-500">Pending Commission</p>
+                    <p class="text-2xl font-bold text-blue-600" id="stat-commission">₹0</p>
+                </div>
+                <div class="bg-white rounded-xl p-4 shadow-sm">
+                    <p class="text-sm text-gray-500">Conversion Rate</p>
+                    <p class="text-2xl font-bold text-purple-600" id="stat-conversion">0%</p>
+                </div>
+            </div>
+
+            <!-- Pipeline Board -->
+            <div class="pipeline-board" id="pipeline-board">
+                <!-- Columns will be rendered by JS -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Deal Modal -->
+    <div id="deal-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-bold">New Deal</h2>
+                    <button onclick="closeDealModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            <form id="deal-form" class="p-6 space-y-4">
+                <input type="hidden" id="deal-id">
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Lead *</label>
+                    <select id="deal-lead" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500" required>
+                        <option value="">Select a lead</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Title *</label>
+                    <input type="text" id="deal-title" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500" placeholder="Deal title" required>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Deal Value *</label>
+                        <input type="number" id="deal-value" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500" placeholder="1000000" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Commission %</label>
+                        <input type="number" id="deal-commission" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500" value="2" step="0.1" min="0" max="100">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Stage</label>
+                        <select id="deal-stage" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500">
+                            <option value="Initial">Initial</option>
+                            <option value="Negotiation">Negotiation</option>
+                            <option value="Agreement">Agreement</option>
+                            <option value="Documentation">Documentation</option>
+                            <option value="Payment">Payment</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Expected Close</label>
+                        <input type="date" id="deal-close-date" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+                    <textarea id="deal-notes" rows="3" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500" placeholder="Additional notes..."></textarea>
+                </div>
+
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="closeDealModal()" class="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl font-medium hover:opacity-90">
+                        <i class="fas fa-save mr-2"></i>Save Deal
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+        let token = localStorage.getItem('token');
+        let deals = [];
+
+        const STAGES = [
+            { id: 'Initial', label: 'Initial', color: '#94a3b8' },
+            { id: 'Negotiation', label: 'Negotiation', color: '#f59e0b' },
+            { id: 'Agreement', label: 'Agreement', color: '#3b82f6' },
+            { id: 'Documentation', label: 'Documentation', color: '#8b5cf6' },
+            { id: 'Payment', label: 'Payment', color: '#06b6d4' },
+            { id: 'Closed Won', label: 'Won', color: '#10b981' },
+            { id: 'Closed Lost', label: 'Lost', color: '#ef4444' }
+        ];
+
+        if (!token) {
+            window.location.href = '/login';
+        }
+
+        async function loadDeals() {
+            try {
+                const res = await fetch(`${API_BASE}/deals`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    deals = Array.isArray(data) ? data : (data.deals || []);
+                    renderPipeline();
+                    updateStats();
+                }
+            } catch (err) {
+                console.error('Load deals error:', err);
+                deals = [];
+            }
+        }
+
+        async function loadLeads() {
+            try {
+                const res = await fetch(`${API_BASE}/leads?limit=100`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    const leads = Array.isArray(data) ? data : (data.leads || []);
+                    const select = document.getElementById('deal-lead');
+                    select.innerHTML = '<option value="">Select a lead</option>' +
+                        leads.map(l => `<option value="${l.id}">${l.name || l.phone} - ${l.budget || 'No budget'}</option>`).join('');
+                }
+            } catch (err) {
+                console.error('Load leads error:', err);
+            }
+        }
+
+        function formatCurrency(amount) {
+            if (!amount) return '₹0';
+            if (amount >= 10000000) return '₹' + (amount / 10000000).toFixed(1) + ' Cr';
+            if (amount >= 100000) return '₹' + (amount / 100000).toFixed(1) + ' L';
+            if (amount >= 1000) return '₹' + (amount / 1000).toFixed(1) + ' K';
+            return '₹' + amount.toLocaleString('en-IN');
+        }
+
+        function renderPipeline() {
+            const board = document.getElementById('pipeline-board');
+            
+            // Filter out won/lost from main pipeline
+            const pipelineStages = STAGES.filter(s => s.id !== 'Closed Won' && s.id !== 'Closed Lost');
+            
+            board.innerHTML = pipelineStages.map(stage => {
+                const stageDeals = deals.filter(d => d.deal_stage === stage.id);
+                const totalValue = stageDeals.reduce((sum, d) => sum + (parseFloat(d.deal_value) || 0), 0);
+                
+                return `
+                    <div class="pipeline-column">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="font-semibold text-gray-700 flex items-center gap-2">
+                                <span class="w-3 h-3 rounded-full" style="background: ${stage.color}"></span>
+                                ${stage.label}
+                                <span class="bg-gray-200 text-gray-600 text-xs px-2 py-0.5 rounded-full">${stageDeals.length}</span>
+                            </h3>
+                        </div>
+                        <div class="column-total mb-2">${formatCurrency(totalValue)}</div>
+                        <div class="space-y-2">
+                            ${stageDeals.length === 0 ? '<p class="text-center text-gray-400 text-xs py-4">No deals</p>' : ''}
+                            ${stageDeals.map(d => renderDealCard(d)).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderDealCard(deal) {
+            const commission = ((parseFloat(deal.deal_value) || 0) * (parseFloat(deal.commission_percentage) || 2)) / 100;
+            
+            return `
+                <div class="deal-card" onclick="openDealModal('${deal.id}')">
+                    <h4 class="font-medium text-gray-900 text-sm mb-1">${deal.title || 'Untitled Deal'}</h4>
+                    <p class="text-xs text-gray-500 mb-2">Lead: ${deal.lead?.name || deal.lead?.phone || 'Unknown'}</p>
+                    <div class="flex items-center justify-between">
+                        <span class="deal-value text-blue-600">${formatCurrency(deal.deal_value)}</span>
+                        <span class="text-xs text-gray-500">${deal.commission_percentage || 2}%</span>
+                    </div>
+                    ${deal.expected_close_date ? `
+                        <p class="text-xs text-gray-400 mt-1">
+                            <i class="fas fa-calendar mr-1"></i>
+                            ${new Date(deal.expected_close_date).toLocaleDateString()}
+                        </p>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        function updateStats() {
+            const totalPipeline = deals
+                .filter(d => !['Closed Won', 'Closed Lost'].includes(d.deal_stage))
+                .reduce((sum, d) => sum + (parseFloat(d.deal_value) || 0), 0);
+            
+            const thisMonth = new Date().getMonth();
+            const thisYear = new Date().getFullYear();
+            
+            const wonThisMonth = deals.filter(d => {
+                if (d.deal_stage !== 'Closed Won' || !d.actual_close_date) return false;
+                const closeDate = new Date(d.actual_close_date);
+                return closeDate.getMonth() === thisMonth && closeDate.getFullYear() === thisYear;
+            }).reduce((sum, d) => sum + (parseFloat(d.deal_value) || 0), 0);
+            
+            const lostThisMonth = deals.filter(d => {
+                if (d.deal_stage !== 'Closed Lost' || !d.actual_close_date) return false;
+                const closeDate = new Date(d.actual_close_date);
+                return closeDate.getMonth() === thisMonth && closeDate.getFullYear() === thisYear;
+            }).reduce((sum, d) => sum + (parseFloat(d.deal_value) || 0), 0);
+            
+            const pendingCommission = deals
+                .filter(d => d.deal_stage === 'Closed Won')
+                .reduce((sum, d) => sum + ((parseFloat(d.deal_value) || 0) * (parseFloat(d.commission_percentage) || 2)) / 100, 0);
+            
+            const totalClosed = deals.filter(d => ['Closed Won', 'Closed Lost'].includes(d.deal_stage)).length;
+            const won = deals.filter(d => d.deal_stage === 'Closed Won').length;
+            const conversionRate = totalClosed > 0 ? Math.round((won / totalClosed) * 100) : 0;
+
+            document.getElementById('stat-pipeline').textContent = formatCurrency(totalPipeline);
+            document.getElementById('stat-won').textContent = formatCurrency(wonThisMonth);
+            document.getElementById('stat-lost').textContent = formatCurrency(lostThisMonth);
+            document.getElementById('stat-commission').textContent = formatCurrency(pendingCommission);
+            document.getElementById('stat-conversion').textContent = conversionRate + '%';
+        }
+
+        function openDealModal(id) {
+            document.getElementById('deal-id').value = id || '';
+            document.getElementById('deal-form').reset();
+            document.getElementById('deal-commission').value = '2';
+            document.getElementById('deal-stage').value = 'Initial';
+            document.getElementById('deal-modal').classList.remove('hidden');
+            loadLeads();
+
+            if (id) {
+                const deal = deals.find(d => d.id === id);
+                if (deal) {
+                    document.getElementById('deal-id').value = deal.id;
+                    document.getElementById('deal-lead').value = deal.lead_id || '';
+                    document.getElementById('deal-title').value = deal.title || '';
+                    document.getElementById('deal-value').value = deal.deal_value || '';
+                    document.getElementById('deal-commission').value = deal.commission_percentage || 2;
+                    document.getElementById('deal-stage').value = deal.deal_stage || 'Initial';
+                    document.getElementById('deal-notes').value = deal.notes || '';
+                    if (deal.expected_close_date) {
+                        document.getElementById('deal-close-date').value = deal.expected_close_date.split('T')[0];
+                    }
+                }
+            }
+        }
+
+        function closeDealModal() {
+            document.getElementById('deal-modal').classList.add('hidden');
+        }
+
+        document.getElementById('deal-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const id = document.getElementById('deal-id').value;
+            const dealValue = parseFloat(document.getElementById('deal-value').value) || 0;
+            const commissionRate = parseFloat(document.getElementById('deal-commission').value) || 2;
+            
+            const data = {
+                lead_id: document.getElementById('deal-lead').value,
+                title: document.getElementById('deal-title').value,
+                deal_value: dealValue,
+                commission_percentage: commissionRate,
+                commission_amount: (dealValue * commissionRate) / 100,
+                deal_stage: document.getElementById('deal-stage').value,
+                expected_close_date: document.getElementById('deal-close-date').value || null,
+                notes: document.getElementById('deal-notes').value
+            };
+
+            try {
+                const url = id ? `${API_BASE}/deals/${id}` : `${API_BASE}/deals`;
+                const method = id ? 'PATCH' : 'POST';
+                
+                const res = await fetch(url, {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (res.ok) {
+                    closeDealModal();
+                    await loadDeals();
+                } else {
+                    const err = await res.json();
+                    alert('Error: ' + err.error);
+                }
+            } catch (err) {
+                console.error('Save deal error:', err);
+                alert('Failed to save deal');
+            }
+        });
+
+        loadDeals();
+    </script>
+</body>
+</html>

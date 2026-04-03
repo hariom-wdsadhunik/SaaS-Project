@@ -166,6 +166,31 @@ app.get("/email-templates", (req, res) => {
   res.sendFile(__dirname + "/leadpilot-ui/email-templates.html");
 });
 
+// Serve calendar page
+app.get("/calendar", (req, res) => {
+  res.sendFile(__dirname + "/leadpilot-ui/calendar.html");
+});
+
+// Serve tasks page
+app.get("/tasks", (req, res) => {
+  res.sendFile(__dirname + "/leadpilot-ui/tasks.html");
+});
+
+// Serve deals page
+app.get("/deals", (req, res) => {
+  res.sendFile(__dirname + "/leadpilot-ui/deals.html");
+});
+
+// Serve team page
+app.get("/team", (req, res) => {
+  res.sendFile(__dirname + "/leadpilot-ui/team.html");
+});
+
+// Serve documents page
+app.get("/documents", (req, res) => {
+  res.sendFile(__dirname + "/leadpilot-ui/documents.html");
+});
+
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({ error: 'Not found' });
