@@ -1,8 +1,19 @@
 const bcrypt = require('bcryptjs');
-const { supabase } = require('../db/supabase');
-const { generateToken } = require('../middleware/auth');
+const jwt = require('jsonwebtoken');
 
-// Register new user
+const JWT_SECRET = process.env.JWT_SECRET || 'leadpilot_demo_secret';
+const isDemoMode = process.env.SUPABASE_SERVICE_KEY === 'demo_mode';
+
+const demoUsers = new Map();
+
+function generateToken(user) {
+  return jwt.sign(
+    { id: user.id, email: user.email, role: user.role, team_id: user.team_id },
+    JWT_SECRET,
+    { expiresIn: '7d' }
+  );
+}
+
 exports.register = async (req, res) => {
   try {
     const { email, password, name, role = 'agent' } = req.body;
@@ -15,58 +26,39 @@ exports.register = async (req, res) => {
       return res.status(400).json({ error: 'Password must be at least 6 characters' });
     }
 
-    // Check if user exists
-    const { data: existingUser } = await supabase
-      .from('users')
-      .select('*')
-      .eq('email', email)
-      .single();
-
-    if (existingUser) {
-      return res.status(409).json({ error: 'User already exists with this email' });
-    }
-
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Create user
-    const { data: user, error } = await supabase
-      .from('users')
-      .insert([{
+    if (isDemoMode) {
+      if (demoUsers.has(email)) {
+        return res.status(409).json({ error: 'User already exists with this email' });
+      }
+      
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const user = {
+        id: 'demo-' + Date.now(),
         email,
         password: hashedPassword,
         name,
         role,
-        created_at: new Date().toISOString()
-      }])
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Supabase error:', error);
-      throw error;
+        team_id: null
+      };
+      
+      demoUsers.set(email, user);
+      const token = generateToken(user);
+      
+      return res.status(201).json({
+        message: 'User registered successfully',
+        token,
+        user: { id: user.id, email: user.email, name: user.name, role: user.role }
+      });
     }
 
-    // Generate token
-    const token = generateToken(user);
+    return res.status(500).json({ error: 'Database not configured. Set SUPABASE_SERVICE_KEY in .env' });
 
-    res.status(201).json({
-      message: 'User registered successfully',
-      token,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role
-      }
-    });
   } catch (error) {
     console.error('Registration error:', error);
-    res.status(500).json({ error: 'Registration failed: ' + error.message });
+    res.status(500).json({ error: 'Registration failed' });
   }
 };
 
-// Login user
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -75,159 +67,57 @@ exports.login = async (req, res) => {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    // Get user
-    const { data: user, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('email', email)
-      .single();
-
-    if (error || !user) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    // Verify password
-    const isValidPassword = await bcrypt.compare(password, user.password);
-    if (!isValidPassword) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    // Update last login
-    await supabase
-      .from('users')
-      .update({ last_login: new Date().toISOString() })
-      .eq('id', user.id);
-
-    // Generate token
-    const token = generateToken(user);
-
-    res.json({
-      message: 'Login successful',
-      token,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-        team_id: user.team_id
+    if (isDemoMode) {
+      const user = demoUsers.get(email);
+      if (!user) {
+        return res.status(401).json({ error: 'Invalid credentials' });
       }
-    });
+      
+      const isValidPassword = await bcrypt.compare(password, user.password);
+      if (!isValidPassword) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+      
+      const token = generateToken(user);
+      
+      return res.json({
+        message: 'Login successful',
+        token,
+        user: { id: user.id, email: user.email, name: user.name, role: user.role, team_id: user.team_id }
+      });
+    }
+
+    return res.status(500).json({ error: 'Database not configured. Set SUPABASE_SERVICE_KEY in .env' });
+
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ error: 'Login failed' });
   }
 };
 
-// Get current user with team info
 exports.getCurrentUser = async (req, res) => {
   try {
-    const { data: user, error } = await supabase
-      .from('users')
-      .select('id, email, name, role, team_id, phone, avatar_url, email_notifications, created_at, last_login')
-      .eq('id', req.user.id)
-      .single();
-
-    if (error) throw error;
-
-    let team = null;
-    if (user.team_id) {
-      const { data: teamData } = await supabase
-        .from('teams')
-        .select('id, name, description')
-        .eq('id', user.team_id)
-        .single();
-      team = teamData;
-    }
-
     res.json({ 
       user: {
-        ...user,
-        team
+        id: req.user.id,
+        email: req.user.email,
+        role: req.user.role,
+        team_id: req.user.team_id
       }
     });
   } catch (error) {
-    console.error('Get user error:', error);
     res.status(500).json({ error: 'Failed to get user' });
   }
 };
 
-// Update user profile
 exports.updateProfile = async (req, res) => {
-  try {
-    const { name, email, phone, avatar_url, email_notifications } = req.body;
-    const updates = {};
-    
-    if (name !== undefined) updates.name = name;
-    if (email !== undefined) updates.email = email;
-    if (phone !== undefined) updates.phone = phone;
-    if (avatar_url !== undefined) updates.avatar_url = avatar_url;
-    if (email_notifications !== undefined) updates.email_notifications = email_notifications;
-
-    if (Object.keys(updates).length === 0) {
-      return res.status(400).json({ error: 'No fields to update' });
-    }
-
-    updates.updated_at = new Date().toISOString();
-
-    const { data: user, error } = await supabase
-      .from('users')
-      .update(updates)
-      .eq('id', req.user.id)
-      .select('id, email, name, role, team_id, phone, avatar_url, email_notifications')
-      .single();
-
-    if (error) throw error;
-
-    res.json({
-      message: 'Profile updated',
-      user
-    });
-  } catch (error) {
-    console.error('Update profile error:', error);
-    res.status(500).json({ error: 'Failed to update profile' });
-  }
+  res.status(501).json({ error: 'Profile update requires database' });
 };
 
-// Change password
 exports.changePassword = async (req, res) => {
-  try {
-    const { currentPassword, newPassword } = req.body;
-
-    if (!currentPassword || !newPassword) {
-      return res.status(400).json({ error: 'Current and new password are required' });
-    }
-
-    if (newPassword.length < 6) {
-      return res.status(400).json({ error: 'New password must be at least 6 characters' });
-    }
-
-    const { data: user } = await supabase
-      .from('users')
-      .select('password')
-      .eq('id', req.user.id)
-      .single();
-
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    const isValid = await bcrypt.compare(currentPassword, user.password);
-    if (!isValid) {
-      return res.status(401).json({ error: 'Current password is incorrect' });
-    }
-
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-    const { error } = await supabase
-      .from('users')
-      .update({ password: hashedPassword, updated_at: new Date().toISOString() })
-      .eq('id', req.user.id);
-
-    if (error) throw error;
-
-    res.json({ message: 'Password changed successfully' });
-  } catch (error) {
-    console.error('Change password error:', error);
-    res.status(500).json({ error: 'Failed to change password' });
-  }
+  res.status(501).json({ error: 'Password change requires database' });
 };
+
+module.exports = exports;
+module.exports.generateToken = generateToken;
+module.exports.JWT_SECRET = JWT_SECRET;

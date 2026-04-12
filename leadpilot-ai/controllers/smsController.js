@@ -264,5 +264,3 @@ exports.getLogs = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch SMS logs" });
   }
 };
-
-module.exports = smsController;

@@ -56,7 +56,14 @@ const validateConfig = () => {
   }
 
   if (!config.supabase.url) critical.push('supabase.url');
-  if (!config.supabase.serviceKey) critical.push('supabase.serviceKey');
+  if (!config.supabase.serviceKey) {
+    if (!isProduction) {
+      console.warn('⚠️  supabase.serviceKey not set - using demo mode');
+      config.supabase.serviceKey = 'demo_mode';
+    } else {
+      critical.push('supabase.serviceKey');
+    }
+  }
 
   const optional = [];
   if (!config.supabase.anonKey) optional.push('supabase.anonKey');

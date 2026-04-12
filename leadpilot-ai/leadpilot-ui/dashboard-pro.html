@@ -1012,7 +1012,7 @@
     </div>
 
     <script>
-        const API_BASE_URL = window.location.hostname === 'localhost' ? 'http://localhost:80' : window.location.origin;
+        const API_BASE_URL = (window.location.hostname === 'localhost' ? 'http://localhost:80' : window.location.origin) + '/api';
         let allLeads = [], filteredLeads = [], currentFilter = 'all', currentView = 'list', bulkMode = false, selectedLeads = new Set();
         let allProperties = [], filteredProperties = [], currentPropertyFilter = 'all';
         let allAppointments = [], allTasks = [], allDeals = [], currentTaskFilter = 'all';
