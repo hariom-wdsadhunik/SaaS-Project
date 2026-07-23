@@ -16,6 +16,8 @@ const settings = {};
 const activityLogs = [];
 const goals = [];
 const sequences = [];
+const sequenceEnrollments = [];
+const processedSequenceSteps = [];
 const documents = [];
 const whatsappLogs = [];
 
@@ -535,6 +537,124 @@ const demoStore = {
     const log = { id: 'sms-' + Date.now(), created_at: new Date().toISOString(), ...data };
     smsLogs.unshift(log);
     return log;
+  },
+
+  // Users
+  async getUsers(filters = {}) {
+    let result = Array.from(users.values());
+    if (filters.team_id) result = result.filter(u => u.team_id === filters.team_id);
+    return result;
+  },
+
+  // Activity Logs
+  async getActivityLogs(filters = {}) {
+    let result = [...activityLogs];
+    if (filters.team_id) result = result.filter(a => a.team_id === filters.team_id);
+    return result;
+  },
+
+  // Sequences
+  async getSequences(teamId) {
+    if (teamId) return sequences.filter(s => s.team_id === teamId);
+    return sequences;
+  },
+
+  async getSequenceById(id) {
+    return sequences.find(s => s.id === id) || null;
+  },
+
+  async createSequence(data) {
+    const seq = { id: 'seq-' + Date.now(), created_at: new Date().toISOString(), ...data };
+    sequences.unshift(seq);
+    return seq;
+  },
+
+  async updateSequence(id, updates) {
+    const seq = await this.getSequenceById(id);
+    if (!seq) return null;
+    Object.assign(seq, updates);
+    return seq;
+  },
+
+  async deleteSequence(id) {
+    const index = sequences.findIndex(s => s.id === id);
+    if (index === -1) return false;
+    sequences.splice(index, 1);
+    return true;
+  },
+
+  // Sequence Enrollments
+  async getSequenceEnrollments(filters = {}) {
+    let result = [...sequenceEnrollments];
+    if (filters.sequence_id) result = result.filter(e => e.sequence_id === filters.sequence_id);
+    if (filters.lead_id) result = result.filter(e => e.lead_id === filters.lead_id);
+    if (filters.status) result = result.filter(e => e.status === filters.status);
+    return result;
+  },
+
+  async getSequenceEnrollmentById(id) {
+    return sequenceEnrollments.find(e => e.id === id) || null;
+  },
+
+  async createSequenceEnrollment(data) {
+    const enr = { id: 'enr-' + Date.now(), enrolled_at: new Date().toISOString(), ...data };
+    sequenceEnrollments.unshift(enr);
+    return enr;
+  },
+
+  async updateSequenceEnrollment(id, updates) {
+    const enr = await this.getSequenceEnrollmentById(id);
+    if (!enr) return null;
+    Object.assign(enr, updates);
+    return enr;
+  },
+
+  async deleteSequenceEnrollment(id) {
+    const index = sequenceEnrollments.findIndex(e => e.id === id);
+    if (index === -1) return false;
+    sequenceEnrollments.splice(index, 1);
+    return true;
+  },
+
+  // Sequence Locking & Idempotency
+  async acquireEnrollmentLock(id, lockDurationMs = 120000) {
+    const enr = sequenceEnrollments.find(e => e.id === id);
+    if (!enr) return null;
+
+    const now = Date.now();
+    const isLocked = enr.locked_until && new Date(enr.locked_until).getTime() > now;
+    if (isLocked) return null;
+
+    enr.locked_until = new Date(now + lockDurationMs).toISOString();
+    enr.status = 'processing';
+    return { ...enr };
+  },
+
+  async releaseEnrollmentLock(id, updates = {}) {
+    const enr = sequenceEnrollments.find(e => e.id === id);
+    if (!enr) return null;
+
+    Object.assign(enr, updates, {
+      locked_until: null,
+      last_action_at: new Date().toISOString()
+    });
+    return { ...enr };
+  },
+
+  async isStepAlreadyProcessed(enrollmentId, stepIndex) {
+    return processedSequenceSteps.some(
+      s => s.enrollment_id === enrollmentId && s.step_index === stepIndex
+    );
+  },
+
+  async recordProcessedStep(data) {
+    const record = {
+      id: 'step-log-' + Date.now(),
+      created_at: new Date().toISOString(),
+      ...data
+    };
+    processedSequenceSteps.unshift(record);
+    return record;
   }
 };
 

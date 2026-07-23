@@ -6,7 +6,7 @@ const rateLimit = require("express-rate-limit");
 const compression = require("compression");
 const morgan = require("morgan");
 const path = require("path");
-const { config } = require("./config");
+const { config, validateConfig } = require("./config");
 const demoStore = require('./db/demoStore');
 
 const app = express();
@@ -100,6 +100,7 @@ module.exports = app;
 
 // Start server if executed directly
 if (require.main === module) {
+  validateConfig();
   const PORT = process.env.PORT || config.port || 3000;
   demoStore.seedData().then(() => {
     app.listen(PORT, () => {

@@ -1,20 +1,39 @@
 require('dotenv').config();
 
 const isProduction = process.env.NODE_ENV === 'production';
+const isDemoMode = !process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_KEY === 'demo_mode';
+
+const resolveJwtSecret = () => {
+  if (process.env.JWT_SECRET) return process.env.JWT_SECRET;
+  if (isDemoMode) return 'leadpilot_demo_secret_2024';
+  if (!isProduction) return 'leadpilot_dev_secret_key';
+  return null;
+};
+
+const resolveCronSecret = () => {
+  if (process.env.CRON_SECRET) return process.env.CRON_SECRET;
+  if (isDemoMode || !isProduction) return 'leadpilot_demo_cron_secret_2024';
+  return null;
+};
 
 const config = {
   env: process.env.NODE_ENV || 'development',
   port: parseInt(process.env.PORT, 10) || 3000,
   
   jwt: {
-    secret: process.env.JWT_SECRET,
+    secret: resolveJwtSecret(),
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
   },
   
+  cron: {
+    secret: resolveCronSecret(),
+    batchSize: parseInt(process.env.SEQUENCE_BATCH_SIZE, 10) || 50,
+  },
+
   supabase: {
     url: process.env.SUPABASE_URL,
     anonKey: process.env.SUPABASE_ANON_KEY,
-    serviceKey: process.env.SUPABASE_SERVICE_KEY,
+    serviceKey: process.env.SUPABASE_SERVICE_KEY || 'demo_mode',
   },
   
   whatsapp: {
@@ -41,54 +60,40 @@ const config = {
   
   rateLimit: {
     windowMs: 15 * 60 * 1000,
-    max: 100,
+    max: 200,
   },
 };
 
 const validateConfig = () => {
-  const critical = [];
-  const warnings = [];
-
-  if (!config.jwt.secret) {
-    critical.push('jwt.secret');
-  } else if (config.jwt.secret.includes('fallback_')) {
-    critical.push('jwt.secret (using insecure fallback)');
+  if (isProduction && !process.env.JWT_SECRET) {
+    throw new Error('FATAL CONFIG ERROR: JWT_SECRET environment variable must be set in production mode.');
   }
 
-  if (!config.supabase.url) critical.push('supabase.url');
-  if (!config.supabase.serviceKey) {
-    if (!isProduction) {
-      console.warn('⚠️  supabase.serviceKey not set - using demo mode');
-      config.supabase.serviceKey = 'demo_mode';
-    } else {
-      critical.push('supabase.serviceKey');
+  if (isProduction && !config.cron.secret) {
+    throw new Error('FATAL CONFIG ERROR: CRON_SECRET environment variable must be set in production mode.');
+  }
+
+  if (isProduction && !isDemoMode) {
+    if (!process.env.SUPABASE_URL) {
+      throw new Error('FATAL CONFIG ERROR: SUPABASE_URL environment variable is required in production mode.');
+    }
+    if (!process.env.SUPABASE_SERVICE_KEY) {
+      throw new Error('FATAL CONFIG ERROR: SUPABASE_SERVICE_KEY environment variable is required in production mode.');
     }
   }
 
   const optional = [];
-  if (!config.supabase.anonKey) optional.push('supabase.anonKey');
-  if (!config.email.apiKey) optional.push('email.apiKey (emails will not be sent)');
-  if (!config.redis.url) optional.push('redis.url (caching disabled)');
-
-  if (critical.length > 0) {
-    const errorMsg = `Critical configuration missing:\n  - ${critical.join('\n  - ')}`;
-    if (isProduction) {
-      throw new Error(errorMsg);
-    } else {
-      console.error('❌', errorMsg);
-      console.warn('⚠️  Application may not function correctly in production.');
-    }
-  }
+  if (!config.email.apiKey) optional.push('EMAIL_API_KEY (email sending disabled)');
+  if (!config.whatsapp.accessToken) optional.push('WHATSAPP_ACCESS_TOKEN (WhatsApp API disabled)');
+  if (!config.redis.url) optional.push('REDIS_URL (in-memory caching active)');
 
   if (optional.length > 0) {
-    console.warn('⚠️  Optional configuration missing:', optional.join(', '));
+    console.log('ℹ️  Optional integrations status:', optional.join(' | '));
+  } else {
+    console.log('✅ All configurations and optional integrations validated');
   }
 
-  if (critical.length === 0) {
-    console.log('✅ All critical configuration validated');
-  }
-
-  return critical.length === 0;
+  return true;
 };
 
 module.exports = { config, validateConfig };

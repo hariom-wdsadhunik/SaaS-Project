@@ -1,8 +1,6 @@
 const jwt = require('jsonwebtoken');
 const { config } = require('../config');
 
-const JWT_SECRET = config.jwt.secret || process.env.JWT_SECRET || 'leadpilot_demo_secret_2024';
-
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -11,7 +9,7 @@ const authenticateToken = (req, res, next) => {
     return res.status(401).json({ error: 'Access token required' });
   }
 
-  jwt.verify(token, JWT_SECRET, (err, user) => {
+  jwt.verify(token, config.jwt.secret, (err, user) => {
     if (err) {
       return res.status(403).json({ error: 'Invalid or expired token' });
     }
@@ -28,9 +26,9 @@ const generateToken = (user) => {
       role: user.role,
       team_id: user.team_id 
     },
-    JWT_SECRET,
-    { expiresIn: '7d' }
+    config.jwt.secret,
+    { expiresIn: config.jwt.expiresIn || '7d' }
   );
 };
 
-module.exports = { authenticateToken, generateToken, JWT_SECRET };
+module.exports = { authenticateToken, generateToken, get JWT_SECRET() { return config.jwt.secret; } };

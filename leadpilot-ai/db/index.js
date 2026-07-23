@@ -697,6 +697,196 @@ const repository = {
     const { data: result, error } = await supabase.from('sms_logs').insert([data]).select().single();
     if (error) throw error;
     return result;
+  },
+
+  // ============================================
+  // USERS & ACTIVITY LOGS
+  // ============================================
+  async getUsers(filters = {}) {
+    if (isDemoMode) {
+      return demoStore.getUsers(filters);
+    }
+    let query = supabase.from('users').select('*');
+    if (filters.team_id) query = query.eq('team_id', filters.team_id);
+    const { data, error } = await query;
+    if (error) throw error;
+    return data || [];
+  },
+
+  async getActivityLogs(filters = {}) {
+    if (isDemoMode) {
+      return demoStore.getActivityLogs(filters);
+    }
+    let query = supabase.from('activity_logs').select('*');
+    if (filters.team_id) query = query.eq('team_id', filters.team_id);
+    const { data, error } = await query;
+    if (error) throw error;
+    return data || [];
+  },
+
+  // ============================================
+  // SEQUENCES
+  // ============================================
+  async getSequences(teamId) {
+    if (isDemoMode) {
+      return demoStore.getSequences(teamId);
+    }
+    let query = supabase.from('sequences').select('*');
+    if (teamId) query = query.eq('team_id', teamId);
+    const { data, error } = await query;
+    if (error) throw error;
+    return data || [];
+  },
+
+  async getSequenceById(id) {
+    if (isDemoMode) {
+      return demoStore.getSequenceById(id);
+    }
+    const { data, error } = await supabase.from('sequences').select('*').eq('id', id).single();
+    if (error && error.code !== 'PGRST116') throw error;
+    return data || null;
+  },
+
+  async createSequence(data) {
+    if (isDemoMode) {
+      return demoStore.createSequence(data);
+    }
+    const { data: result, error } = await supabase.from('sequences').insert([data]).select().single();
+    if (error) throw error;
+    return result;
+  },
+
+  async updateSequence(id, updates) {
+    if (isDemoMode) {
+      return demoStore.updateSequence(id, updates);
+    }
+    const { data, error } = await supabase.from('sequences').update(updates).eq('id', id).select().single();
+    if (error) throw error;
+    return data || null;
+  },
+
+  async deleteSequence(id) {
+    if (isDemoMode) {
+      return demoStore.deleteSequence(id);
+    }
+    const { error } = await supabase.from('sequences').delete().eq('id', id);
+    if (error) throw error;
+    return true;
+  },
+
+  // ============================================
+  // SEQUENCE ENROLLMENTS
+  // ============================================
+  async getSequenceEnrollments(filters = {}) {
+    if (isDemoMode) {
+      return demoStore.getSequenceEnrollments(filters);
+    }
+    let query = supabase.from('sequence_enrollments').select('*');
+    if (filters.sequence_id) query = query.eq('sequence_id', filters.sequence_id);
+    if (filters.lead_id) query = query.eq('lead_id', filters.lead_id);
+    if (filters.status) query = query.eq('status', filters.status);
+    const { data, error } = await query;
+    if (error) throw error;
+    return data || [];
+  },
+
+  async getSequenceEnrollmentById(id) {
+    if (isDemoMode) {
+      return demoStore.getSequenceEnrollmentById(id);
+    }
+    const { data, error } = await supabase.from('sequence_enrollments').select('*').eq('id', id).single();
+    if (error && error.code !== 'PGRST116') throw error;
+    return data || null;
+  },
+
+  async createSequenceEnrollment(data) {
+    if (isDemoMode) {
+      return demoStore.createSequenceEnrollment(data);
+    }
+    const { data: result, error } = await supabase.from('sequence_enrollments').insert([data]).select().single();
+    if (error) throw error;
+    return result;
+  },
+
+  async updateSequenceEnrollment(id, updates) {
+    if (isDemoMode) {
+      return demoStore.updateSequenceEnrollment(id, updates);
+    }
+    const { data, error } = await supabase.from('sequence_enrollments').update(updates).eq('id', id).select().single();
+    if (error) throw error;
+    return data || null;
+  },
+
+  async deleteSequenceEnrollment(id) {
+    if (isDemoMode) {
+      return demoStore.deleteSequenceEnrollment(id);
+    }
+    const { error } = await supabase.from('sequence_enrollments').delete().eq('id', id);
+    if (error) throw error;
+    return true;
+  },
+
+  // Sequence Locking & Idempotency
+  async acquireEnrollmentLock(id, lockDurationMs = 120000) {
+    if (isDemoMode) {
+      return demoStore.acquireEnrollmentLock(id, lockDurationMs);
+    }
+    const lockUntil = new Date(Date.now() + lockDurationMs).toISOString();
+    const { data, error } = await supabase
+      .from('sequence_enrollments')
+      .update({ status: 'processing', locked_until: lockUntil })
+      .eq('id', id)
+      .or(`locked_until.is.null,locked_until.lt.${new Date().toISOString()}`)
+      .select()
+      .single();
+    if (error && error.code !== 'PGRST116') throw error;
+    return data || null;
+  },
+
+  async releaseEnrollmentLock(id, updates = {}) {
+    if (isDemoMode) {
+      return demoStore.releaseEnrollmentLock(id, updates);
+    }
+    const payload = {
+      ...updates,
+      locked_until: null,
+      last_action_at: new Date().toISOString()
+    };
+    const { data, error } = await supabase
+      .from('sequence_enrollments')
+      .update(payload)
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data || null;
+  },
+
+  async isStepAlreadyProcessed(enrollmentId, stepIndex) {
+    if (isDemoMode) {
+      return demoStore.isStepAlreadyProcessed(enrollmentId, stepIndex);
+    }
+    const { data, error } = await supabase
+      .from('sequence_step_logs')
+      .select('id')
+      .eq('enrollment_id', enrollmentId)
+      .eq('step_index', stepIndex)
+      .single();
+    if (error && error.code !== 'PGRST116') throw error;
+    return !!data;
+  },
+
+  async recordProcessedStep(data) {
+    if (isDemoMode) {
+      return demoStore.recordProcessedStep(data);
+    }
+    const { data: result, error } = await supabase
+      .from('sequence_step_logs')
+      .insert([data])
+      .select()
+      .single();
+    if (error) throw error;
+    return result;
   }
 };
 

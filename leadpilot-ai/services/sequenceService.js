@@ -1,21 +1,11 @@
-const { supabase } = require("../db/supabase");
+const repository = require("../db");
 const emailController = require("../controllers/emailController");
 const smsController = require("../controllers/smsController");
 
 class SequenceService {
-  constructor() {
-    this.processingInterval = null;
-  }
-
   async getSequences(teamId) {
     try {
-      const { data, error } = await supabase
-        .from("sequences")
-        .select("*")
-        .eq("team_id", teamId)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
+      const data = await repository.getSequences(teamId);
       return { success: true, sequences: data || [] };
     } catch (error) {
       console.error("Get sequences error:", error);
@@ -25,13 +15,8 @@ class SequenceService {
 
   async getSequence(id) {
     try {
-      const { data, error } = await supabase
-        .from("sequences")
-        .select("*")
-        .eq("id", id)
-        .single();
-
-      if (error) throw error;
+      const data = await repository.getSequenceById(id);
+      if (!data) return { success: false, error: "Sequence not found" };
       return { success: true, sequence: data };
     } catch (error) {
       console.error("Get sequence error:", error);
@@ -45,25 +30,18 @@ class SequenceService {
         return { success: false, error: "Name and trigger type are required" };
       }
 
-      const { data, error } = await supabase
-        .from("sequences")
-        .insert([
-          {
-            name,
-            description,
-            trigger_type,
-            trigger_config: trigger_config || {},
-            steps: steps || [],
-            status: "inactive",
-            team_id: teamId,
-            created_by: userId,
-            created_at: new Date().toISOString(),
-          },
-        ])
-        .select()
-        .single();
+      const data = await repository.createSequence({
+        name,
+        description,
+        trigger_type,
+        trigger_config: trigger_config || {},
+        steps: steps || [],
+        status: "inactive",
+        team_id: teamId,
+        created_by: userId,
+        created_at: new Date().toISOString(),
+      });
 
-      if (error) throw error;
       return { success: true, sequence: data };
     } catch (error) {
       console.error("Create sequence error:", error);
@@ -74,14 +52,8 @@ class SequenceService {
   async updateSequence(id, updates) {
     try {
       updates.updated_at = new Date().toISOString();
-      const { data, error } = await supabase
-        .from("sequences")
-        .update(updates)
-        .eq("id", id)
-        .select()
-        .single();
-
-      if (error) throw error;
+      const data = await repository.updateSequence(id, updates);
+      if (!data) return { success: false, error: "Sequence not found" };
       return { success: true, sequence: data };
     } catch (error) {
       console.error("Update sequence error:", error);
@@ -91,10 +63,11 @@ class SequenceService {
 
   async deleteSequence(id) {
     try {
-      const { error } = await supabase.from("sequences").delete().eq("id", id);
-      if (error) throw error;
-
-      await supabase.from("sequence_enrollments").delete().eq("sequence_id", id);
+      const success = await repository.deleteSequence(id);
+      const enrollments = await repository.getSequenceEnrollments({ sequence_id: id });
+      for (const enr of (enrollments || [])) {
+        await repository.deleteSequenceEnrollment(enr.id);
+      }
       return { success: true };
     } catch (error) {
       console.error("Delete sequence error:", error);
@@ -104,32 +77,19 @@ class SequenceService {
 
   async enrollLead(leadId, sequenceId) {
     try {
-      const { data: existing } = await supabase
-        .from("sequence_enrollments")
-        .select("*")
-        .eq("lead_id", leadId)
-        .eq("sequence_id", sequenceId)
-        .single();
-
-      if (existing) {
+      const existing = await repository.getSequenceEnrollments({ lead_id: leadId, sequence_id: sequenceId });
+      if (existing && existing.length > 0) {
         return { success: false, error: "Lead already enrolled in this sequence" };
       }
 
-      const { data, error } = await supabase
-        .from("sequence_enrollments")
-        .insert([
-          {
-            lead_id: leadId,
-            sequence_id: sequenceId,
-            status: "active",
-            current_step: 0,
-            enrolled_at: new Date().toISOString(),
-          },
-        ])
-        .select()
-        .single();
+      const data = await repository.createSequenceEnrollment({
+        lead_id: leadId,
+        sequence_id: sequenceId,
+        status: "active",
+        current_step: 0,
+        enrolled_at: new Date().toISOString(),
+      });
 
-      if (error) throw error;
       return { success: true, enrollment: data };
     } catch (error) {
       console.error("Enroll lead error:", error);
@@ -154,10 +114,19 @@ class SequenceService {
 
   async processSequenceStep(enrollment, sequence, lead) {
     try {
-      const step = sequence.steps[enrollment.current_step];
+      const stepIndex = enrollment.current_step;
+      const step = sequence?.steps?.[stepIndex];
       if (!step) {
         await this.completeEnrollment(enrollment.id);
         return { success: true, completed: true };
+      }
+
+      // Step 2: Idempotency check before execution
+      const isProcessed = await repository.isStepAlreadyProcessed(enrollment.id, stepIndex);
+      if (isProcessed) {
+        console.log(`Step ${stepIndex} already processed for enrollment ${enrollment.id}. Advancing step...`);
+        await this.advanceEnrollment(enrollment);
+        return { success: true, skipped: true, reason: "Step already processed" };
       }
 
       const now = new Date();
@@ -166,15 +135,20 @@ class SequenceService {
       scheduledAt.setMinutes(scheduledAt.getMinutes() + delayMinutes);
 
       if (now < scheduledAt) {
+        await repository.releaseEnrollmentLock(enrollment.id, { status: "active" });
         return { success: true, waiting: true, nextStepAt: scheduledAt };
       }
 
+      // Step 4: Deterministic idempotency key
+      const idempotencyKey = `seq_${sequence.id}_lead_${lead.id}_step_${stepIndex}`;
+
+      // Step 5: Execute step action
       switch (step.action) {
         case "email":
-          await this.sendSequenceEmail(lead, step);
+          await this.sendSequenceEmail(lead, step, idempotencyKey);
           break;
         case "sms":
-          await this.sendSequenceSMS(lead, step);
+          await this.sendSequenceSMS(lead, step, idempotencyKey);
           break;
         case "note":
           await this.addSequenceNote(lead, step, enrollment);
@@ -187,17 +161,34 @@ class SequenceService {
           break;
       }
 
-      await this.advanceEnrollment(enrollment.id);
+      // Step 6: Record processed step idempotency record immediately after side effect
+      await repository.recordProcessedStep({
+        enrollment_id: enrollment.id,
+        sequence_id: sequence.id,
+        lead_id: lead.id,
+        step_index: stepIndex,
+        action: step.action,
+        status: "completed",
+        idempotency_key: idempotencyKey,
+        processed_at: new Date().toISOString(),
+        metadata: { stepAction: step.action }
+      });
 
-      return { success: true, stepExecuted: step.action };
+      // Step 7: Advance enrollment & release lock
+      await this.advanceEnrollment(enrollment);
+
+      return { success: true, stepExecuted: step.action, idempotencyKey };
     } catch (error) {
       console.error("Process sequence step error:", error);
-      await this.markEnrollmentFailed(enrollment.id, error.message);
+      await repository.releaseEnrollmentLock(enrollment.id, {
+        status: "failed",
+        error_message: error.message
+      });
       return { success: false, error: error.message };
     }
   }
 
-  async sendSequenceEmail(lead, step) {
+  async sendSequenceEmail(lead, step, idempotencyKey) {
     try {
       const { subject, body, template_id } = step;
       await emailController.sendToLead({
@@ -205,21 +196,21 @@ class SequenceService {
         subject: this.replaceVariables(subject, lead),
         body: this.replaceVariables(body, lead),
         templateId: template_id,
-        variables: { leadId: lead.id },
+        variables: { leadId: lead.id, idempotencyKey },
       });
     } catch (error) {
       console.error("Sequence email error:", error);
     }
   }
 
-  async sendSequenceSMS(lead, step) {
+  async sendSequenceSMS(lead, step, idempotencyKey) {
     try {
       const { message, template_id } = step;
       await smsController.sendToLead({
         leadId: lead.id,
         body: this.replaceVariables(message, lead),
         templateId: template_id,
-        variables: { leadId: lead.id },
+        variables: { leadId: lead.id, idempotencyKey },
       });
     } catch (error) {
       console.error("Sequence SMS error:", error);
@@ -229,14 +220,12 @@ class SequenceService {
   async addSequenceNote(lead, step, enrollment) {
     try {
       const noteContent = this.replaceVariables(step.note_content || "Sequence step completed", lead);
-      await supabase.from("notes").insert([
-        {
-          lead_id: lead.id,
-          note_type: "System",
-          content: `[Sequence: ${enrollment.sequence_name}] ${noteContent}`,
-          created_at: new Date().toISOString(),
-        },
-      ]);
+      await repository.createNote({
+        lead_id: lead.id,
+        note_type: "System",
+        content: `[Sequence: ${enrollment.sequence_name || 'Workflow'}] ${noteContent}`,
+        created_at: new Date().toISOString(),
+      });
     } catch (error) {
       console.error("Sequence note error:", error);
     }
@@ -244,7 +233,7 @@ class SequenceService {
 
   async updateLeadStatus(leadId, status) {
     try {
-      await supabase.from("leads").update({ status }).eq("id", leadId);
+      await repository.updateLead(leadId, { status });
     } catch (error) {
       console.error("Update lead status error:", error);
     }
@@ -252,37 +241,39 @@ class SequenceService {
 
   async assignLead(leadId, userId) {
     try {
-      await supabase
-        .from("leads")
-        .update({ assigned_to: userId, assigned_at: new Date().toISOString() })
-        .eq("id", leadId);
+      await repository.updateLead(leadId, { assigned_to: userId, assigned_at: new Date().toISOString() });
     } catch (error) {
       console.error("Assign lead error:", error);
     }
   }
 
-  async advanceEnrollment(enrollmentId) {
+  async advanceEnrollment(enrollment) {
     try {
-      await supabase
-        .from("sequence_enrollments")
-        .update({ current_step: supabase.rpc("increment_step"), last_action_at: new Date().toISOString() })
-        .eq("id", enrollmentId);
+      const nextStep = (enrollment.current_step || 0) + 1;
+      await repository.releaseEnrollmentLock(enrollment.id, {
+        current_step: nextStep,
+        status: "active"
+      });
     } catch (error) {
-      await supabase
-        .from("sequence_enrollments")
-        .update({ current_step: 999, last_action_at: new Date().toISOString() })
-        .eq("id", enrollmentId);
+      await repository.releaseEnrollmentLock(enrollment.id, {
+        current_step: 999,
+        status: "failed",
+        error_message: error.message
+      });
     }
   }
 
   async completeEnrollment(enrollmentId) {
     try {
-      await supabase
-        .from("sequence_enrollments")
-        .update({ status: "completed", completed_at: new Date().toISOString() })
-        .eq("id", enrollmentId);
+      await repository.releaseEnrollmentLock(enrollmentId, {
+        status: "completed",
+        completed_at: new Date().toISOString()
+      });
 
-      await this.updateSequenceStats(enrollmentId);
+      const enr = await repository.getSequenceEnrollmentById(enrollmentId);
+      if (enr) {
+        await this.updateSequenceStats(enr.sequence_id);
+      }
     } catch (error) {
       console.error("Complete enrollment error:", error);
     }
@@ -290,10 +281,10 @@ class SequenceService {
 
   async markEnrollmentFailed(enrollmentId, error) {
     try {
-      await supabase
-        .from("sequence_enrollments")
-        .update({ status: "failed", error_message: error })
-        .eq("id", enrollmentId);
+      await repository.releaseEnrollmentLock(enrollmentId, {
+        status: "failed",
+        error_message: error
+      });
     } catch (err) {
       console.error("Mark enrollment failed error:", err);
     }
@@ -301,10 +292,7 @@ class SequenceService {
 
   async updateSequenceStats(sequenceId) {
     try {
-      const { data: enrollments } = await supabase
-        .from("sequence_enrollments")
-        .select("status")
-        .eq("sequence_id", sequenceId);
+      const enrollments = await repository.getSequenceEnrollments({ sequence_id: sequenceId });
 
       if (enrollments) {
         const stats = {
@@ -313,7 +301,7 @@ class SequenceService {
           stopped: enrollments.filter((e) => e.status === "stopped" || e.status === "failed").length,
         };
 
-        await supabase.from("sequences").update({ stats }).eq("id", sequenceId);
+        await repository.updateSequence(sequenceId, { stats });
       }
     } catch (error) {
       console.error("Update sequence stats error:", error);
@@ -338,55 +326,58 @@ class SequenceService {
 
   async processAllEnrollments() {
     try {
-      const { data: activeEnrollments } = await supabase
-        .from("sequence_enrollments")
-        .select("*, sequences(*)")
-        .eq("status", "active");
+      const activeEnrollments = await repository.getSequenceEnrollments({ status: "active" });
 
       if (!activeEnrollments || activeEnrollments.length === 0) return;
 
-      const { data: leads } = await supabase
-        .from("leads")
-        .select("*")
-        .in(
-          "id",
-          activeEnrollments.map((e) => e.lead_id)
-        );
-
-      const leadsMap = {};
-      leads?.forEach((l) => (leadsMap[l.id] = l));
-
-      for (const enrollment of activeEnrollments) {
-        const lead = leadsMap[enrollment.lead_id];
-        if (!lead) {
-          await this.markEnrollmentFailed(enrollment.id, "Lead not found");
+      for (const rawEnrollment of activeEnrollments) {
+        // Step 1: Acquire lock atomically
+        const lockedEnrollment = await repository.acquireEnrollmentLock(rawEnrollment.id);
+        if (!lockedEnrollment) {
+          // Locked by another worker -> skip
           continue;
         }
 
-        await this.processSequenceStep(enrollment, enrollment.sequences, lead);
+        try {
+          const lead = await repository.getLeadById(lockedEnrollment.lead_id);
+          const sequence = await repository.getSequenceById(lockedEnrollment.sequence_id);
+
+          if (!lead || !sequence) {
+            await repository.releaseEnrollmentLock(lockedEnrollment.id, {
+              status: "failed",
+              error_message: "Lead or Sequence not found"
+            });
+            continue;
+          }
+
+          await this.processSequenceStep(lockedEnrollment, sequence, lead);
+        } catch (err) {
+          console.error("Enrollment processing error:", err);
+          await repository.releaseEnrollmentLock(lockedEnrollment.id, {
+            status: "failed",
+            error_message: err.message
+          });
+        }
       }
     } catch (error) {
       console.error("Process all enrollments error:", error);
     }
   }
 
-  startProcessor(intervalMinutes = 5) {
-    if (this.processingInterval) {
-      clearInterval(this.processingInterval);
-    }
-
-    this.processingInterval = setInterval(() => {
-      this.processAllEnrollments();
-    }, intervalMinutes * 60 * 1000);
-
-    console.log(`Sequence processor started (every ${intervalMinutes} minutes)`);
-  }
-
-  stopProcessor() {
-    if (this.processingInterval) {
-      clearInterval(this.processingInterval);
-      this.processingInterval = null;
-      console.log("Sequence processor stopped");
+  async processPendingJobs() {
+    try {
+      const startTime = new Date();
+      await this.processAllEnrollments();
+      const endTime = new Date();
+      return {
+        success: true,
+        message: 'Pending sequence jobs processed successfully',
+        timestamp: endTime.toISOString(),
+        durationMs: endTime - startTime
+      };
+    } catch (error) {
+      console.error('Process pending jobs error:', error);
+      return { success: false, error: error.message };
     }
   }
 }
@@ -462,19 +453,9 @@ const enrollSingleLead = async (req, res) => {
 const getEnrollments = async (req, res) => {
   try {
     const { sequenceId } = req.query;
-    let query = supabase
-      .from("sequence_enrollments")
-      .select("*, leads(name, phone), sequences(name)")
-      .order("enrolled_at", { ascending: false });
+    const enrollments = await repository.getSequenceEnrollments({ sequence_id: sequenceId });
 
-    if (sequenceId) {
-      query = query.eq("sequence_id", sequenceId);
-    }
-
-    const { data, error } = await query;
-    if (error) throw error;
-
-    res.json({ enrollments: data || [] });
+    res.json({ enrollments: enrollments || [] });
   } catch (error) {
     console.error("Get enrollments error:", error);
     res.status(500).json({ error: "Failed to fetch enrollments" });

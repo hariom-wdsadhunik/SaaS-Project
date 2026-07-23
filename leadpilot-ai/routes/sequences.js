@@ -1,7 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const { authenticateToken } = require("../middleware/auth");
+const { cronAuth } = require("../middleware/cronAuth");
 const {
+  sequenceService,
   getSequences,
   getSequence,
   createSequence,
@@ -12,6 +14,17 @@ const {
   getEnrollments,
 } = require("../services/sequenceService");
 
+// Public / Cron Protected Route (Must be mounted before authenticateToken middleware)
+router.post("/process-jobs", cronAuth, async (req, res) => {
+  const result = await sequenceService.processPendingJobs();
+  if (result.success) {
+    res.json(result);
+  } else {
+    res.status(500).json(result);
+  }
+});
+
+// Protected routes (User JWT)
 router.use(authenticateToken);
 
 router.get("/", getSequences);

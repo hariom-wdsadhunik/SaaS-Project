@@ -3,13 +3,11 @@ const jwt = require('jsonwebtoken');
 const { config } = require('../config');
 const repository = require('../db');
 
-const JWT_SECRET = config.jwt.secret || process.env.JWT_SECRET || 'leadpilot_demo_secret_2024';
-
 function generateToken(user) {
   return jwt.sign(
     { id: user.id, email: user.email, role: user.role, team_id: user.team_id },
-    JWT_SECRET,
-    { expiresIn: '7d' }
+    config.jwt.secret,
+    { expiresIn: config.jwt.expiresIn || '7d' }
   );
 }
 
@@ -150,4 +148,4 @@ exports.changePassword = async (req, res) => {
 
 module.exports = exports;
 module.exports.generateToken = generateToken;
-module.exports.JWT_SECRET = JWT_SECRET;
+Object.defineProperty(module.exports, 'JWT_SECRET', { get() { return config.jwt.secret; } });

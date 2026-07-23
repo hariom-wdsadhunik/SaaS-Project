@@ -1,4 +1,4 @@
-const { supabase } = require("../db/supabase");
+const repository = require("../db");
 
 class ReportService {
   formatCurrency(amount) {
@@ -11,23 +11,21 @@ class ReportService {
 
   async generateLeadsReport({ teamId, startDate, endDate, filters }) {
     try {
-      let query = supabase.from("leads").select("*").eq("team_id", teamId);
+      const { data: allLeads } = await repository.getLeads({ limit: 1000 });
+      let leads = (allLeads || []).filter(l => !teamId || l.team_id === teamId);
 
       if (startDate) {
-        query = query.gte("created_at", startDate);
+        leads = leads.filter(l => l.created_at >= startDate);
       }
       if (endDate) {
-        query = query.lte("created_at", endDate);
+        leads = leads.filter(l => l.created_at <= endDate);
       }
       if (filters?.status) {
-        query = query.eq("status", filters.status);
+        leads = leads.filter(l => l.status === filters.status);
       }
       if (filters?.source) {
-        query = query.eq("source", filters.source);
+        leads = leads.filter(l => l.source === filters.source);
       }
-
-      const { data: leads, error } = await query;
-      if (error) throw error;
 
       const total = leads.length;
       const byStatus = {};
@@ -36,13 +34,11 @@ class ReportService {
       const byMonth = {};
 
       leads.forEach((lead) => {
-        byStatus[lead.status] = (byStatus[lead.status] || 0) + 1;
+        if (lead.status) byStatus[lead.status] = (byStatus[lead.status] || 0) + 1;
+        if (lead.source) bySource[lead.source] = (bySource[lead.source] || 0) + 1;
+        if (lead.ai_priority) byPriority[lead.ai_priority] = (byPriority[lead.ai_priority] || 0) + 1;
 
-        bySource[lead.source] = (bySource[lead.source] || 0) + 1;
-
-        byPriority[lead.ai_priority] = (byPriority[lead.ai_priority] || 0) + 1;
-
-        const month = new Date(lead.created_at).toLocaleDateString("en-US", {
+        const month = new Date(lead.created_at || Date.now()).toLocaleDateString("en-US", {
           month: "short",
           year: "numeric",
         });
@@ -52,9 +48,10 @@ class ReportService {
       const closed = leads.filter((l) => l.status === "closed").length;
       const conversionRate = total > 0 ? ((closed / total) * 100).toFixed(1) : 0;
 
-      const avgScore =
-        leads.filter((l) => l.ai_score).reduce((sum, l) => sum + l.ai_score, 0) /
-          leads.filter((l) => l.ai_score).length || 0;
+      const scoredLeads = leads.filter((l) => l.ai_score);
+      const avgScore = scoredLeads.length > 0
+        ? scoredLeads.reduce((sum, l) => sum + l.ai_score, 0) / scoredLeads.length
+        : 0;
 
       return {
         success: true,
@@ -83,17 +80,15 @@ class ReportService {
 
   async generateDealsReport({ teamId, startDate, endDate }) {
     try {
-      let query = supabase.from("deals").select("*").eq("team_id", teamId);
+      const allDeals = await repository.getDeals();
+      let deals = (allDeals || []).filter(d => !teamId || d.team_id === teamId);
 
       if (startDate) {
-        query = query.gte("created_at", startDate);
+        deals = deals.filter(d => d.created_at >= startDate);
       }
       if (endDate) {
-        query = query.lte("created_at", endDate);
+        deals = deals.filter(d => d.created_at <= endDate);
       }
-
-      const { data: deals, error } = await query;
-      if (error) throw error;
 
       const totalValue = deals.reduce((sum, d) => sum + (parseFloat(d.deal_value) || 0), 0);
       const totalCommission = deals.reduce((sum, d) => sum + (parseFloat(d.commission_amount) || 0), 0);
@@ -104,9 +99,9 @@ class ReportService {
       const lost = deals.filter((d) => d.deal_stage === "Closed Lost");
 
       deals.forEach((deal) => {
-        byStage[deal.deal_stage] = (byStage[deal.deal_stage] || 0) + 1;
+        if (deal.deal_stage) byStage[deal.deal_stage] = (byStage[deal.deal_stage] || 0) + 1;
 
-        const month = new Date(deal.created_at).toLocaleDateString("en-US", {
+        const month = new Date(deal.created_at || Date.now()).toLocaleDateString("en-US", {
           month: "short",
           year: "numeric",
         });
@@ -115,7 +110,7 @@ class ReportService {
         byMonth[month].value += parseFloat(deal.deal_value) || 0;
       });
 
-      const winRate = deals.length > 0 ? ((won.length / (won.length + lost.length)) * 100).toFixed(1) : 0;
+      const winRate = deals.length > 0 ? ((won.length / (won.length + lost.length || 1)) * 100).toFixed(1) : 0;
 
       return {
         success: true,
@@ -145,22 +140,11 @@ class ReportService {
 
   async generatePerformanceReport({ teamId, startDate, endDate }) {
     try {
-      const { data: teamMembers, error: membersError } = await supabase
-        .from("users")
-        .select("id, name, email")
-        .eq("team_id", teamId);
+      const teamMembers = await repository.getUsers({ team_id: teamId });
+      const { data: leads } = await repository.getLeads({ limit: 1000 });
 
-      if (membersError) throw membersError;
-
-      const { data: leads, error: leadsError } = await supabase
-        .from("leads")
-        .select("*")
-        .eq("team_id", teamId);
-
-      if (leadsError) throw leadsError;
-
-      const memberStats = teamMembers.map((member) => {
-        const memberLeads = leads.filter((l) => l.assigned_to === member.id);
+      const memberStats = (teamMembers || []).map((member) => {
+        const memberLeads = (leads || []).filter((l) => l.assigned_to === member.id);
         const newLeads = memberLeads.filter((l) => l.status === "new").length;
         const contacted = memberLeads.filter((l) => l.status === "contacted").length;
         const closed = memberLeads.filter((l) => l.status === "closed").length;
@@ -188,13 +172,13 @@ class ReportService {
           generatedAt: new Date().toISOString(),
           dateRange: { startDate, endDate },
           summary: {
-            totalTeamMembers: teamMembers.length,
-            totalLeads: leads.length,
-            overallClosed: leads.filter((l) => l.status === "closed").length,
+            totalTeamMembers: (teamMembers || []).length,
+            totalLeads: (leads || []).length,
+            overallClosed: (leads || []).filter((l) => l.status === "closed").length,
             overallConversion:
-              leads.length > 0
+              (leads || []).length > 0
                 ? (
-                    (leads.filter((l) => l.status === "closed").length / leads.length) *
+                    ((leads || []).filter((l) => l.status === "closed").length / (leads || []).length) *
                     100
                   ).toFixed(1) + "%"
                 : "0%",
@@ -211,26 +195,23 @@ class ReportService {
 
   async generateActivityReport({ teamId, startDate, endDate }) {
     try {
-      let query = supabase.from("activity_logs").select("*").eq("team_id", teamId);
+      const activities = await repository.getActivityLogs({ team_id: teamId });
+      let filtered = (activities || []);
 
       if (startDate) {
-        query = query.gte("created_at", startDate);
+        filtered = filtered.filter(a => a.created_at >= startDate);
       }
       if (endDate) {
-        query = query.lte("created_at", endDate);
+        filtered = filtered.filter(a => a.created_at <= endDate);
       }
 
-      const { data: activities, error } = await query;
-      if (error) throw error;
-
       const byAction = {};
-      const byUser = {};
       const byDay = {};
 
-      activities.forEach((activity) => {
-        byAction[activity.action] = (byAction[activity.action] || 0) + 1;
+      filtered.forEach((activity) => {
+        if (activity.action) byAction[activity.action] = (byAction[activity.action] || 0) + 1;
 
-        const day = new Date(activity.created_at).toLocaleDateString();
+        const day = new Date(activity.created_at || Date.now()).toLocaleDateString();
         byDay[day] = (byDay[day] || 0) + 1;
       });
 
@@ -241,12 +222,12 @@ class ReportService {
           generatedAt: new Date().toISOString(),
           dateRange: { startDate, endDate },
           summary: {
-            totalActivities: activities.length,
+            totalActivities: filtered.length,
             uniqueActions: Object.keys(byAction).length,
           },
           byAction,
           byDay,
-          recentActivities: activities.slice(0, 50),
+          recentActivities: filtered.slice(0, 50),
         },
       };
     } catch (error) {
@@ -397,16 +378,14 @@ exports.generateReport = async (req, res) => {
       return res.status(500).json(result);
     }
 
-    await supabase.from("activity_logs").insert([
-      {
-        user_id: userId,
-        team_id: teamId,
-        action: "generate_report",
-        description: `Generated ${type} report`,
-        metadata: { type, startDate, endDate },
-        created_at: new Date().toISOString(),
-      },
-    ]);
+    await repository.logActivity({
+      user_id: userId,
+      team_id: teamId,
+      action: "generate_report",
+      description: `Generated ${type} report`,
+      metadata: { type, startDate, endDate },
+      created_at: new Date().toISOString(),
+    });
 
     if (format === "html") {
       const html = reportService.generatePDFHtml(result.report);

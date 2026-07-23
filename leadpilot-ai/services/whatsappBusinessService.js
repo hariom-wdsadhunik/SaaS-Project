@@ -1,202 +1,181 @@
-const axios = require('axios');
-const { config } = require('../config');
-const { supabase } = require('../db/supabase');
+const { config } = require("../config");
+const repository = require("../db");
 
 class WhatsAppBusinessService {
   constructor() {
-    this.baseUrl = `https://graph.facebook.com/${config.whatsapp.apiVersion}`;
-    this.phoneNumberId = config.whatsapp.phoneNumberId;
     this.accessToken = config.whatsapp.accessToken;
+    this.phoneNumberId = config.whatsapp.phoneNumberId;
+    this.apiVersion = config.whatsapp.apiVersion || "v18.0";
+    this.baseUrl = `https://graph.facebook.com/${this.apiVersion}`;
   }
 
-  // Send a text message
-  async sendTextMessage(to, message) {
-    try {
-      const response = await axios.post(
-        `${this.baseUrl}/${this.phoneNumberId}/messages`,
-        {
-          messaging_product: 'whatsapp',
-          recipient_type: 'individual',
-          to: this.formatPhoneNumber(to),
-          type: 'text',
-          text: { body: message }
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${this.accessToken}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+  isConfigured() {
+    return !!(this.accessToken && this.phoneNumberId);
+  }
 
-      // Log the message
-      await this.logMessage(to, message, 'sent');
-      
-      return response.data;
+  async sendTextMessage(to, text) {
+    if (!this.isConfigured()) {
+      throw new Error("WhatsApp Business API not configured. Please set WHATSAPP_ACCESS_TOKEN and WHATSAPP_PHONE_NUMBER_ID.");
+    }
+
+    const formattedNumber = this.formatPhoneNumber(to);
+    const url = `${this.baseUrl}/${this.phoneNumberId}/messages`;
+
+    const payload = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: formattedNumber,
+      type: "text",
+      text: {
+        preview_url: false,
+        body: text,
+      },
+    };
+
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${this.accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error("WhatsApp API Error Response:", data);
+        throw new Error(data.error?.message || "Failed to send WhatsApp message");
+      }
+
+      await this.logMessage(formattedNumber, text, "outbound");
+
+      return {
+        success: true,
+        messageId: data.messages?.[0]?.id,
+        to: formattedNumber,
+      };
     } catch (error) {
-      console.error('Error sending WhatsApp message:', error.response?.data || error.message);
-      throw new Error('Failed to send WhatsApp message');
+      console.error("WhatsApp text message send error:", error);
+      throw error;
     }
   }
 
-  // Send a template message
-  async sendTemplateMessage(to, templateName, languageCode = 'en', components = []) {
-    try {
-      const response = await axios.post(
-        `${this.baseUrl}/${this.phoneNumberId}/messages`,
-        {
-          messaging_product: 'whatsapp',
-          recipient_type: 'individual',
-          to: this.formatPhoneNumber(to),
-          type: 'template',
-          template: {
-            name: templateName,
-            language: { code: languageCode },
-            components
-          }
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${this.accessToken}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+  async sendTemplateMessage(to, templateName, languageCode = "en", components = []) {
+    if (!this.isConfigured()) {
+      throw new Error("WhatsApp Business API not configured");
+    }
 
-      await this.logMessage(to, `Template: ${templateName}`, 'sent');
-      
-      return response.data;
+    const formattedNumber = this.formatPhoneNumber(to);
+    const url = `${this.baseUrl}/${this.phoneNumberId}/messages`;
+
+    const payload = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: formattedNumber,
+      type: "template",
+      template: {
+        name: templateName,
+        language: {
+          code: languageCode,
+        },
+        components: components,
+      },
+    };
+
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${this.accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error?.message || "Failed to send WhatsApp template");
+      }
+
+      await this.logMessage(formattedNumber, `Template: ${templateName}`, "outbound");
+
+      return {
+        success: true,
+        messageId: data.messages?.[0]?.id,
+        to: formattedNumber,
+      };
     } catch (error) {
-      console.error('Error sending template message:', error.response?.data || error.message);
-      throw new Error('Failed to send template message');
+      console.error("WhatsApp template message send error:", error);
+      throw error;
     }
   }
 
-  // Send a media message (image, document)
-  async sendMediaMessage(to, mediaType, mediaUrl, caption = '') {
+  async handleWebhookEvent(body) {
     try {
-      const response = await axios.post(
-        `${this.baseUrl}/${this.phoneNumberId}/messages`,
-        {
-          messaging_product: 'whatsapp',
-          recipient_type: 'individual',
-          to: this.formatPhoneNumber(to),
-          type: mediaType,
-          [mediaType]: {
-            link: mediaUrl,
-            caption
-          }
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${this.accessToken}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      await this.logMessage(to, `Media: ${mediaType}`, 'sent');
-      
-      return response.data;
-    } catch (error) {
-      console.error('Error sending media message:', error.response?.data || error.message);
-      throw new Error('Failed to send media message');
-    }
-  }
-
-  // Handle incoming webhook messages
-  async handleIncomingMessage(payload) {
-    try {
-      const entry = payload.entry?.[0];
+      const entry = body.entry?.[0];
       const changes = entry?.changes?.[0];
       const value = changes?.value;
-      const messages = value?.messages;
 
-      if (!messages || messages.length === 0) return;
-
-      for (const message of messages) {
-        const from = message.from;
-        const messageType = message.type;
-        const messageId = message.id;
-        const timestamp = message.timestamp;
-
-        let content = '';
-        switch (messageType) {
-          case 'text':
-            content = message.text.body;
-            break;
-          case 'image':
-            content = '[Image]';
-            break;
-          case 'document':
-            content = '[Document]';
-            break;
-          case 'audio':
-            content = '[Audio]';
-            break;
-          case 'video':
-            content = '[Video]';
-            break;
-          default:
-            content = `[${messageType}]`;
-        }
-
-        // Create lead from WhatsApp message
-        await this.createLeadFromWhatsApp(from, content, messageType);
-        
-        // Send auto-reply if enabled
-        await this.sendAutoReply(from);
+      if (!value || !value.messages) {
+        return { processed: false, reason: "No messages in payload" };
       }
+
+      const results = [];
+
+      for (const message of value.messages) {
+        if (message.type === "text") {
+          const from = message.from;
+          const text = message.text?.body;
+
+          await this.logMessage(from, text, "inbound");
+          const lead = await this.createLeadFromMessage(from, text);
+          await this.sendAutoReply(from);
+
+          results.push({ from, messageId: message.id, leadId: lead?.id });
+        }
+      }
+
+      return { processed: true, count: results.length, results };
     } catch (error) {
-      console.error('Error handling incoming message:', error);
+      console.error("Error processing WhatsApp webhook:", error);
+      throw error;
     }
   }
 
-  // Create lead from WhatsApp message
-  async createLeadFromWhatsApp(phone, message, messageType) {
+  async createLeadFromMessage(phone, message) {
     try {
-      // Check if lead already exists
-      const { data: existingLead } = await supabase
-        .from('leads')
-        .select('*')
-        .eq('phone', phone)
-        .single();
+      const { data: existingLeads } = await repository.getLeads({ search: phone });
+      const existingLead = (existingLeads || []).find(l => l.phone === phone);
 
       if (existingLead) {
-        // Add note to existing lead
-        await supabase.from('notes').insert([{
+        await repository.createNote({
           lead_id: existingLead.id,
           note_type: 'WhatsApp',
           content: message,
           created_at: new Date().toISOString()
-        }]);
+        });
         return existingLead;
       }
 
-      // Create new lead
-      const { data: newLead, error } = await supabase
-        .from('leads')
-        .insert([{
-          phone,
-          message,
-          source: 'whatsapp',
-          status: 'new',
-          ai_score: this.calculateAIScore(message),
-          ai_priority: this.calculatePriority(message),
-          created_at: new Date().toISOString()
-        }])
-        .select()
-        .single();
+      const newLead = await repository.createLead({
+        phone,
+        message,
+        source: 'whatsapp',
+        status: 'new',
+        ai_score: this.calculateAIScore(message),
+        ai_priority: this.calculatePriority(message),
+        created_at: new Date().toISOString()
+      });
 
-      if (error) throw error;
-
-      // Add initial note
-      await supabase.from('notes').insert([{
+      await repository.createNote({
         lead_id: newLead.id,
         note_type: 'WhatsApp',
         content: `New lead from WhatsApp: ${message}`,
         created_at: new Date().toISOString()
-      }]);
+      });
 
       return newLead;
     } catch (error) {
@@ -205,92 +184,54 @@ class WhatsAppBusinessService {
     }
   }
 
-  // Send auto-reply if enabled
   async sendAutoReply(to) {
     try {
-      // Get settings from database
-      const { data: settings } = await supabase
-        .from('settings')
-        .select('*')
-        .eq('key', 'whatsapp_auto_reply')
-        .single();
-
-      if (!settings || !settings.value?.enabled) return;
-
-      const welcomeMessage = settings.value.welcome_message || 
-        'Thank you for contacting us! We will get back to you shortly.';
-
+      const welcomeMessage = 'Thank you for contacting us! We will get back to you shortly.';
       await this.sendTextMessage(to, welcomeMessage);
     } catch (error) {
       console.error('Error sending auto-reply:', error);
     }
   }
 
-  // Log message to database
   async logMessage(phone, content, direction) {
     try {
-      await supabase.from('whatsapp_logs').insert([{
-        phone,
-        content,
-        direction,
+      await repository.createNote({
+        note_type: 'WhatsApp',
+        content: `[WhatsApp ${direction}]: ${content} (Phone: ${phone})`,
         created_at: new Date().toISOString()
-      }]);
+      });
     } catch (error) {
       console.error('Error logging message:', error);
     }
   }
 
-  // Format phone number (remove + and spaces)
-  formatPhoneNumber(phone) {
-    return phone.replace(/\+/g, '').replace(/\s/g, '');
-  }
-
-  // Calculate AI score based on message content
   calculateAIScore(message) {
-    let score = 50; // Base score
-    
-    // Keywords that indicate high intent
-    const highIntentKeywords = ['buy', 'purchase', 'interested', 'budget', 'price', 'ready'];
-    const mediumIntentKeywords = ['looking', 'searching', 'information', 'details'];
-    
-    const lowerMessage = message.toLowerCase();
-    
-    highIntentKeywords.forEach(keyword => {
-      if (lowerMessage.includes(keyword)) score += 15;
-    });
-    
-    mediumIntentKeywords.forEach(keyword => {
-      if (lowerMessage.includes(keyword)) score += 5;
-    });
-    
-    return Math.min(score, 100);
+    let score = 50;
+    const text = message.toLowerCase();
+
+    if (text.includes("urgent") || text.includes("immediately") || text.includes("today")) score += 20;
+    if (text.includes("budget") || text.includes("cr") || text.includes("lakh") || text.includes("price")) score += 15;
+    if (text.includes("buy") || text.includes("purchase") || text.includes("looking for")) score += 15;
+    if (text.includes("location") || text.includes("area") || text.includes("city")) score += 10;
+
+    return Math.min(score, 99);
   }
 
-  // Calculate priority based on AI score
   calculatePriority(message) {
     const score = this.calculateAIScore(message);
-    if (score >= 80) return 'hot';
-    if (score >= 60) return 'warm';
-    return 'cold';
+    if (score >= 80) return "hot";
+    if (score >= 60) return "warm";
+    return "cold";
   }
 
-  // Get message templates
-  async getTemplates() {
-    try {
-      const response = await axios.get(
-        `${this.baseUrl}/${config.whatsapp.businessAccountId}/message_templates`,
-        {
-          headers: {
-            'Authorization': `Bearer ${this.accessToken}`
-          }
-        }
-      );
-      return response.data.data;
-    } catch (error) {
-      console.error('Error fetching templates:', error.response?.data || error.message);
-      throw new Error('Failed to fetch templates');
+  formatPhoneNumber(phone) {
+    let cleaned = phone.replace(/\D/g, "");
+    if (!cleaned.startsWith("91") && cleaned.length === 10) {
+      cleaned = "91" + cleaned;
     }
+    return cleaned;
   }
 }
 
-module.exports = new WhatsAppBusinessService();
+const whatsappBusinessService = new WhatsAppBusinessService();
+module.exports = whatsappBusinessService;
