@@ -1,25 +1,11 @@
 const repository = require("../db");
+const logger = require("../logger");
 
 // Get all leads with pagination and filters
 exports.getLeads = async (req, res) => {
   try {
-    const { status, search, limit = 50, offset = 0 } = req.query;
-
-    const result = await repository.getLeads({
-      status,
-      search,
-      limit: parseInt(limit, 10),
-      offset: parseInt(offset, 10)
-    });
-
-    res.json({
-      data: result.data,
-      pagination: {
-        total: result.total,
-        limit: parseInt(limit, 10),
-        offset: parseInt(offset, 10)
-      }
-    });
+    const result = await repository.getLeads(req.query);
+    res.json(result);
   } catch (err) {
     console.error("Error fetching leads:", err);
     res.status(500).json({ error: "Failed to fetch leads" });

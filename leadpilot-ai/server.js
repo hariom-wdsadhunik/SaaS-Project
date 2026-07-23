@@ -6,6 +6,7 @@ const rateLimit = require("express-rate-limit");
 const compression = require("compression");
 const morgan = require("morgan");
 const path = require("path");
+const logger = require("./logger");
 const { config, validateConfig } = require("./config");
 const demoStore = require('./db/demoStore');
 
@@ -23,7 +24,32 @@ app.use(helmet({
   },
 }));
 
-app.use(cors({ origin: '*', credentials: true, methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], allowedHeaders: ['Content-Type', 'Authorization'] }));
+// Production-ready CORS Configuration
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow requests without Origin header (curl, Postman, server-to-server, same-origin)
+    if (!origin) return callback(null, true);
+
+    const allowedOrigins = config.cors.allowedOrigins;
+    const isProd = config.env === 'production';
+
+    // Development or explicit wildcard mode
+    if (allowedOrigins.includes('*') || (!isProd && !process.env.CORS_ORIGIN)) {
+      return callback(null, true);
+    }
+
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`CORS Policy: Origin '${origin}' is not allowed.`));
+  },
+  credentials: config.cors.credentials,
+  methods: config.cors.methods,
+  allowedHeaders: config.cors.allowedHeaders
+};
+
+app.use(cors(corsOptions));
 
 const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 200, message: { error: 'Too many requests' } });
 app.use('/api/', limiter);
@@ -31,7 +57,12 @@ app.use('/api/', limiter);
 app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 app.use(compression());
-app.use(morgan('dev'));
+
+// Structured HTTP Request Logging
+const morganStream = {
+  write: (message) => logger.info({ type: 'http' }, message.trim())
+};
+app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev', { stream: morganStream }));
 
 // Static UI serving
 app.use(express.static(path.join(__dirname, "public")));
@@ -91,7 +122,7 @@ app.use((req, res) => res.status(404).json({ error: 'Not found' }));
 
 // Global Error Handler
 app.use((err, req, res, next) => {
-  console.error('Error:', err.message);
+  logger.error({ err, path: req.path, method: req.method }, 'Global Error: ' + err.message);
   res.status(500).json({ error: 'Internal server error' });
 });
 
@@ -104,9 +135,9 @@ if (require.main === module) {
   const PORT = process.env.PORT || config.port || 3000;
   demoStore.seedData().then(() => {
     app.listen(PORT, () => {
-      console.log(`🚀 LeadPilot AI CRM running on http://localhost:${PORT}`);
-      console.log(`📊 Mode: DEMO (in-memory, no database needed)`);
-      console.log(`👤 Demo login: admin@leadpilot.ai / admin123`);
+      logger.info({ port: PORT, mode: config.env }, `🚀 LeadPilot AI CRM running on http://localhost:${PORT}`);
+      logger.info('📊 Mode: DEMO (in-memory, no database needed)');
+      logger.info('👤 Demo login: admin@leadpilot.ai / admin123');
     });
   });
 }

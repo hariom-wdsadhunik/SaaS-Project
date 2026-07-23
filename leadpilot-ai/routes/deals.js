@@ -1,5 +1,7 @@
 const express = require("express");
 const router = express.Router();
+const validate = require("../middleware/validate");
+const { createDealSchema, updateDealSchema } = require("../schemas/dealSchemas");
 const {
   getDeals,
   getDeal,
@@ -20,8 +22,8 @@ router.get("/pipeline/stats", getDealPipelineStats);
 router.get("/commission/stats", getCommissionStats);
 router.get("/trends/monthly", getMonthlyTrends);
 router.get("/:id", getDeal);
-router.post("/", createDeal);
-router.patch("/:id", updateDeal);
+router.post("/", validate(createDealSchema), createDeal);
+router.patch("/:id", validate(updateDealSchema), updateDeal);
 router.patch("/:id/close-won", closeDealWon);
 router.patch("/:id/close-lost", closeDealLost);
 router.patch("/:id/payment", recordPayment);

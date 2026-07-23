@@ -21,6 +21,25 @@ const processedSequenceSteps = [];
 const documents = [];
 const whatsappLogs = [];
 
+function parsePaginationParams(params = {}) {
+  let page = parseInt(params.page, 10);
+  let limit = parseInt(params.limit, 10);
+
+  if (isNaN(page) && params.offset !== undefined) {
+    const offset = parseInt(params.offset, 10) || 0;
+    if (!isNaN(limit) && limit > 0) {
+      page = Math.floor(offset / limit) + 1;
+    }
+  }
+
+  if (isNaN(page) || page < 1) page = 1;
+  if (isNaN(limit) || limit < 1) limit = 50;
+  if (limit > 100) limit = 100;
+
+  const offset = (page - 1) * limit;
+  return { page, limit, offset };
+}
+
 // Seed demo data
 async function seedData() {
   if (users.size > 0) return; // Prevent double seeding
@@ -148,9 +167,17 @@ const demoStore = {
         (l.location && l.location.toLowerCase().includes(term))
       );
     }
-    const offset = parseInt(filters.offset || 0, 10);
-    const limit = parseInt(filters.limit || 50, 10);
-    return { data: result.slice(offset, offset + limit), total: result.length };
+    const { page, limit, offset } = parsePaginationParams(filters);
+    const total = result.length;
+    return {
+      data: result.slice(offset, offset + limit),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit) || 1
+      }
+    };
   },
 
   async getLeadById(id) {
@@ -196,7 +223,17 @@ const demoStore = {
     if (filters.status) result = result.filter(p => p.status === filters.status);
     if (filters.city) result = result.filter(p => p.city && p.city.toLowerCase().includes(filters.city.toLowerCase()));
     if (filters.type) result = result.filter(p => p.property_type === filters.type);
-    return result;
+    const { page, limit, offset } = parsePaginationParams(filters);
+    const total = result.length;
+    return {
+      data: result.slice(offset, offset + limit),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit) || 1
+      }
+    };
   },
 
   async getPropertyById(id) {
@@ -246,7 +283,17 @@ const demoStore = {
   async getTasks(filters = {}) {
     let result = [...tasks];
     if (filters.status) result = result.filter(t => t.status === filters.status);
-    return result;
+    const { page, limit, offset } = parsePaginationParams(filters);
+    const total = result.length;
+    return {
+      data: result.slice(offset, offset + limit),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit) || 1
+      }
+    };
   },
 
   async getTaskById(id) {
@@ -290,7 +337,17 @@ const demoStore = {
   async getAppointments(filters = {}) {
     let result = [...appointments];
     if (filters.status) result = result.filter(a => a.status === filters.status);
-    return result;
+    const { page, limit, offset } = parsePaginationParams(filters);
+    const total = result.length;
+    return {
+      data: result.slice(offset, offset + limit),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit) || 1
+      }
+    };
   },
 
   async getAppointmentById(id) {
@@ -330,7 +387,17 @@ const demoStore = {
   async getDeals(filters = {}) {
     let result = [...deals];
     if (filters.stage) result = result.filter(d => d.deal_stage === filters.stage);
-    return result;
+    const { page, limit, offset } = parsePaginationParams(filters);
+    const total = result.length;
+    return {
+      data: result.slice(offset, offset + limit),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit) || 1
+      }
+    };
   },
 
   async getDealById(id) {
@@ -367,7 +434,17 @@ const demoStore = {
   async getNotes(filters = {}) {
     let result = [...notes];
     if (filters.lead_id) result = result.filter(n => n.lead_id === filters.lead_id);
-    return result;
+    const { page, limit, offset } = parsePaginationParams(filters);
+    const total = result.length;
+    return {
+      data: result.slice(offset, offset + limit),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit) || 1
+      }
+    };
   },
 
   async getNoteById(id) {

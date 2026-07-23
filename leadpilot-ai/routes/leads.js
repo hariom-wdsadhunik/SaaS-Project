@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const { authenticateToken } = require("../middleware/auth");
+const validate = require("../middleware/validate");
+const { createLeadSchema, updateLeadSchema } = require("../schemas/leadSchemas");
 const {
   getLeads,
   getSingleLead,
@@ -13,9 +15,9 @@ const {
 router.use(authenticateToken);
 
 router.get("/", getLeads);
-router.post("/", createLead);
+router.post("/", validate(createLeadSchema), createLead);
 router.get("/:id", getSingleLead);
-router.patch("/:id", updateLeadStatus);
+router.patch("/:id", validate(updateLeadSchema), updateLeadStatus);
 router.delete("/:id", deleteLead);
 
 module.exports = router;

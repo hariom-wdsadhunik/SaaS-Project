@@ -2,6 +2,8 @@ const express = require("express");
 const router = express.Router();
 const { authenticateToken } = require("../middleware/auth");
 const { cronAuth } = require("../middleware/cronAuth");
+const validate = require("../middleware/validate");
+const { createSequenceSchema } = require("../schemas/sequenceSchemas");
 const {
   sequenceService,
   getSequences,
@@ -30,7 +32,7 @@ router.use(authenticateToken);
 router.get("/", getSequences);
 router.get("/enrollments", getEnrollments);
 router.get("/:id", getSequence);
-router.post("/", createSequence);
+router.post("/", validate(createSequenceSchema), createSequence);
 router.patch("/:id", updateSequence);
 router.put("/:id", updateSequence);
 router.delete("/:id", deleteSequence);

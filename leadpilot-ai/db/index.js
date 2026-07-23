@@ -10,6 +10,25 @@ const demoStore = require('./demoStore');
  * - update(id, updates) -> Updated Object or null
  * - delete(id) -> Boolean (true if deleted, false if not found)
  */
+function parsePaginationParams(params = {}) {
+  let page = parseInt(params.page, 10);
+  let limit = parseInt(params.limit, 10);
+
+  if (isNaN(page) && params.offset !== undefined) {
+    const offset = parseInt(params.offset, 10) || 0;
+    if (!isNaN(limit) && limit > 0) {
+      page = Math.floor(offset / limit) + 1;
+    }
+  }
+
+  if (isNaN(page) || page < 1) page = 1;
+  if (isNaN(limit) || limit < 1) limit = 50;
+  if (limit > 100) limit = 100;
+
+  const offset = (page - 1) * limit;
+  return { page, limit, offset };
+}
+
 const repository = {
   isDemoMode,
 
@@ -88,12 +107,13 @@ const repository = {
     if (isDemoMode) {
       return demoStore.getLeads(filters);
     }
-    const { status, search, limit = 50, offset = 0 } = filters;
+    const { status, search } = filters;
+    const { page, limit, offset } = parsePaginationParams(filters);
     let query = supabase
       .from('leads')
       .select('*, properties(*), deals(*)', { count: 'exact' })
       .order('created_at', { ascending: false })
-      .range(parseInt(offset, 10), parseInt(offset, 10) + parseInt(limit, 10) - 1);
+      .range(offset, offset + limit - 1);
 
     if (status && status !== 'all') query = query.eq('status', status);
     if (search) {
@@ -101,7 +121,16 @@ const repository = {
     }
     const { data, error, count } = await query;
     if (error) throw error;
-    return { data: data || [], total: count || 0 };
+    const total = count || 0;
+    return {
+      data: data || [],
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit) || 1
+      }
+    };
   },
 
   async getLeadById(id) {
@@ -172,7 +201,9 @@ const repository = {
       return demoStore.getProperties(filters);
     }
     const { status, city, type, minPrice, maxPrice, search } = filters;
-    let query = supabase.from('properties').select('*').order('created_at', { ascending: false });
+    const { page, limit, offset } = parsePaginationParams(filters);
+
+    let query = supabase.from('properties').select('*', { count: 'exact' }).order('created_at', { ascending: false }).range(offset, offset + limit - 1);
     if (status) query = query.eq('status', status);
     if (city) query = query.ilike('city', `%${city}%`);
     if (type) query = query.eq('property_type', type);
@@ -181,9 +212,18 @@ const repository = {
     if (search) {
       query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%,address.ilike.%${search}%`);
     }
-    const { data, error } = await query;
+    const { data, error, count } = await query;
     if (error) throw error;
-    return data || [];
+    const total = count || 0;
+    return {
+      data: data || [],
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit) || 1
+      }
+    };
   },
 
   async getPropertyById(id) {
@@ -256,9 +296,24 @@ const repository = {
     if (isDemoMode) {
       return demoStore.getTasks(filters);
     }
-    const { data, error } = await supabase.from('tasks').select('*').order('due_date', { ascending: true });
+    const { page, limit, offset } = parsePaginationParams(filters);
+    const { data, error, count } = await supabase
+      .from('tasks')
+      .select('*', { count: 'exact' })
+      .order('due_date', { ascending: true })
+      .range(offset, offset + limit - 1);
+
     if (error) throw error;
-    return data || [];
+    const total = count || 0;
+    return {
+      data: data || [],
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit) || 1
+      }
+    };
   },
 
   async getTaskById(id) {
@@ -326,9 +381,24 @@ const repository = {
     if (isDemoMode) {
       return demoStore.getAppointments(filters);
     }
-    const { data, error } = await supabase.from('appointments').select('*').order('scheduled_at', { ascending: true });
+    const { page, limit, offset } = parsePaginationParams(filters);
+    const { data, error, count } = await supabase
+      .from('appointments')
+      .select('*', { count: 'exact' })
+      .order('scheduled_at', { ascending: true })
+      .range(offset, offset + limit - 1);
+
     if (error) throw error;
-    return data || [];
+    const total = count || 0;
+    return {
+      data: data || [],
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit) || 1
+      }
+    };
   },
 
   async getAppointmentById(id) {
@@ -387,9 +457,24 @@ const repository = {
     if (isDemoMode) {
       return demoStore.getDeals(filters);
     }
-    const { data, error } = await supabase.from('deals').select('*').order('created_at', { ascending: false });
+    const { page, limit, offset } = parsePaginationParams(filters);
+    const { data, error, count } = await supabase
+      .from('deals')
+      .select('*', { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+
     if (error) throw error;
-    return data || [];
+    const total = count || 0;
+    return {
+      data: data || [],
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit) || 1
+      }
+    };
   },
 
   async getDealById(id) {
@@ -445,9 +530,21 @@ const repository = {
     if (isDemoMode) {
       return demoStore.getNotes(filters);
     }
-    const { data, error } = await supabase.from('notes').select('*');
+    const { page, limit, offset } = parsePaginationParams(filters);
+    let query = supabase.from('notes').select('*', { count: 'exact' }).range(offset, offset + limit - 1);
+    if (filters.lead_id) query = query.eq('lead_id', filters.lead_id);
+    const { data, error, count } = await query;
     if (error) throw error;
-    return data || [];
+    const total = count || 0;
+    return {
+      data: data || [],
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit) || 1
+      }
+    };
   },
 
   async getNoteById(id) {

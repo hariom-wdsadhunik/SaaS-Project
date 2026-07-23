@@ -16,6 +16,20 @@ const resolveCronSecret = () => {
   return null;
 };
 
+const resolveAllowedOrigins = () => {
+  if (process.env.CORS_ORIGIN) {
+    if (process.env.CORS_ORIGIN === '*') return ['*'];
+    return process.env.CORS_ORIGIN.split(',').map(o => o.trim()).filter(Boolean);
+  }
+  return [
+    'http://localhost:3000',
+    'http://localhost:80',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:80',
+    'http://localhost:5173'
+  ];
+};
+
 const config = {
   env: process.env.NODE_ENV || 'development',
   port: parseInt(process.env.PORT, 10) || 3000,
@@ -28,6 +42,13 @@ const config = {
   cron: {
     secret: resolveCronSecret(),
     batchSize: parseInt(process.env.SEQUENCE_BATCH_SIZE, 10) || 50,
+  },
+
+  cors: {
+    allowedOrigins: resolveAllowedOrigins(),
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-cron-secret', 'x-requested-with'],
   },
 
   supabase: {
@@ -86,11 +107,13 @@ const validateConfig = () => {
   if (!config.email.apiKey) optional.push('EMAIL_API_KEY (email sending disabled)');
   if (!config.whatsapp.accessToken) optional.push('WHATSAPP_ACCESS_TOKEN (WhatsApp API disabled)');
   if (!config.redis.url) optional.push('REDIS_URL (in-memory caching active)');
+  if (isProduction && !process.env.CORS_ORIGIN) optional.push('CORS_ORIGIN (using default development origins)');
 
+  const logger = require('../logger');
   if (optional.length > 0) {
-    console.log('ℹ️  Optional integrations status:', optional.join(' | '));
+    logger.info({ optionalIntegrations: optional }, `Optional integrations status: ${optional.join(' | ')}`);
   } else {
-    console.log('✅ All configurations and optional integrations validated');
+    logger.info('✅ All configurations and optional integrations validated');
   }
 
   return true;
