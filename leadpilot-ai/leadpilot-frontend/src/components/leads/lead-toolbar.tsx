@@ -16,6 +16,7 @@ interface LeadToolbarProps {
   density: "compact" | "standard" | "spacious";
   onDensityChange: (d: "compact" | "standard" | "spacious") => void;
   onRefresh: () => void;
+  onAddLead?: () => void;
   isRefreshing?: boolean;
 }
 
@@ -23,6 +24,7 @@ export function LeadToolbar({
   density,
   onDensityChange,
   onRefresh,
+  onAddLead,
   isRefreshing = false,
 }: LeadToolbarProps) {
   const [isColumnMenuOpen, setIsColumnMenuOpen] = React.useState(false);
@@ -122,7 +124,7 @@ export function LeadToolbar({
         <Button
           size="sm"
           variant="default"
-          onClick={() => toast.info("Add Lead Drawer Triggered (Press C)")}
+          onClick={onAddLead}
           className="h-8 text-xs gap-1.5 shadow-sm"
         >
           <Plus className="h-3.5 w-3.5" />

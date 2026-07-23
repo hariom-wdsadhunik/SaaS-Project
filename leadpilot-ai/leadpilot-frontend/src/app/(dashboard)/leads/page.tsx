@@ -7,6 +7,7 @@ import { LeadToolbar } from "@/components/leads/lead-toolbar";
 import { LeadTable } from "@/components/leads/lead-table";
 import { BulkActionBar } from "@/components/leads/bulk-action-bar";
 import { LeadDrawer } from "@/components/leads/drawer/lead-drawer";
+import { LeadModalForm } from "@/components/leads/forms/lead-modal-form";
 import {
   LeadItem,
   LeadLoadingSkeleton,
@@ -16,7 +17,7 @@ import {
 } from "@/components/leads/lead-feedback";
 import { toast } from "sonner";
 
-const mockLeadDataset: LeadItem[] = [
+const initialLeadDataset: LeadItem[] = [
   {
     id: "ld-101",
     fullName: "John Doe",
@@ -123,6 +124,7 @@ const initialFilterState: LeadFilterState = {
 };
 
 export default function LeadsPage() {
+  const [leadsList, setLeadsList] = React.useState<LeadItem[]>(initialLeadDataset);
   const [isLoading] = React.useState(false);
   const [isError, setIsError] = React.useState(false);
   const [isRefreshing, setIsRefreshing] = React.useState(false);
@@ -131,9 +133,13 @@ export default function LeadsPage() {
   const [filters, setFilters] = React.useState<LeadFilterState>(initialFilterState);
   const [selectedRowIds, setSelectedRowIds] = React.useState<Record<string, boolean>>({});
 
-  // Drawer Selected Lead State
+  // Drawer & Modal State
   const [selectedLead, setSelectedLead] = React.useState<LeadItem | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = React.useState(false);
+
+  const [isFormModalOpen, setIsFormModalOpen] = React.useState(false);
+  const [formMode, setFormMode] = React.useState<"create" | "edit">("create");
+  const [editingLead, setEditingLead] = React.useState<LeadItem | null>(null);
 
   const handleFilterChange = (newFilters: Partial<LeadFilterState>) => {
     setFilters((prev) => ({ ...prev, ...newFilters }));
@@ -153,22 +159,42 @@ export default function LeadsPage() {
     }, 600);
   };
 
-  const handleOpenLeadDrawer = (lead: LeadItem) => {
-    setSelectedLead(lead);
-    setIsDrawerOpen(true);
+  const handleOpenCreateModal = () => {
+    setFormMode("create");
+    setEditingLead(null);
+    setIsFormModalOpen(true);
   };
 
-  const handleCloseLeadDrawer = () => {
-    setIsDrawerOpen(false);
-    setSelectedLead(null);
+  const handleFormSuccess = (lead: LeadItem) => {
+    if (formMode === "create") {
+      setLeadsList((prev) => [lead, ...prev]);
+    } else {
+      setLeadsList((prev) => prev.map((l) => (l.id === lead.id ? lead : l)));
+    }
   };
 
-  // Calculate active filter count
+  // Keyboard shortcut `C` for Create Lead
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        (e.key === "c" || e.key === "C") &&
+        !isFormModalOpen &&
+        !isDrawerOpen &&
+        document.activeElement?.tagName !== "INPUT" &&
+        document.activeElement?.tagName !== "TEXTAREA"
+      ) {
+        e.preventDefault();
+        handleOpenCreateModal();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isFormModalOpen, isDrawerOpen]);
+
   const activeFilterCount = Object.values(filters).filter((val) => val !== "").length;
 
-  // Filtered dataset
   const filteredLeads = React.useMemo(() => {
-    return mockLeadDataset.filter((lead) => {
+    return leadsList.filter((lead) => {
       if (filters.search) {
         const query = filters.search.toLowerCase();
         const matchesName = lead.fullName.toLowerCase().includes(query);
@@ -181,7 +207,7 @@ export default function LeadsPage() {
       if (filters.agent && lead.assignedBrokerName !== filters.agent) return false;
       return true;
     });
-  }, [filters]);
+  }, [leadsList, filters]);
 
   const selectedCount = Object.keys(selectedRowIds).filter((key) => selectedRowIds[key]).length;
 
@@ -213,6 +239,7 @@ export default function LeadsPage() {
         density={density}
         onDensityChange={setDensity}
         onRefresh={handleRefresh}
+        onAddLead={handleOpenCreateModal}
         isRefreshing={isRefreshing}
       />
 
@@ -232,14 +259,24 @@ export default function LeadsPage() {
               density={density}
               selectedRowIds={selectedRowIds}
               onRowSelectionChange={setSelectedRowIds}
-              onSelectLead={handleOpenLeadDrawer}
+              onSelectLead={(lead) => {
+                setSelectedLead(lead);
+                setIsDrawerOpen(true);
+              }}
             />
           </div>
 
           {/* Mobile Card Grid View */}
           <div className="block md:hidden space-y-3">
             {filteredLeads.map((lead) => (
-              <div key={lead.id} onClick={() => handleOpenLeadDrawer(lead)} className="cursor-pointer">
+              <div
+                key={lead.id}
+                onClick={() => {
+                  setSelectedLead(lead);
+                  setIsDrawerOpen(true);
+                }}
+                className="cursor-pointer"
+              >
                 <LeadCardMobile lead={lead} />
               </div>
             ))}
@@ -257,7 +294,19 @@ export default function LeadsPage() {
       <LeadDrawer
         lead={selectedLead}
         isOpen={isDrawerOpen}
-        onClose={handleCloseLeadDrawer}
+        onClose={() => {
+          setIsDrawerOpen(false);
+          setSelectedLead(null);
+        }}
+      />
+
+      {/* Create / Edit Lead Modal Form */}
+      <LeadModalForm
+        isOpen={isFormModalOpen}
+        mode={formMode}
+        initialData={editingLead}
+        onClose={() => setIsFormModalOpen(false)}
+        onSuccess={handleFormSuccess}
       />
     </div>
   );
