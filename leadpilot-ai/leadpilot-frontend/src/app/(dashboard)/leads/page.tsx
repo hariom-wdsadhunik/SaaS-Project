@@ -6,6 +6,7 @@ import { LeadFilters, LeadFilterState } from "@/components/leads/lead-filters";
 import { LeadToolbar } from "@/components/leads/lead-toolbar";
 import { LeadTable } from "@/components/leads/lead-table";
 import { BulkActionBar } from "@/components/leads/bulk-action-bar";
+import { LeadDrawer } from "@/components/leads/drawer/lead-drawer";
 import {
   LeadItem,
   LeadLoadingSkeleton,
@@ -130,6 +131,10 @@ export default function LeadsPage() {
   const [filters, setFilters] = React.useState<LeadFilterState>(initialFilterState);
   const [selectedRowIds, setSelectedRowIds] = React.useState<Record<string, boolean>>({});
 
+  // Drawer Selected Lead State
+  const [selectedLead, setSelectedLead] = React.useState<LeadItem | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = React.useState(false);
+
   const handleFilterChange = (newFilters: Partial<LeadFilterState>) => {
     setFilters((prev) => ({ ...prev, ...newFilters }));
   };
@@ -146,6 +151,16 @@ export default function LeadsPage() {
       setIsRefreshing(false);
       toast.success("Lead database updated");
     }, 600);
+  };
+
+  const handleOpenLeadDrawer = (lead: LeadItem) => {
+    setSelectedLead(lead);
+    setIsDrawerOpen(true);
+  };
+
+  const handleCloseLeadDrawer = () => {
+    setIsDrawerOpen(false);
+    setSelectedLead(null);
   };
 
   // Calculate active filter count
@@ -175,7 +190,7 @@ export default function LeadsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-zinc-800/80 pb-5">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Lead Management</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-white">Lead Management Workspace</h1>
           <p className="text-xs text-zinc-400 mt-1">
             Capture, qualify, and auto-assign real estate buyer &amp; seller inquiries
           </p>
@@ -217,13 +232,16 @@ export default function LeadsPage() {
               density={density}
               selectedRowIds={selectedRowIds}
               onRowSelectionChange={setSelectedRowIds}
+              onSelectLead={handleOpenLeadDrawer}
             />
           </div>
 
           {/* Mobile Card Grid View */}
           <div className="block md:hidden space-y-3">
             {filteredLeads.map((lead) => (
-              <LeadCardMobile key={lead.id} lead={lead} />
+              <div key={lead.id} onClick={() => handleOpenLeadDrawer(lead)} className="cursor-pointer">
+                <LeadCardMobile lead={lead} />
+              </div>
             ))}
           </div>
         </>
@@ -233,6 +251,13 @@ export default function LeadsPage() {
       <BulkActionBar
         selectedCount={selectedCount}
         onClearSelection={() => setSelectedRowIds({})}
+      />
+
+      {/* Slide-over Lead Details Drawer */}
+      <LeadDrawer
+        lead={selectedLead}
+        isOpen={isDrawerOpen}
+        onClose={handleCloseLeadDrawer}
       />
     </div>
   );

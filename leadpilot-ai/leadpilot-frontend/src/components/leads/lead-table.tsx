@@ -40,6 +40,7 @@ interface LeadTableProps {
   density?: "compact" | "standard" | "spacious";
   selectedRowIds: Record<string, boolean>;
   onRowSelectionChange: (selection: Record<string, boolean>) => void;
+  onSelectLead?: (lead: LeadItem) => void;
 }
 
 export function LeadTable({
@@ -47,6 +48,7 @@ export function LeadTable({
   density = "standard",
   selectedRowIds,
   onRowSelectionChange,
+  onSelectLead,
 }: LeadTableProps) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [activeMenuId, setActiveMenuId] = React.useState<string | null>(null);
@@ -59,7 +61,7 @@ export function LeadTable({
           type="checkbox"
           checked={table.getIsAllPageRowsSelected()}
           onChange={table.getToggleAllPageRowsSelectedHandler()}
-          className="h-4 w-4 rounded border-zinc-700 bg-zinc-900 text-indigo-600 focus:ring-indigo-500"
+          className="h-4 w-4 rounded border-zinc-700 bg-zinc-900 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
         />
       ),
       cell: ({ row }) => (
@@ -67,7 +69,7 @@ export function LeadTable({
           type="checkbox"
           checked={row.getIsSelected()}
           onChange={row.getToggleSelectedHandler()}
-          className="h-4 w-4 rounded border-zinc-700 bg-zinc-900 text-indigo-600 focus:ring-indigo-500"
+          className="h-4 w-4 rounded border-zinc-700 bg-zinc-900 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
         />
       ),
       enableSorting: false,
@@ -86,10 +88,13 @@ export function LeadTable({
       cell: ({ row }) => {
         const lead = row.original;
         return (
-          <div className="flex items-center gap-2.5">
+          <div
+            onClick={() => onSelectLead?.(lead)}
+            className="flex items-center gap-2.5 cursor-pointer group"
+          >
             <Avatar src={lead.avatarUrl} fallback={lead.fullName[0]} size="sm" />
             <div className="flex flex-col">
-              <span className="font-semibold text-white hover:text-indigo-400 cursor-pointer transition-colors">
+              <span className="font-semibold text-white group-hover:text-indigo-400 transition-colors">
                 {lead.fullName}
               </span>
               <span className="text-[10px] text-zinc-400 font-mono">ID: {lead.id}</span>
@@ -245,7 +250,7 @@ export function LeadTable({
                 <button
                   onClick={() => {
                     setActiveMenuId(null);
-                    toast.info(`Opening Lead Drawer for ${lead.fullName}`);
+                    onSelectLead?.(lead);
                   }}
                   className="flex w-full items-center px-2.5 py-1.5 text-xs text-zinc-200 hover:bg-zinc-800 rounded-lg"
                 >
