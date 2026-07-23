@@ -8,6 +8,9 @@ import { LeadTable } from "@/components/leads/lead-table";
 import { BulkActionBar } from "@/components/leads/bulk-action-bar";
 import { LeadDrawer } from "@/components/leads/drawer/lead-drawer";
 import { LeadModalForm } from "@/components/leads/forms/lead-modal-form";
+import { LeadConfirmationDialog } from "@/components/leads/actions/lead-action-dialogs";
+import { LeadStatusAssignModal } from "@/components/leads/actions/lead-status-assign-modal";
+import { leadActionService } from "@/services/lead-action-service";
 import {
   LeadItem,
   LeadLoadingSkeleton,
@@ -141,6 +144,19 @@ export default function LeadsPage() {
   const [formMode, setFormMode] = React.useState<"create" | "edit">("create");
   const [editingLead, setEditingLead] = React.useState<LeadItem | null>(null);
 
+  // Bulk / Action Modals State
+  const [confirmDialog, setConfirmDialog] = React.useState<{
+    isOpen: boolean;
+    type: "DELETE" | "ARCHIVE";
+  }>({ isOpen: false, type: "DELETE" });
+
+  const [assignStatusModal, setAssignStatusModal] = React.useState<{
+    isOpen: boolean;
+    mode: "ASSIGN" | "STATUS";
+  }>({ isOpen: false, mode: "ASSIGN" });
+
+  const [isActionProcessing, setIsActionProcessing] = React.useState(false);
+
   const handleFilterChange = (newFilters: Partial<LeadFilterState>) => {
     setFilters((prev) => ({ ...prev, ...newFilters }));
   };
@@ -173,6 +189,66 @@ export default function LeadsPage() {
     }
   };
 
+  // Extract selected IDs list
+  const selectedLeadIds = React.useMemo(() => {
+    return Object.keys(selectedRowIds).filter((id) => selectedRowIds[id]);
+  }, [selectedRowIds]);
+
+  const selectedCount = selectedLeadIds.length;
+
+  // Execute Action Handlers
+  const handleConfirmAction = async () => {
+    setIsActionProcessing(true);
+    try {
+      if (confirmDialog.type === "DELETE") {
+        await leadActionService.deleteLeads(selectedLeadIds);
+        setLeadsList((prev) => prev.filter((l) => !selectedRowIds[l.id]));
+        toast.success(`Successfully deleted ${selectedCount} lead record(s)`);
+      } else {
+        await leadActionService.archiveLeads(selectedLeadIds);
+        setLeadsList((prev) => prev.filter((l) => !selectedRowIds[l.id]));
+        toast.success(`Successfully archived ${selectedCount} lead record(s)`);
+      }
+      setSelectedRowIds({});
+      setConfirmDialog({ isOpen: false, type: "DELETE" });
+    } catch {
+      toast.error("Failed to execute action.");
+    } finally {
+      setIsActionProcessing(false);
+    }
+  };
+
+  const handleApplyStatusOrAssign = async (val: string) => {
+    setIsActionProcessing(true);
+    try {
+      if (assignStatusModal.mode === "ASSIGN") {
+        await leadActionService.assignAgent(selectedLeadIds, val);
+        setLeadsList((prev) =>
+          prev.map((l) =>
+            selectedRowIds[l.id] ? { ...l, assignedBrokerName: val } : l
+          )
+        );
+        toast.success(`Assigned ${selectedCount} lead(s) to ${val}`);
+      } else {
+        await leadActionService.changeStatus(selectedLeadIds, val);
+        setLeadsList((prev) =>
+          prev.map((l) =>
+            selectedRowIds[l.id]
+              ? { ...l, status: val as LeadItem["status"] }
+              : l
+          )
+        );
+        toast.success(`Updated status to ${val} for ${selectedCount} lead(s)`);
+      }
+      setSelectedRowIds({});
+      setAssignStatusModal({ isOpen: false, mode: "ASSIGN" });
+    } catch {
+      toast.error("Failed to execute status update.");
+    } finally {
+      setIsActionProcessing(false);
+    }
+  };
+
   // Keyboard shortcut `C` for Create Lead
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -180,6 +256,8 @@ export default function LeadsPage() {
         (e.key === "c" || e.key === "C") &&
         !isFormModalOpen &&
         !isDrawerOpen &&
+        !confirmDialog.isOpen &&
+        !assignStatusModal.isOpen &&
         document.activeElement?.tagName !== "INPUT" &&
         document.activeElement?.tagName !== "TEXTAREA"
       ) {
@@ -189,7 +267,7 @@ export default function LeadsPage() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isFormModalOpen, isDrawerOpen]);
+  }, [isFormModalOpen, isDrawerOpen, confirmDialog, assignStatusModal]);
 
   const activeFilterCount = Object.values(filters).filter((val) => val !== "").length;
 
@@ -208,8 +286,6 @@ export default function LeadsPage() {
       return true;
     });
   }, [leadsList, filters]);
-
-  const selectedCount = Object.keys(selectedRowIds).filter((key) => selectedRowIds[key]).length;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
@@ -288,6 +364,11 @@ export default function LeadsPage() {
       <BulkActionBar
         selectedCount={selectedCount}
         onClearSelection={() => setSelectedRowIds({})}
+        onBulkAssign={() => setAssignStatusModal({ isOpen: true, mode: "ASSIGN" })}
+        onBulkStatus={() => setAssignStatusModal({ isOpen: true, mode: "STATUS" })}
+        onBulkExport={() => toast.success(`Exporting ${selectedCount} leads to CSV`)}
+        onBulkArchive={() => setConfirmDialog({ isOpen: true, type: "ARCHIVE" })}
+        onBulkDelete={() => setConfirmDialog({ isOpen: true, type: "DELETE" })}
       />
 
       {/* Slide-over Lead Details Drawer */}
@@ -307,6 +388,26 @@ export default function LeadsPage() {
         initialData={editingLead}
         onClose={() => setIsFormModalOpen(false)}
         onSuccess={handleFormSuccess}
+      />
+
+      {/* Single / Bulk Delete & Archive Confirmation Dialog */}
+      <LeadConfirmationDialog
+        isOpen={confirmDialog.isOpen}
+        type={confirmDialog.type}
+        itemCount={selectedCount}
+        isProcessing={isActionProcessing}
+        onConfirm={handleConfirmAction}
+        onCancel={() => setConfirmDialog((prev) => ({ ...prev, isOpen: false }))}
+      />
+
+      {/* Single / Bulk Assign & Status Change Modal */}
+      <LeadStatusAssignModal
+        isOpen={assignStatusModal.isOpen}
+        mode={assignStatusModal.mode}
+        itemCount={selectedCount}
+        isProcessing={isActionProcessing}
+        onConfirm={handleApplyStatusOrAssign}
+        onClose={() => setAssignStatusModal((prev) => ({ ...prev, isOpen: false }))}
       />
     </div>
   );
