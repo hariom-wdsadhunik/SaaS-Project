@@ -1,28 +1,12 @@
-const { supabase } = require("../db/supabase");
+const repository = require("../db");
 
 // Get all appointments with filters
 exports.getAppointments = async (req, res) => {
   try {
-    const { lead_id, property_id, status, from_date, to_date, assigned_to } = req.query;
-    
-    let query = supabase
-      .from("appointments")
-      .select("*, leads(phone, message), properties(title, address)")
-      .order("scheduled_at", { ascending: true });
-    
-    if (lead_id) query = query.eq("lead_id", lead_id);
-    if (property_id) query = query.eq("property_id", property_id);
-    if (status) query = query.eq("status", status);
-    if (assigned_to) query = query.eq("assigned_to", assigned_to);
-    if (from_date) query = query.gte("scheduled_at", from_date);
-    if (to_date) query = query.lte("scheduled_at", to_date);
-    
-    const { data, error } = await query;
-    if (error) throw error;
-    
+    const data = await repository.getAppointments(req.query);
     res.json(data);
   } catch (err) {
-    console.error(err);
+    console.error("Error fetching appointments:", err);
     res.status(500).json({ error: "Failed to fetch appointments" });
   }
 };
@@ -31,17 +15,15 @@ exports.getAppointments = async (req, res) => {
 exports.getAppointment = async (req, res) => {
   try {
     const { id } = req.params;
-    
-    const { data, error } = await supabase
-      .from("appointments")
-      .select("*, leads(*), properties(*)")
-      .eq("id", id)
-      .single();
-    
-    if (error) throw error;
-    
+    const data = await repository.getAppointmentById(id);
+
+    if (!data) {
+      return res.status(404).json({ error: "Appointment not found" });
+    }
+
     res.json(data);
   } catch (err) {
+    console.error("Error fetching appointment:", err);
     res.status(500).json({ error: "Appointment not found" });
   }
 };
@@ -50,25 +32,20 @@ exports.getAppointment = async (req, res) => {
 exports.createAppointment = async (req, res) => {
   try {
     const appointmentData = req.body;
-    
-    const { data, error } = await supabase
-      .from("appointments")
-      .insert([appointmentData])
-      .select()
-      .single();
-    
-    if (error) throw error;
-    
+    const data = await repository.createAppointment(appointmentData);
+
     // Add note about appointment
-    await supabase.from("notes").insert([{
-      lead_id: appointmentData.lead_id,
-      note_type: "System",
-      content: `Appointment scheduled: ${appointmentData.title} on ${new Date(appointmentData.scheduled_at).toLocaleString()}`
-    }]);
-    
+    if (appointmentData.lead_id) {
+      await repository.createNote({
+        lead_id: appointmentData.lead_id,
+        note_type: "System",
+        content: `Appointment scheduled: ${appointmentData.title} on ${new Date(appointmentData.scheduled_at || Date.now()).toLocaleString()}`
+      });
+    }
+
     res.status(201).json(data);
   } catch (err) {
-    console.error(err);
+    console.error("Error creating appointment:", err);
     res.status(500).json({ error: "Failed to create appointment" });
   }
 };
@@ -77,20 +54,17 @@ exports.createAppointment = async (req, res) => {
 exports.updateAppointment = async (req, res) => {
   try {
     const { id } = req.params;
-    const updates = req.body;
-    updates.updated_at = new Date().toISOString();
-    
-    const { data, error } = await supabase
-      .from("appointments")
-      .update(updates)
-      .eq("id", id)
-      .select()
-      .single();
-    
-    if (error) throw error;
-    
+    const updates = { ...req.body, updated_at: new Date().toISOString() };
+
+    const data = await repository.updateAppointment(id, updates);
+
+    if (!data) {
+      return res.status(404).json({ error: "Appointment not found" });
+    }
+
     res.json(data);
   } catch (err) {
+    console.error("Error updating appointment:", err);
     res.status(500).json({ error: "Failed to update appointment" });
   }
 };
@@ -100,31 +74,33 @@ exports.completeAppointment = async (req, res) => {
   try {
     const { id } = req.params;
     const { feedback, rating, notes } = req.body;
-    
-    const { data, error } = await supabase
-      .from("appointments")
-      .update({
-        status: "Completed",
-        feedback,
-        rating,
-        notes,
-        updated_at: new Date().toISOString()
-      })
-      .eq("id", id)
-      .select()
-      .single();
-    
-    if (error) throw error;
-    
+
+    const updates = {
+      status: "Completed",
+      feedback,
+      rating,
+      notes,
+      updated_at: new Date().toISOString()
+    };
+
+    const data = await repository.updateAppointment(id, updates);
+
+    if (!data) {
+      return res.status(404).json({ error: "Appointment not found" });
+    }
+
     // Add completion note
-    await supabase.from("notes").insert([{
-      lead_id: data.lead_id,
-      note_type: "Site Visit",
-      content: `Site visit completed. Feedback: ${feedback || "No feedback provided"}`
-    }]);
-    
+    if (data.lead_id) {
+      await repository.createNote({
+        lead_id: data.lead_id,
+        note_type: "Site Visit",
+        content: `Site visit completed. Feedback: ${feedback || "No feedback provided"}`
+      });
+    }
+
     res.json(data);
   } catch (err) {
+    console.error("Error completing appointment:", err);
     res.status(500).json({ error: "Failed to complete appointment" });
   }
 };
@@ -134,22 +110,22 @@ exports.cancelAppointment = async (req, res) => {
   try {
     const { id } = req.params;
     const { reason } = req.body;
-    
-    const { data, error } = await supabase
-      .from("appointments")
-      .update({
-        status: "Cancelled",
-        notes: reason,
-        updated_at: new Date().toISOString()
-      })
-      .eq("id", id)
-      .select()
-      .single();
-    
-    if (error) throw error;
-    
+
+    const updates = {
+      status: "Cancelled",
+      notes: reason,
+      updated_at: new Date().toISOString()
+    };
+
+    const data = await repository.updateAppointment(id, updates);
+
+    if (!data) {
+      return res.status(404).json({ error: "Appointment not found" });
+    }
+
     res.json(data);
   } catch (err) {
+    console.error("Error cancelling appointment:", err);
     res.status(500).json({ error: "Failed to cancel appointment" });
   }
 };
@@ -158,16 +134,15 @@ exports.cancelAppointment = async (req, res) => {
 exports.deleteAppointment = async (req, res) => {
   try {
     const { id } = req.params;
-    
-    const { error } = await supabase
-      .from("appointments")
-      .delete()
-      .eq("id", id);
-    
-    if (error) throw error;
-    
+    const success = await repository.deleteAppointment(id);
+
+    if (!success) {
+      return res.status(404).json({ error: "Appointment not found" });
+    }
+
     res.json({ message: "Appointment deleted successfully" });
   } catch (err) {
+    console.error("Error deleting appointment:", err);
     res.status(500).json({ error: "Failed to delete appointment" });
   }
 };
@@ -175,23 +150,15 @@ exports.deleteAppointment = async (req, res) => {
 // Get upcoming appointments
 exports.getUpcomingAppointments = async (req, res) => {
   try {
-    const { assigned_to } = req.query;
-    
-    let query = supabase
-      .from("appointments")
-      .select("*, leads(phone, message), properties(title)")
-      .gte("scheduled_at", new Date().toISOString())
-      .in("status", ["Scheduled", "Rescheduled"])
-      .order("scheduled_at", { ascending: true })
-      .limit(10);
-    
-    if (assigned_to) query = query.eq("assigned_to", assigned_to);
-    
-    const { data, error } = await query;
-    if (error) throw error;
-    
-    res.json(data);
+    const all = await repository.getAppointments(req.query);
+    const now = new Date();
+    const upcoming = (all || [])
+      .filter(a => new Date(a.scheduled_at) >= now && ["Scheduled", "Rescheduled"].includes(a.status))
+      .slice(0, 10);
+
+    res.json(upcoming);
   } catch (err) {
+    console.error("Error fetching upcoming appointments:", err);
     res.status(500).json({ error: "Failed to fetch upcoming appointments" });
   }
 };
@@ -199,39 +166,10 @@ exports.getUpcomingAppointments = async (req, res) => {
 // Get appointment statistics
 exports.getAppointmentStats = async (req, res) => {
   try {
-    const today = new Date().toISOString().split('T')[0];
-    const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
-    
-    const { data: todayCount, error: err1 } = await supabase
-      .from("appointments")
-      .select("id", { count: "exact" })
-      .gte("scheduled_at", today)
-      .lt("scheduled_at", today + 'T23:59:59');
-    
-    const { data: monthCount, error: err2 } = await supabase
-      .from("appointments")
-      .select("id", { count: "exact" })
-      .gte("scheduled_at", startOfMonth);
-    
-    const { data: completed, error: err3 } = await supabase
-      .from("appointments")
-      .select("id", { count: "exact" })
-      .eq("status", "Completed");
-    
-    const { data: noShow, error: err4 } = await supabase
-      .from("appointments")
-      .select("id", { count: "exact" })
-      .eq("status", "No Show");
-    
-    if (err1 || err2 || err3 || err4) throw err1 || err2 || err3 || err4;
-    
-    res.json({
-      today: todayCount.length,
-      thisMonth: monthCount.length,
-      completed: completed.length,
-      noShow: noShow.length
-    });
+    const stats = await repository.getAppointmentStats();
+    res.json(stats);
   } catch (err) {
+    console.error("Error fetching appointment stats:", err);
     res.status(500).json({ error: "Failed to fetch appointment stats" });
   }
 };

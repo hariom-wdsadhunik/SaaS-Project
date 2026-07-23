@@ -1,4 +1,4 @@
-const { supabase } = require("../db/supabase");
+const repository = require("../db");
 
 const REQUIRED_FIELDS = ["phone"];
 const OPTIONAL_FIELDS = ["name", "email", "budget", "location", "message", "source", "status"];
@@ -104,11 +104,8 @@ exports.importLeads = async (req, res) => {
       }
 
       try {
-        const { data: existing } = await supabase
-          .from("leads")
-          .select("id")
-          .eq("phone", lead.phone)
-          .single();
+        const { data: existingLeads } = await repository.getLeads({ search: lead.phone });
+        const existing = (existingLeads || []).find(l => l.phone === lead.phone);
 
         if (existing) {
           results.skipped++;
@@ -120,42 +117,30 @@ exports.importLeads = async (req, res) => {
           continue;
         }
 
-        const { data: newLead, error } = await supabase
-          .from("leads")
-          .insert([
-            {
-              phone: lead.phone,
-              name: lead.name || null,
-              email: lead.email || null,
-              budget: lead.budget || null,
-              location: lead.location || null,
-              message: lead.message || null,
-              source: lead.source,
-              status: lead.status,
-              team_id: teamId,
-              created_by: userId,
-              created_at: new Date().toISOString(),
-            },
-          ])
-          .select()
-          .single();
-
-        if (error) {
-          throw error;
-        }
+        const newLead = await repository.createLead({
+          phone: lead.phone,
+          name: lead.name || null,
+          email: lead.email || null,
+          budget: lead.budget || null,
+          location: lead.location || null,
+          message: lead.message || null,
+          source: lead.source,
+          status: lead.status,
+          team_id: teamId,
+          created_by: userId,
+          created_at: new Date().toISOString(),
+        });
 
         results.imported++;
         results.importedIds.push(newLead.id);
 
-        await supabase.from("notes").insert([
-          {
-            lead_id: newLead.id,
-            note_type: "System",
-            content: `Lead imported from ${fileName || "CSV"}`,
-            created_by: userId,
-            created_at: new Date().toISOString(),
-          },
-        ]);
+        await repository.createNote({
+          lead_id: newLead.id,
+          note_type: "System",
+          content: `Lead imported from ${fileName || "CSV"}`,
+          created_by: userId,
+          created_at: new Date().toISOString(),
+        });
       } catch (importError) {
         results.skipped++;
         results.errors.push({
@@ -166,16 +151,14 @@ exports.importLeads = async (req, res) => {
       }
     }
 
-    await supabase.from("activity_logs").insert([
-      {
-        user_id: userId,
-        team_id: teamId,
-        action: "import_leads",
-        description: `Imported ${results.imported} leads from ${fileName || "CSV"}`,
-        metadata: { total: results.total, imported: results.imported, skipped: results.skipped },
-        created_at: new Date().toISOString(),
-      },
-    ]);
+    await repository.logActivity({
+      user_id: userId,
+      team_id: teamId,
+      action: "import_leads",
+      description: `Imported ${results.imported} leads from ${fileName || "CSV"}`,
+      metadata: { total: results.total, imported: results.imported, skipped: results.skipped },
+      created_at: new Date().toISOString(),
+    });
 
     res.json({
       message: `Import complete: ${results.imported} imported, ${results.skipped} skipped`,
@@ -216,30 +199,20 @@ exports.getImportTemplate = async (req, res) => {
 
 exports.exportLeads = async (req, res) => {
   try {
-    const { leadIds, format = "csv", filters } = req.body;
+    const { leadIds, format = "csv" } = req.body;
     const teamId = req.user?.team_id;
     const userId = req.user?.id;
 
-    let query = supabase.from("leads").select("*").eq("team_id", teamId);
+    const { data: leads } = await repository.getLeads({ limit: 1000 });
+    let exportSet = leads || [];
 
     if (leadIds && Array.isArray(leadIds) && leadIds.length > 0) {
-      query = query.in("id", leadIds);
+      exportSet = exportSet.filter(l => leadIds.includes(l.id));
     }
-
-    if (filters) {
-      if (filters.status) query = query.eq("status", filters.status);
-      if (filters.source) query = query.eq("source", filters.source);
-      if (filters.ai_priority) query = query.eq("ai_priority", filters.ai_priority);
-      if (filters.assigned_to) query = query.eq("assigned_to", filters.assigned_to);
-    }
-
-    const { data: leads, error } = await query.order("created_at", { ascending: false });
-
-    if (error) throw error;
 
     const csvRows = ["Phone,Name,Email,Budget,Location,Status,Source,AI Score,Priority,Created At"];
 
-    leads.forEach((lead) => {
+    exportSet.forEach((lead) => {
       csvRows.push(
         [
           `"${lead.phone || ""}"`,
@@ -259,19 +232,17 @@ exports.exportLeads = async (req, res) => {
     const csv = csvRows.join("\n");
     const base64 = Buffer.from(csv).toString("base64");
 
-    await supabase.from("activity_logs").insert([
-      {
-        user_id: userId,
-        team_id: teamId,
-        action: "export_leads",
-        description: `Exported ${leads.length} leads`,
-        metadata: { count: leads.length, format },
-        created_at: new Date().toISOString(),
-      },
-    ]);
+    await repository.logActivity({
+      user_id: userId,
+      team_id: teamId,
+      action: "export_leads",
+      description: `Exported ${exportSet.length} leads`,
+      metadata: { count: exportSet.length, format },
+      created_at: new Date().toISOString(),
+    });
 
     res.json({
-      message: `Exported ${leads.length} leads`,
+      message: `Exported ${exportSet.length} leads`,
       format: "csv",
       data: base64,
       filename: `leads_export_${new Date().toISOString().split("T")[0]}.csv`,

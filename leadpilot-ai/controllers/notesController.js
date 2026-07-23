@@ -1,25 +1,12 @@
-const { supabase } = require("../db/supabase");
+const repository = require("../db");
 
 // Get all notes for a lead
 exports.getNotes = async (req, res) => {
   try {
-    const { lead_id, property_id, note_type } = req.query;
-    
-    let query = supabase
-      .from("notes")
-      .select("*, users(name)")
-      .order("created_at", { ascending: false });
-    
-    if (lead_id) query = query.eq("lead_id", lead_id);
-    if (property_id) query = query.eq("property_id", property_id);
-    if (note_type) query = query.eq("note_type", note_type);
-    
-    const { data, error } = await query;
-    if (error) throw error;
-    
+    const data = await repository.getNotes(req.query);
     res.json(data);
   } catch (err) {
-    console.error(err);
+    console.error("Error fetching notes:", err);
     res.status(500).json({ error: "Failed to fetch notes" });
   }
 };
@@ -28,17 +15,15 @@ exports.getNotes = async (req, res) => {
 exports.getNote = async (req, res) => {
   try {
     const { id } = req.params;
-    
-    const { data, error } = await supabase
-      .from("notes")
-      .select("*, users(name), leads(phone)")
-      .eq("id", id)
-      .single();
-    
-    if (error) throw error;
-    
+    const data = await repository.getNoteById(id);
+
+    if (!data) {
+      return res.status(404).json({ error: "Note not found" });
+    }
+
     res.json(data);
   } catch (err) {
+    console.error("Error fetching note:", err);
     res.status(500).json({ error: "Note not found" });
   }
 };
@@ -47,18 +32,11 @@ exports.getNote = async (req, res) => {
 exports.createNote = async (req, res) => {
   try {
     const noteData = req.body;
-    
-    const { data, error } = await supabase
-      .from("notes")
-      .insert([noteData])
-      .select()
-      .single();
-    
-    if (error) throw error;
-    
+    const data = await repository.createNote(noteData);
+
     res.status(201).json(data);
   } catch (err) {
-    console.error(err);
+    console.error("Error creating note:", err);
     res.status(500).json({ error: "Failed to create note" });
   }
 };
@@ -67,40 +45,28 @@ exports.createNote = async (req, res) => {
 exports.createCallLog = async (req, res) => {
   try {
     const { lead_id, content, call_duration, call_outcome, sentiment, created_by } = req.body;
-    
-    const { data, error } = await supabase
-      .from("notes")
-      .insert([{
-        lead_id,
-        note_type: "Call",
-        content,
-        call_duration,
-        call_outcome,
-        sentiment,
-        created_by
-      }])
-      .select()
-      .single();
-    
-    if (error) throw error;
-    
+
+    const data = await repository.createNote({
+      lead_id,
+      note_type: "Call",
+      content,
+      call_duration,
+      call_outcome,
+      sentiment,
+      created_by
+    });
+
     // Update lead status to contacted if it's a new lead
-    const { data: lead } = await supabase
-      .from("leads")
-      .select("status")
-      .eq("id", lead_id)
-      .single();
-    
-    if (lead && lead.status === "new") {
-      await supabase
-        .from("leads")
-        .update({ status: "contacted", updated_at: new Date().toISOString() })
-        .eq("id", lead_id);
+    if (lead_id) {
+      const lead = await repository.getLeadById(lead_id);
+      if (lead && lead.status === "new") {
+        await repository.updateLead(lead_id, { status: "contacted" });
+      }
     }
-    
+
     res.status(201).json(data);
   } catch (err) {
-    console.error(err);
+    console.error("Error creating call log:", err);
     res.status(500).json({ error: "Failed to create call log" });
   }
 };
@@ -110,18 +76,16 @@ exports.updateNote = async (req, res) => {
   try {
     const { id } = req.params;
     const updates = req.body;
-    
-    const { data, error } = await supabase
-      .from("notes")
-      .update(updates)
-      .eq("id", id)
-      .select()
-      .single();
-    
-    if (error) throw error;
-    
+
+    const data = await repository.updateNote(id, updates);
+
+    if (!data) {
+      return res.status(404).json({ error: "Note not found" });
+    }
+
     res.json(data);
   } catch (err) {
+    console.error("Error updating note:", err);
     res.status(500).json({ error: "Failed to update note" });
   }
 };
@@ -130,16 +94,15 @@ exports.updateNote = async (req, res) => {
 exports.deleteNote = async (req, res) => {
   try {
     const { id } = req.params;
-    
-    const { error } = await supabase
-      .from("notes")
-      .delete()
-      .eq("id", id);
-    
-    if (error) throw error;
-    
+    const success = await repository.deleteNote(id);
+
+    if (!success) {
+      return res.status(404).json({ error: "Note not found" });
+    }
+
     res.json({ message: "Note deleted successfully" });
   } catch (err) {
+    console.error("Error deleting note:", err);
     res.status(500).json({ error: "Failed to delete note" });
   }
 };
@@ -148,40 +111,21 @@ exports.deleteNote = async (req, res) => {
 exports.getCommunicationTimeline = async (req, res) => {
   try {
     const { lead_id } = req.params;
-    
-    // Get notes
-    const { data: notes, error: notesError } = await supabase
-      .from("notes")
-      .select("*, users(name)")
-      .eq("lead_id", lead_id)
-      .order("created_at", { ascending: false });
-    
-    // Get appointments
-    const { data: appointments, error: apptError } = await supabase
-      .from("appointments")
-      .select("*, properties(title)")
-      .eq("lead_id", lead_id)
-      .order("scheduled_at", { ascending: false });
-    
-    // Get tasks
-    const { data: tasks, error: tasksError } = await supabase
-      .from("tasks")
-      .select("*")
-      .eq("lead_id", lead_id)
-      .order("created_at", { ascending: false });
-    
-    if (notesError || apptError || tasksError) throw notesError || apptError || tasksError;
-    
+
+    const notes = await repository.getNotes({ lead_id });
+    const appointments = await repository.getAppointments({ lead_id });
+    const tasks = await repository.getTasks({ lead_id });
+
     // Combine and sort timeline
     const timeline = [
-      ...notes.map(n => ({ ...n, type: 'note', date: n.created_at })),
-      ...appointments.map(a => ({ ...a, type: 'appointment', date: a.scheduled_at })),
-      ...tasks.map(t => ({ ...t, type: 'task', date: t.created_at }))
+      ...(notes || []).map(n => ({ ...n, type: 'note', date: n.created_at })),
+      ...(appointments || []).map(a => ({ ...a, type: 'appointment', date: a.scheduled_at })),
+      ...(tasks || []).map(t => ({ ...t, type: 'task', date: t.created_at }))
     ].sort((a, b) => new Date(b.date) - new Date(a.date));
-    
+
     res.json(timeline);
   } catch (err) {
-    console.error(err);
+    console.error("Error fetching communication timeline:", err);
     res.status(500).json({ error: "Failed to fetch communication timeline" });
   }
 };

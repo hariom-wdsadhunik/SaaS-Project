@@ -1,4 +1,4 @@
-const { supabase } = require('../db/supabase');
+const repository = require('../db');
 
 const requireTeam = async (req, res, next) => {
   if (!req.user?.team_id) {
@@ -27,11 +27,7 @@ const loadTenantContext = async (req, res, next) => {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const { data: user } = await supabase
-      .from('users')
-      .select('id, email, name, role, team_id')
-      .eq('id', req.user.id)
-      .single();
+    const user = await repository.getUserById(req.user.id);
 
     if (!user) {
       return res.status(401).json({ error: 'User not found' });
@@ -90,13 +86,18 @@ const logActivity = async (action, description, metadata = {}) => {
     res.on('finish', async () => {
       if (res.statusCode >= 200 && res.statusCode < 300) {
         try {
-          await supabase.from('activity_logs').insert([{
-            user_id: req.user.id,
-            team_id: req.user.team_id,
-            action,
-            description,
-            metadata: { ...metadata, method: req.method, path: req.path }
-          }]);
+          if (!repository.isDemoMode) {
+            const { supabase } = require('../db/supabase');
+            if (supabase) {
+              await supabase.from('activity_logs').insert([{
+                user_id: req.user.id,
+                team_id: req.user.team_id,
+                action,
+                description,
+                metadata: { ...metadata, method: req.method, path: req.path }
+              }]);
+            }
+          }
         } catch (err) {
           console.error('Activity log error:', err);
         }

@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
+const { config } = require('../config');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'leadpilot_secret_key';
+const JWT_SECRET = config.jwt.secret || process.env.JWT_SECRET || 'leadpilot_demo_secret_2024';
 
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];

@@ -1,4 +1,4 @@
-const { supabase } = require("../db/supabase");
+const repository = require("../db");
 const { config } = require("../config");
 
 class SmsController {
@@ -68,13 +68,9 @@ class SmsController {
 
   async sendToLead({ leadId, body, templateId, variables = {} }) {
     try {
-      const { data: lead, error } = await supabase
-        .from("leads")
-        .select("id, phone, name")
-        .eq("id", leadId)
-        .single();
+      const lead = await repository.getLeadById(leadId);
 
-      if (error || !lead) {
+      if (!lead) {
         throw new Error("Lead not found");
       }
 
@@ -82,19 +78,7 @@ class SmsController {
         throw new Error("Lead has no phone number");
       }
 
-      let messageBody = body;
-
-      if (templateId) {
-        const { data: template } = await supabase
-          .from("sms_templates")
-          .select("*")
-          .eq("id", templateId)
-          .single();
-
-        if (template) {
-          messageBody = template.body;
-        }
-      }
+      let messageBody = body || "";
 
       const mergeVars = {
         lead_name: lead.name || "Customer",
@@ -108,35 +92,31 @@ class SmsController {
 
       const result = await this.sendSms({ to: lead.phone, body: messageBody });
 
-      await supabase.from("sms_logs").insert([
-        {
-          lead_id: leadId,
-          user_id: variables.userId,
-          phone: lead.phone,
-          message: messageBody,
-          direction: "outbound",
-          status: "sent",
-          twilio_sid: result.messageId,
-          created_at: new Date().toISOString(),
-        },
-      ]);
+      await repository.createSmsLog({
+        lead_id: leadId,
+        user_id: variables.userId,
+        phone: lead.phone,
+        message: messageBody,
+        direction: "outbound",
+        status: "sent",
+        twilio_sid: result.messageId,
+        created_at: new Date().toISOString(),
+      });
 
       return { success: true, lead, ...result };
     } catch (error) {
       console.error("Send SMS to lead error:", error);
 
-      await supabase.from("sms_logs").insert([
-        {
-          lead_id: leadId,
-          user_id: variables.userId,
-          phone: variables.phone || "",
-          message: body,
-          direction: "outbound",
-          status: "failed",
-          error_message: error.message,
-          created_at: new Date().toISOString(),
-        },
-      ]);
+      await repository.createSmsLog({
+        lead_id: leadId,
+        user_id: variables.userId,
+        phone: variables.phone || "",
+        message: body,
+        direction: "outbound",
+        status: "failed",
+        error_message: error.message,
+        created_at: new Date().toISOString(),
+      });
 
       throw error;
     }
@@ -231,32 +211,15 @@ exports.getStatus = async (req, res) => {
 
 exports.getLogs = async (req, res) => {
   try {
-    const { limit = 50, offset = 0, leadId, direction } = req.query;
-
-    let query = supabase
-      .from("sms_logs")
-      .select("*, leads(phone, name)")
-      .order("created_at", { ascending: false })
-      .range(parseInt(offset), parseInt(offset) + parseInt(limit) - 1);
-
-    if (leadId) {
-      query = query.eq("lead_id", leadId);
-    }
-
-    if (direction) {
-      query = query.eq("direction", direction);
-    }
-
-    const { data, error, count } = await query;
-
-    if (error) throw error;
+    const { leadId } = req.query;
+    const logs = await repository.getSmsLogs({ leadId });
 
     res.json({
-      logs: data || [],
+      logs: logs || [],
       pagination: {
-        total: count,
-        limit: parseInt(limit),
-        offset: parseInt(offset),
+        total: (logs || []).length,
+        limit: 50,
+        offset: 0,
       },
     });
   } catch (error) {

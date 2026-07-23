@@ -1,4 +1,4 @@
-const { supabase } = require("../db/supabase");
+const repository = require("../db");
 
 const ALLOWED_VARIABLES = [
   "lead_name",
@@ -17,23 +17,7 @@ const ALLOWED_VARIABLES = [
 
 exports.getTemplates = async (req, res) => {
   try {
-    const { type, is_active } = req.query;
-    const teamId = req.user?.team_id;
-
-    let query = supabase.from("email_templates").select("*");
-
-    if (type) {
-      query = query.eq("type", type);
-    }
-
-    if (is_active !== undefined) {
-      query = query.eq("is_active", is_active === "true");
-    }
-
-    const { data, error } = await query;
-
-    if (error) throw error;
-
+    const data = await repository.getEmailTemplates();
     res.json({ templates: data || [] });
   } catch (error) {
     console.error("Get templates error:", error);
@@ -44,14 +28,11 @@ exports.getTemplates = async (req, res) => {
 exports.getTemplate = async (req, res) => {
   try {
     const { id } = req.params;
+    const data = await repository.getEmailTemplateById(id);
 
-    const { data, error } = await supabase
-      .from("email_templates")
-      .select("*")
-      .eq("id", id)
-      .single();
-
-    if (error) throw error;
+    if (!data) {
+      return res.status(404).json({ error: "Template not found" });
+    }
 
     res.json({ template: data });
   } catch (error) {
@@ -70,25 +51,17 @@ exports.createTemplate = async (req, res) => {
       return res.status(400).json({ error: "name, subject, and body are required" });
     }
 
-    const { data, error } = await supabase
-      .from("email_templates")
-      .insert([
-        {
-          name,
-          subject,
-          body,
-          type,
-          variables: variables.length > 0 ? variables : ALLOWED_VARIABLES.slice(0, 5),
-          is_active,
-          user_id: userId,
-          team_id: teamId,
-          created_at: new Date().toISOString(),
-        },
-      ])
-      .select()
-      .single();
-
-    if (error) throw error;
+    const data = await repository.createEmailTemplate({
+      name,
+      subject,
+      body,
+      type,
+      variables: variables.length > 0 ? variables : ALLOWED_VARIABLES.slice(0, 5),
+      is_active,
+      user_id: userId,
+      team_id: teamId,
+      created_at: new Date().toISOString()
+    });
 
     res.status(201).json({ message: "Template created", template: data });
   } catch (error) {
@@ -111,14 +84,11 @@ exports.updateTemplate = async (req, res) => {
     if (is_active !== undefined) updates.is_active = is_active;
     updates.updated_at = new Date().toISOString();
 
-    const { data, error } = await supabase
-      .from("email_templates")
-      .update(updates)
-      .eq("id", id)
-      .select()
-      .single();
+    const data = await repository.updateEmailTemplate(id, updates);
 
-    if (error) throw error;
+    if (!data) {
+      return res.status(404).json({ error: "Template not found" });
+    }
 
     res.json({ message: "Template updated", template: data });
   } catch (error) {
@@ -130,10 +100,11 @@ exports.updateTemplate = async (req, res) => {
 exports.deleteTemplate = async (req, res) => {
   try {
     const { id } = req.params;
+    const success = await repository.deleteEmailTemplate(id);
 
-    const { error } = await supabase.from("email_templates").delete().eq("id", id);
-
-    if (error) throw error;
+    if (!success) {
+      return res.status(404).json({ error: "Template not found" });
+    }
 
     res.json({ message: "Template deleted" });
   } catch (error) {
@@ -188,33 +159,23 @@ exports.duplicateTemplate = async (req, res) => {
     const userId = req.user?.id;
     const teamId = req.user?.team_id;
 
-    const { data: original, error: fetchError } = await supabase
-      .from("email_templates")
-      .select("*")
-      .eq("id", id)
-      .single();
+    const original = await repository.getEmailTemplateById(id);
 
-    if (fetchError) throw fetchError;
+    if (!original) {
+      return res.status(404).json({ error: "Original template not found" });
+    }
 
-    const { data, error } = await supabase
-      .from("email_templates")
-      .insert([
-        {
-          name: `${original.name} (Copy)`,
-          subject: original.subject,
-          body: original.body,
-          type: original.type,
-          variables: original.variables,
-          is_active: false,
-          user_id: userId,
-          team_id: teamId,
-          created_at: new Date().toISOString(),
-        },
-      ])
-      .select()
-      .single();
-
-    if (error) throw error;
+    const data = await repository.createEmailTemplate({
+      name: `${original.name} (Copy)`,
+      subject: original.subject,
+      body: original.body,
+      type: original.type,
+      variables: original.variables,
+      is_active: false,
+      user_id: userId,
+      team_id: teamId,
+      created_at: new Date().toISOString(),
+    });
 
     res.status(201).json({ message: "Template duplicated", template: data });
   } catch (error) {

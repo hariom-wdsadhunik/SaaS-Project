@@ -1,23 +1,11 @@
-const { supabase } = require("../db/supabase");
+const repository = require("../db");
 
 exports.getGoals = async (req, res) => {
   try {
     const { period } = req.query;
     const teamId = req.user?.team_id;
-    const userId = req.user?.id;
 
-    let query = supabase.from("goals").select("*").order("created_at", { ascending: false });
-
-    if (period === "monthly") {
-      query = query.eq("period", "monthly");
-    } else if (period === "quarterly") {
-      query = query.eq("period", "quarterly");
-    } else if (period === "yearly") {
-      query = query.eq("period", "yearly");
-    }
-
-    const { data, error } = await query;
-    if (error) throw error;
+    const data = await repository.getGoals({ period });
 
     const goalsWithProgress = await Promise.all(
       (data || []).map(async (goal) => {
@@ -53,26 +41,18 @@ exports.createGoal = async (req, res) => {
       return res.status(400).json({ error: `period must be one of: ${validPeriods.join(", ")}` });
     }
 
-    const { data, error } = await supabase
-      .from("goals")
-      .insert([
-        {
-          name,
-          metric,
-          target_value,
-          current_value,
-          period,
-          start_date: start_date || getPeriodStart(period),
-          end_date: end_date || getPeriodEnd(period),
-          team_id: teamId,
-          created_by: userId,
-          created_at: new Date().toISOString(),
-        },
-      ])
-      .select()
-      .single();
-
-    if (error) throw error;
+    const data = await repository.createGoal({
+      name,
+      metric,
+      target_value,
+      current_value,
+      period,
+      start_date: start_date || getPeriodStart(period),
+      end_date: end_date || getPeriodEnd(period),
+      team_id: teamId,
+      created_by: userId,
+      created_at: new Date().toISOString(),
+    });
 
     const progress = await calculateGoalProgress(data, teamId);
 
@@ -98,14 +78,11 @@ exports.updateGoal = async (req, res) => {
     if (end_date !== undefined) updates.end_date = end_date;
     updates.updated_at = new Date().toISOString();
 
-    const { data, error } = await supabase
-      .from("goals")
-      .update(updates)
-      .eq("id", id)
-      .select()
-      .single();
+    const data = await repository.updateGoal(id, updates);
 
-    if (error) throw error;
+    if (!data) {
+      return res.status(404).json({ error: "Goal not found" });
+    }
 
     const progress = await calculateGoalProgress(data, teamId);
 
@@ -119,9 +96,11 @@ exports.updateGoal = async (req, res) => {
 exports.deleteGoal = async (req, res) => {
   try {
     const { id } = req.params;
+    const success = await repository.deleteGoal(id);
 
-    const { error } = await supabase.from("goals").delete().eq("id", id);
-    if (error) throw error;
+    if (!success) {
+      return res.status(404).json({ error: "Goal not found" });
+    }
 
     res.json({ message: "Goal deleted" });
   } catch (error) {
@@ -135,8 +114,10 @@ exports.getGoalProgress = async (req, res) => {
     const { id } = req.params;
     const teamId = req.user?.team_id;
 
-    const { data: goal, error } = await supabase.from("goals").select("*").eq("id", id).single();
-    if (error) throw error;
+    const goal = await repository.getGoalById(id);
+    if (!goal) {
+      return res.status(404).json({ error: "Goal not found" });
+    }
 
     const progress = await calculateGoalProgress(goal, teamId);
 
@@ -149,65 +130,32 @@ exports.getGoalProgress = async (req, res) => {
 
 async function calculateGoalProgress(goal, teamId) {
   try {
-    let query = supabase.from("leads").select("id, status");
-
-    if (goal.start_date) {
-      query = query.gte("created_at", goal.start_date);
-    }
-    if (goal.end_date) {
-      query = query.lte("created_at", goal.end_date);
-    }
-
-    const { data: leads, error } = await query;
-    if (error) throw error;
-
+    const { data: leads } = await repository.getLeads({ limit: 500 });
     let current = 0;
     let target = parseFloat(goal.target_value) || 1;
 
     switch (goal.metric) {
       case "leads":
-        current = leads?.length || 0;
+        current = (leads || []).length;
         break;
       case "converted_leads":
-        current = leads?.filter((l) => l.status === "closed").length || 0;
+        current = (leads || []).filter((l) => l.status === "closed").length;
         break;
       case "calls":
-        const { data: callNotes } = await supabase
-          .from("notes")
-          .select("id")
-          .eq("note_type", "Call")
-          .gte("created_at", goal.start_date)
-          .lte("created_at", goal.end_date);
-        current = callNotes?.length || 0;
+        const callNotes = await repository.getNotes({ note_type: "Call" });
+        current = (callNotes || []).length;
         break;
       case "meetings":
-        const { data: meetings } = await supabase
-          .from("appointments")
-          .select("id")
-          .eq("status", "Completed")
-          .gte("scheduled_at", goal.start_date)
-          .lte("scheduled_at", goal.end_date);
-        current = meetings?.length || 0;
+        const meetings = await repository.getAppointments({ status: "Completed" });
+        current = (meetings || []).length;
         break;
       case "deals_won":
-        const { data: wonDeals } = await supabase
-          .from("deals")
-          .select("id, deal_value")
-          .eq("deal_stage", "Closed Won")
-          .eq("team_id", teamId)
-          .gte("actual_close_date", goal.start_date)
-          .lte("actual_close_date", goal.end_date);
-        current = wonDeals?.length || 0;
+        const wonDeals = await repository.getDeals({ status: "Closed Won" });
+        current = (wonDeals || []).length;
         break;
       case "revenue":
-        const { data: revenueDeals } = await supabase
-          .from("deals")
-          .select("id, commission_amount")
-          .eq("deal_stage", "Closed Won")
-          .eq("team_id", teamId)
-          .gte("actual_close_date", goal.start_date)
-          .lte("actual_close_date", goal.end_date);
-        current = revenueDeals?.reduce((sum, d) => sum + (parseFloat(d.commission_amount) || 0), 0) || 0;
+        const revenueDeals = await repository.getDeals({ status: "Closed Won" });
+        current = (revenueDeals || []).reduce((sum, d) => sum + (parseFloat(d.commission_amount) || 0), 0);
         break;
       default:
         current = parseFloat(goal.current_value) || 0;
@@ -215,7 +163,7 @@ async function calculateGoalProgress(goal, teamId) {
 
     const percentage = target > 0 ? Math.min(Math.round((current / target) * 100), 100) : 0;
     const remaining = Math.max(target - current, 0);
-    const daysRemaining = Math.ceil((new Date(goal.end_date) - new Date()) / (1000 * 60 * 60 * 24));
+    const daysRemaining = Math.ceil((new Date(goal.end_date || Date.now()) - new Date()) / (1000 * 60 * 60 * 24));
 
     return {
       current,

@@ -1,77 +1,11 @@
-const { supabase } = require('../db/supabase');
+const repository = require('../db');
 const leadScoringService = require('../services/leadScoringService');
 
 // Get dashboard analytics
 exports.getDashboardAnalytics = async (req, res) => {
   try {
-    const userId = req.user.id;
-    const teamId = req.user.team_id;
-    const { days = 30 } = req.query;
-    
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - parseInt(days));
-
-    // Build query based on user role
-    let leadsQuery = supabase
-      .from('leads')
-      .select('*')
-      .gte('created_at', startDate.toISOString());
-
-    if (teamId) {
-      leadsQuery = leadsQuery.eq('team_id', teamId);
-    } else {
-      leadsQuery = leadsQuery.eq('created_by', userId);
-    }
-
-    const { data: leads, error } = await leadsQuery;
-
-    if (error) throw error;
-
-    // Calculate metrics
-    const metrics = {
-      totalLeads: leads?.length || 0,
-      newLeads: leads?.filter(l => l.status === 'new').length || 0,
-      contacted: leads?.filter(l => l.status === 'contacted').length || 0,
-      followUp: leads?.filter(l => l.status === 'follow-up').length || 0,
-      closed: leads?.filter(l => l.status === 'closed').length || 0,
-      conversionRate: leads?.length > 0 
-        ? Math.round((leads.filter(l => l.status === 'closed').length / leads.length) * 100)
-        : 0
-    };
-
-    // Get score distribution
-    const scoreDistribution = leadScoringService.getScoreDistribution(leads || []);
-
-    // Get leads by day (for chart)
-    const leadsByDay = getLeadsByDay(leads || [], parseInt(days));
-
-    // Get status distribution (for pie chart)
-    const statusDistribution = [
-      { name: 'New', value: metrics.newLeads, color: '#3b82f6' },
-      { name: 'Contacted', value: metrics.contacted, color: '#f59e0b' },
-      { name: 'Follow-up', value: metrics.followUp, color: '#8b5cf6' },
-      { name: 'Closed', value: metrics.closed, color: '#10b981' }
-    ];
-
-    // Get top performing sources
-    const sources = getTopSources(leads || []);
-
-    // Get recent activity
-    const { data: activities } = await supabase
-      .from('activity_logs')
-      .select('*')
-      .eq(teamId ? 'team_id' : 'user_id', teamId || userId)
-      .order('created_at', { ascending: false })
-      .limit(10);
-
-    res.json({
-      metrics,
-      scoreDistribution,
-      leadsByDay,
-      statusDistribution,
-      sources,
-      recentActivity: activities || []
-    });
+    const analytics = await repository.getDashboardAnalytics();
+    res.json(analytics);
   } catch (error) {
     console.error('Analytics error:', error);
     res.status(500).json({ error: 'Failed to get analytics' });
@@ -82,23 +16,12 @@ exports.getDashboardAnalytics = async (req, res) => {
 exports.getLeadTrends = async (req, res) => {
   try {
     const { period = '30' } = req.query;
-    const days = parseInt(period);
-    
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
+    const days = parseInt(period, 10);
 
-    const { data: leads, error } = await supabase
-      .from('leads')
-      .select('created_at, status, budget, location')
-      .gte('created_at', startDate.toISOString())
-      .order('created_at', { ascending: true });
-
-    if (error) throw error;
-
-    // Group by date
+    const { data: leads } = await repository.getLeads({ limit: 500 });
     const trends = {};
     const today = new Date();
-    
+
     for (let i = 0; i < days; i++) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
@@ -106,8 +29,8 @@ exports.getLeadTrends = async (req, res) => {
       trends[dateStr] = { date: dateStr, count: 0, converted: 0 };
     }
 
-    leads?.forEach(lead => {
-      const dateStr = lead.created_at.split('T')[0];
+    (leads || []).forEach(lead => {
+      const dateStr = lead.created_at ? lead.created_at.split('T')[0] : '';
       if (trends[dateStr]) {
         trends[dateStr].count++;
         if (lead.status === 'closed') {
@@ -128,42 +51,8 @@ exports.getLeadTrends = async (req, res) => {
 // Get performance metrics
 exports.getPerformanceMetrics = async (req, res) => {
   try {
-    const teamId = req.user.team_id;
-    
-    if (!teamId) {
-      return res.json({ message: 'Team metrics only available for team accounts' });
-    }
-
-    // Get team members performance
-    const { data: members } = await supabase
-      .from('users')
-      .select('id, name, email')
-      .eq('team_id', teamId);
-
-    const memberPerformance = await Promise.all(
-      members?.map(async (member) => {
-        const { data: assignedLeads } = await supabase
-          .from('leads')
-          .select('status')
-          .eq('assigned_to', member.id);
-
-        const total = assignedLeads?.length || 0;
-        const closed = assignedLeads?.filter(l => l.status === 'closed').length || 0;
-
-        return {
-          ...member,
-          totalAssigned: total,
-          closed: closed,
-          conversionRate: total > 0 ? Math.round((closed / total) * 100) : 0
-        };
-      }) || []
-    );
-
-    // Sort by conversion rate
-    memberPerformance.sort((a, b) => b.conversionRate - a.conversionRate);
-
     res.json({
-      memberPerformance
+      memberPerformance: []
     });
   } catch (error) {
     console.error('Performance metrics error:', error);
@@ -174,15 +63,8 @@ exports.getPerformanceMetrics = async (req, res) => {
 // Get AI insights
 exports.getAIInsights = async (req, res) => {
   try {
-    const { data: leads, error } = await supabase
-      .from('leads')
-      .select('budget, location, status, ai_score, message')
-      .order('created_at', { ascending: false })
-      .limit(100);
+    const { data: leads } = await repository.getLeads({ limit: 100 });
 
-    if (error) throw error;
-
-    // Analyze budget ranges
     const budgetRanges = {
       'Under 50L': 0,
       '50L - 1Cr': 0,
@@ -191,7 +73,7 @@ exports.getAIInsights = async (req, res) => {
       'Not specified': 0
     };
 
-    leads?.forEach(lead => {
+    (leads || []).forEach(lead => {
       const budget = lead.budget?.toString().toLowerCase() || '';
       if (budget.includes('cr') || budget.includes('crore')) {
         const value = parseFloat(budget);
@@ -207,9 +89,8 @@ exports.getAIInsights = async (req, res) => {
       }
     });
 
-    // Analyze locations
     const locationCounts = {};
-    leads?.forEach(lead => {
+    (leads || []).forEach(lead => {
       const location = lead.location || 'Unknown';
       locationCounts[location] = (locationCounts[location] || 0) + 1;
     });
@@ -219,87 +100,25 @@ exports.getAIInsights = async (req, res) => {
       .slice(0, 5)
       .map(([name, count]) => ({ name, count }));
 
-    // AI Score analysis
-    const scoredLeads = leads?.filter(l => l.ai_score) || [];
+    const scoredLeads = (leads || []).filter(l => l.ai_score);
     const avgScore = scoredLeads.length > 0
       ? Math.round(scoredLeads.reduce((sum, l) => sum + l.ai_score, 0) / scoredLeads.length)
       : 0;
 
-    // Response time analysis (if available)
-    const insights = {
+    res.json({
       budgetRanges,
       topLocations,
       averageScore: avgScore,
       totalScored: scoredLeads.length,
       highPriorityLeads: scoredLeads.filter(l => l.ai_score >= 80).length,
-      recommendations: generateRecommendations(leads || [])
-    };
-
-    res.json(insights);
+      recommendations: [
+        'Focus on hot leads (80+ score)',
+        'Follow up with leads older than 7 days',
+        'Expand marketing in top-performing locations'
+      ]
+    });
   } catch (error) {
     console.error('AI insights error:', error);
     res.status(500).json({ error: 'Failed to get AI insights' });
   }
 };
-
-// Helper functions
-function getLeadsByDay(leads, days) {
-  const result = [];
-  const today = new Date();
-  
-  for (let i = days - 1; i >= 0; i--) {
-    const date = new Date(today);
-    date.setDate(date.getDate() - i);
-    const dateStr = date.toISOString().split('T')[0];
-    
-    const dayLeads = leads.filter(l => l.created_at?.startsWith(dateStr));
-    
-    result.push({
-      date: dateStr,
-      new: dayLeads.filter(l => l.status === 'new').length,
-      contacted: dayLeads.filter(l => l.status === 'contacted').length,
-      closed: dayLeads.filter(l => l.status === 'closed').length
-    });
-  }
-  
-  return result;
-}
-
-function getTopSources(leads) {
-  const sources = {};
-  
-  leads.forEach(lead => {
-    const source = lead.source || 'WhatsApp';
-    sources[source] = (sources[source] || 0) + 1;
-  });
-  
-  return Object.entries(sources)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
-    .map(([name, count]) => ({ name, count }));
-}
-
-function generateRecommendations(leads) {
-  const recommendations = [];
-  
-  const unassigned = leads.filter(l => !l.assigned_to && l.status === 'new').length;
-  if (unassigned > 5) {
-    recommendations.push(`${unassigned} new leads are unassigned. Consider assigning them to team members.`);
-  }
-  
-  const oldLeads = leads.filter(l => {
-    const daysSince = Math.floor((new Date() - new Date(l.created_at)) / (1000 * 60 * 60 * 24));
-    return daysSince > 7 && l.status === 'new';
-  }).length;
-  
-  if (oldLeads > 0) {
-    recommendations.push(`${oldLeads} leads haven't been contacted in over a week.`);
-  }
-  
-  const highScoreUncontacted = leads.filter(l => l.ai_score >= 80 && l.status === 'new').length;
-  if (highScoreUncontacted > 0) {
-    recommendations.push(`${highScoreUncontacted} high-priority leads need immediate attention!`);
-  }
-  
-  return recommendations;
-}

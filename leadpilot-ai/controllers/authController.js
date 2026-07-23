@@ -1,10 +1,9 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { config } = require('../config');
+const repository = require('../db');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'leadpilot_demo_secret';
-const isDemoMode = process.env.SUPABASE_SERVICE_KEY === 'demo_mode';
-
-const demoUsers = new Map();
+const JWT_SECRET = config.jwt.secret || process.env.JWT_SECRET || 'leadpilot_demo_secret_2024';
 
 function generateToken(user) {
   return jwt.sign(
@@ -26,33 +25,27 @@ exports.register = async (req, res) => {
       return res.status(400).json({ error: 'Password must be at least 6 characters' });
     }
 
-    if (isDemoMode) {
-      if (demoUsers.has(email)) {
-        return res.status(409).json({ error: 'User already exists with this email' });
-      }
-      
-      const hashedPassword = await bcrypt.hash(password, 10);
-      const user = {
-        id: 'demo-' + Date.now(),
-        email,
-        password: hashedPassword,
-        name,
-        role,
-        team_id: null
-      };
-      
-      demoUsers.set(email, user);
-      const token = generateToken(user);
-      
-      return res.status(201).json({
-        message: 'User registered successfully',
-        token,
-        user: { id: user.id, email: user.email, name: user.name, role: user.role }
-      });
+    const existingUser = await repository.getUserByEmail(email);
+    if (existingUser) {
+      return res.status(409).json({ error: 'User already exists with this email' });
     }
 
-    return res.status(500).json({ error: 'Database not configured. Set SUPABASE_SERVICE_KEY in .env' });
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await repository.createUser({
+      email,
+      password: hashedPassword,
+      name,
+      role,
+      team_id: null
+    });
 
+    const token = generateToken(user);
+
+    res.status(201).json({
+      message: 'User registered successfully',
+      token,
+      user: { id: user.id, email: user.email, name: user.name, role: user.role }
+    });
   } catch (error) {
     console.error('Registration error:', error);
     res.status(500).json({ error: 'Registration failed' });
@@ -67,28 +60,23 @@ exports.login = async (req, res) => {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    if (isDemoMode) {
-      const user = demoUsers.get(email);
-      if (!user) {
-        return res.status(401).json({ error: 'Invalid credentials' });
-      }
-      
-      const isValidPassword = await bcrypt.compare(password, user.password);
-      if (!isValidPassword) {
-        return res.status(401).json({ error: 'Invalid credentials' });
-      }
-      
-      const token = generateToken(user);
-      
-      return res.json({
-        message: 'Login successful',
-        token,
-        user: { id: user.id, email: user.email, name: user.name, role: user.role, team_id: user.team_id }
-      });
+    const user = await repository.getUserByEmail(email);
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    return res.status(500).json({ error: 'Database not configured. Set SUPABASE_SERVICE_KEY in .env' });
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
 
+    const token = generateToken(user);
+
+    res.json({
+      message: 'Login successful',
+      token,
+      user: { id: user.id, email: user.email, name: user.name, role: user.role, team_id: user.team_id }
+    });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ error: 'Login failed' });
@@ -97,25 +85,67 @@ exports.login = async (req, res) => {
 
 exports.getCurrentUser = async (req, res) => {
   try {
-    res.json({ 
-      user: {
-        id: req.user.id,
-        email: req.user.email,
-        role: req.user.role,
-        team_id: req.user.team_id
-      }
+    const user = await repository.getUserById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json({
+      user: { id: user.id, email: user.email, name: user.name, role: user.role, team_id: user.team_id }
     });
   } catch (error) {
+    console.error('Get current user error:', error);
     res.status(500).json({ error: 'Failed to get user' });
   }
 };
 
 exports.updateProfile = async (req, res) => {
-  res.status(501).json({ error: 'Profile update requires database' });
+  try {
+    const user = await repository.getUserById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    const { name, email, phone } = req.body;
+    const updates = {};
+    if (name) updates.name = name;
+    if (email) updates.email = email;
+    if (phone) updates.phone = phone;
+
+    const updatedUser = await repository.updateUser(req.user.id, updates);
+    res.json({
+      message: 'Profile updated',
+      user: { id: updatedUser.id, email: updatedUser.email, name: updatedUser.name }
+    });
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.status(500).json({ error: 'Failed to update profile' });
+  }
 };
 
 exports.changePassword = async (req, res) => {
-  res.status(501).json({ error: 'Password change requires database' });
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Both passwords required' });
+    }
+
+    const user = await repository.getUserByEmail(req.user.email) || await repository.getUserById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const isValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isValid) {
+      return res.status(401).json({ error: 'Current password is incorrect' });
+    }
+
+    const newHashedPassword = await bcrypt.hash(newPassword, 10);
+    await repository.updateUser(user.id, { password: newHashedPassword });
+
+    res.json({ message: 'Password changed successfully' });
+  } catch (error) {
+    console.error('Change password error:', error);
+    res.status(500).json({ error: 'Failed to change password' });
+  }
 };
 
 module.exports = exports;

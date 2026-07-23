@@ -1,5 +1,5 @@
 const nodemailer = require("nodemailer");
-const { supabase } = require("../db/supabase");
+const repository = require("../db");
 const { config } = require("../config");
 
 class EmailController {
@@ -65,13 +65,9 @@ class EmailController {
 
   async sendToLead({ leadId, subject, body, templateId, variables = {} }) {
     try {
-      const { data: lead, error } = await supabase
-        .from("leads")
-        .select("id, phone, email, name, budget, location")
-        .eq("id", leadId)
-        .single();
+      const lead = await repository.getLeadById(leadId);
 
-      if (error || !lead) {
+      if (!lead) {
         throw new Error("Lead not found");
       }
 
@@ -83,12 +79,7 @@ class EmailController {
       let emailBody = body;
 
       if (templateId) {
-        const { data: template } = await supabase
-          .from("email_templates")
-          .select("*")
-          .eq("id", templateId)
-          .single();
-
+        const template = await repository.getEmailTemplateById(templateId);
         if (template) {
           emailSubject = template.subject;
           emailBody = template.body;
@@ -114,40 +105,34 @@ class EmailController {
         html: emailBody,
       });
 
-      await supabase.from("email_logs").insert([
-        {
-          user_id: variables.userId,
-          lead_id: leadId,
-          email_type: templateId ? "template" : "custom",
-          status: "sent",
-          created_at: new Date().toISOString(),
-        },
-      ]);
+      await repository.createEmailLog({
+        user_id: variables.userId,
+        lead_id: leadId,
+        email_type: templateId ? "template" : "custom",
+        status: "sent",
+        created_at: new Date().toISOString(),
+      });
 
-      await supabase.from("notes").insert([
-        {
-          lead_id: leadId,
-          note_type: "Email",
-          content: `Email sent: ${emailSubject}`,
-          created_by: variables.userId,
-          created_at: new Date().toISOString(),
-        },
-      ]);
+      await repository.createNote({
+        lead_id: leadId,
+        note_type: "Email",
+        content: `Email sent: ${emailSubject}`,
+        created_by: variables.userId,
+        created_at: new Date().toISOString(),
+      });
 
       return { success: true, lead, ...result };
     } catch (error) {
       console.error("Send to lead error:", error);
 
-      await supabase.from("email_logs").insert([
-        {
-          user_id: variables.userId,
-          lead_id: leadId,
-          email_type: "custom",
-          status: "failed",
-          error_message: error.message,
-          created_at: new Date().toISOString(),
-        },
-      ]);
+      await repository.createEmailLog({
+        user_id: variables.userId,
+        lead_id: leadId,
+        email_type: "custom",
+        status: "failed",
+        error_message: error.message,
+        created_at: new Date().toISOString(),
+      });
 
       throw error;
     }
@@ -175,10 +160,10 @@ class EmailController {
   }
 
   async getEmailStatus() {
-    const config = this.parseEmailConfig();
+    const emailConfig = this.parseEmailConfig();
     return {
-      configured: config.configured,
-      service: config.service,
+      configured: emailConfig.configured,
+      service: emailConfig.service,
       fromEmail: this.fromEmail,
     };
   }
@@ -257,28 +242,15 @@ exports.getStatus = async (req, res) => {
 
 exports.getEmailLogs = async (req, res) => {
   try {
-    const { limit = 50, offset = 0, leadId } = req.query;
-
-    let query = supabase
-      .from("email_logs")
-      .select("*, leads(phone, name)")
-      .order("created_at", { ascending: false })
-      .range(parseInt(offset), parseInt(offset) + parseInt(limit) - 1);
-
-    if (leadId) {
-      query = query.eq("lead_id", leadId);
-    }
-
-    const { data, error, count } = await query;
-
-    if (error) throw error;
+    const { leadId } = req.query;
+    const logs = await repository.getEmailLogs({ leadId });
 
     res.json({
-      logs: data,
+      logs: logs || [],
       pagination: {
-        total: count,
-        limit: parseInt(limit),
-        offset: parseInt(offset),
+        total: (logs || []).length,
+        limit: 50,
+        offset: 0,
       },
     });
   } catch (error) {
