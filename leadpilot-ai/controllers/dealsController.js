@@ -220,8 +220,9 @@ exports.deleteDeal = async (req, res) => {
 // Get deal pipeline statistics
 exports.getDealPipelineStats = async (req, res) => {
   try {
-    const deals = await repository.getDeals();
-    const pipeline = (deals || []).reduce((acc, d) => {
+    const response = await repository.getDeals();
+    const dealsList = Array.isArray(response) ? response : (response?.data || []);
+    const pipeline = dealsList.reduce((acc, d) => {
       const stage = d.deal_stage || 'New';
       if (!acc[stage]) {
         acc[stage] = { stage, count: 0, total_value: 0, total_commission: 0 };

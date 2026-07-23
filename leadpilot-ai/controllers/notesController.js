@@ -112,15 +112,19 @@ exports.getCommunicationTimeline = async (req, res) => {
   try {
     const { lead_id } = req.params;
 
-    const notes = await repository.getNotes({ lead_id });
-    const appointments = await repository.getAppointments({ lead_id });
-    const tasks = await repository.getTasks({ lead_id });
+    const notesRes = await repository.getNotes({ lead_id });
+    const appointmentsRes = await repository.getAppointments({ lead_id });
+    const tasksRes = await repository.getTasks({ lead_id });
+
+    const notesList = Array.isArray(notesRes) ? notesRes : (notesRes?.data || []);
+    const appointmentsList = Array.isArray(appointmentsRes) ? appointmentsRes : (appointmentsRes?.data || []);
+    const tasksList = Array.isArray(tasksRes) ? tasksRes : (tasksRes?.data || []);
 
     // Combine and sort timeline
     const timeline = [
-      ...(notes || []).map(n => ({ ...n, type: 'note', date: n.created_at })),
-      ...(appointments || []).map(a => ({ ...a, type: 'appointment', date: a.scheduled_at })),
-      ...(tasks || []).map(t => ({ ...t, type: 'task', date: t.created_at }))
+      ...notesList.map(n => ({ ...n, type: 'note', date: n.created_at })),
+      ...appointmentsList.map(a => ({ ...a, type: 'appointment', date: a.scheduled_at })),
+      ...tasksList.map(t => ({ ...t, type: 'task', date: t.created_at }))
     ].sort((a, b) => new Date(b.date) - new Date(a.date));
 
     res.json(timeline);

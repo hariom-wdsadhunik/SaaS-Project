@@ -171,9 +171,9 @@ class EmailController {
 
 const emailController = new EmailController();
 
-exports.sendEmail = async (req, res) => {
+const sendEmail = async (req, res) => {
   try {
-    const { to, subject, body, cc, bcc } = req.body;
+    const { to, subject, body, cc, bcc } = req.body || {};
 
     if (!to || !subject || !body) {
       return res.status(400).json({ error: "to, subject, and body are required" });
@@ -187,15 +187,18 @@ exports.sendEmail = async (req, res) => {
   }
 };
 
-exports.sendToLead = async (req, res) => {
+const sendToLead = async (req, res) => {
+  if (!res && req && req.leadId) {
+    return emailController.sendToLead(req);
+  }
   try {
-    const { leadId, subject, body, templateId, variables = {} } = req.body;
+    const { leadId, subject, body, templateId, variables = {} } = req.body || {};
 
     if (!leadId) {
       return res.status(400).json({ error: "leadId is required" });
     }
 
-    variables.userId = req.user.id;
+    if (req.user?.id) variables.userId = req.user.id;
 
     const result = await emailController.sendToLead({ leadId, subject, body, templateId, variables });
     res.json({ message: "Email sent successfully", ...result });
@@ -205,9 +208,12 @@ exports.sendToLead = async (req, res) => {
   }
 };
 
-exports.sendBulk = async (req, res) => {
+const sendBulk = async (req, res) => {
+  if (!res && req && req.leadIds) {
+    return emailController.sendBulk(req);
+  }
   try {
-    const { leadIds, subject, body, templateId } = req.body;
+    const { leadIds, subject, body, templateId } = req.body || {};
 
     if (!leadIds || !Array.isArray(leadIds) || leadIds.length === 0) {
       return res.status(400).json({ error: "leadIds array is required" });
@@ -218,7 +224,7 @@ exports.sendBulk = async (req, res) => {
       subject,
       body,
       templateId,
-      variables: { userId: req.user.id },
+      variables: { userId: req.user?.id },
     });
 
     res.json({
@@ -231,7 +237,7 @@ exports.sendBulk = async (req, res) => {
   }
 };
 
-exports.getStatus = async (req, res) => {
+const getStatus = async (req, res) => {
   try {
     const status = await emailController.getEmailStatus();
     res.json(status);
@@ -240,9 +246,9 @@ exports.getStatus = async (req, res) => {
   }
 };
 
-exports.getEmailLogs = async (req, res) => {
+const getEmailLogs = async (req, res) => {
   try {
-    const { leadId } = req.query;
+    const { leadId } = req.query || {};
     const logs = await repository.getEmailLogs({ leadId });
 
     res.json({
@@ -259,4 +265,14 @@ exports.getEmailLogs = async (req, res) => {
   }
 };
 
-module.exports = emailController;
+module.exports = {
+  sendEmail,
+  sendToLead,
+  sendBulk,
+  getStatus,
+  getEmailLogs,
+  parseEmailConfig: emailController.parseEmailConfig.bind(emailController),
+  transporter: emailController.transporter,
+  instance: emailController
+};
+

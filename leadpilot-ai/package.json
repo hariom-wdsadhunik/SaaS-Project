@@ -1,6 +1,6 @@
 {
   "name": "leadpilot-ai",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Professional Real Estate CRM with WhatsApp Integration",
   "main": "server.js",
   "scripts": {

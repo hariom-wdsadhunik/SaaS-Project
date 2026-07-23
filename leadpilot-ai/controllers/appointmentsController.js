@@ -150,9 +150,10 @@ exports.deleteAppointment = async (req, res) => {
 // Get upcoming appointments
 exports.getUpcomingAppointments = async (req, res) => {
   try {
-    const all = await repository.getAppointments(req.query);
+    const response = await repository.getAppointments(req.query);
+    const appointmentsList = Array.isArray(response) ? response : (response?.data || []);
     const now = new Date();
-    const upcoming = (all || [])
+    const upcoming = appointmentsList
       .filter(a => new Date(a.scheduled_at) >= now && ["Scheduled", "Rescheduled"].includes(a.status))
       .slice(0, 10);
 

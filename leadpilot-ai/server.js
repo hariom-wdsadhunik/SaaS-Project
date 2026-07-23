@@ -9,10 +9,14 @@ const path = require("path");
 const logger = require("./logger");
 const { config, validateConfig } = require("./config");
 const demoStore = require('./db/demoStore');
+const requestIdMiddleware = require('./middleware/requestId');
 
 const app = express();
 
-// Security middleware
+// Request Correlation ID Middleware
+app.use(requestIdMiddleware);
+
+// Security middleware with enhanced headers
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -22,6 +26,8 @@ app.use(helmet({
       imgSrc: ["'self'", "data:", "https:"],
     },
   },
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+  hsts: config.env === 'production' ? { maxAge: 31536000, includeSubDomains: true, preload: true } : false
 }));
 
 // Production-ready CORS Configuration
@@ -58,7 +64,7 @@ app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 app.use(compression());
 
-// Structured HTTP Request Logging
+// Structured HTTP Request Logging with Request ID
 const morganStream = {
   write: (message) => logger.info({ type: 'http' }, message.trim())
 };
@@ -69,8 +75,11 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use('/leadpilot-ui', express.static(path.join(__dirname, "leadpilot-ui")));
 
 // ============================================
-// MODULAR ROUTERS
+// MODULAR ROUTERS & HEALTH ENDPOINTS
 // ============================================
+app.use('/', require('./routes/health'));
+app.use('/api', require('./routes/health'));
+
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/leads', require('./routes/leads'));
 app.use('/api/properties', require('./routes/properties'));
@@ -90,11 +99,6 @@ app.use('/api/goals', require('./routes/goals'));
 app.use('/api/reports', require('./routes/reports'));
 app.use('/api/sequences', require('./routes/sequences'));
 app.use('/webhook', require('./routes/webhook'));
-
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString(), mode: 'demo' });
-});
 
 // UI Page routes
 const pages = {
@@ -118,26 +122,60 @@ Object.entries(pages).forEach(([route, file]) => {
 });
 
 // 404 Handler
-app.use((req, res) => res.status(404).json({ error: 'Not found' }));
+app.use((req, res) => res.status(404).json({ error: 'Not found', requestId: req.id }));
 
 // Global Error Handler
 app.use((err, req, res, next) => {
-  logger.error({ err, path: req.path, method: req.method }, 'Global Error: ' + err.message);
-  res.status(500).json({ error: 'Internal server error' });
+  logger.error({ err, path: req.path, method: req.method, requestId: req.id }, 'Global Error: ' + err.message);
+  res.status(500).json({ error: 'Internal server error', requestId: req.id });
 });
 
 // Export app for serverless deployments (Vercel) & testing
 module.exports = app;
 
+// Operational Diagnostics & Graceful Shutdown
+const logStartupDiagnostics = (startTime) => {
+  const duration = Date.now() - startTime;
+  const packageJson = require('./package.json');
+  const isProdDb = process.env.SUPABASE_SERVICE_KEY && process.env.SUPABASE_SERVICE_KEY !== 'demo_mode';
+  logger.info({
+    version: packageJson.version,
+    nodeVersion: process.version,
+    environment: config.env,
+    port: config.port,
+    repositoryMode: isProdDb ? 'Production (Supabase)' : 'Demo Store (In-Memory)',
+    redisStatus: config.redis.url ? 'Enabled' : 'Disabled (In-Memory Fallback)',
+    startupDurationMs: duration,
+    timestamp: new Date().toISOString()
+  }, `🚀 Operational Diagnostics: LeadPilot AI CRM v${packageJson.version} initialized in ${duration}ms`);
+};
+
 // Start server if executed directly
 if (require.main === module) {
+  const startTime = Date.now();
   validateConfig();
   const PORT = process.env.PORT || config.port || 3000;
   demoStore.seedData().then(() => {
-    app.listen(PORT, () => {
-      logger.info({ port: PORT, mode: config.env }, `🚀 LeadPilot AI CRM running on http://localhost:${PORT}`);
-      logger.info('📊 Mode: DEMO (in-memory, no database needed)');
+    const server = app.listen(PORT, () => {
+      logStartupDiagnostics(startTime);
+      logger.info(`🚀 LeadPilot AI CRM running on http://localhost:${PORT}`);
       logger.info('👤 Demo login: admin@leadpilot.ai / admin123');
     });
+
+    const shutdown = (signal) => {
+      logger.info(`Received ${signal}. Starting graceful shutdown...`);
+      server.close(() => {
+        logger.info('HTTP server closed cleanly. Exiting process.');
+        process.exit(0);
+      });
+      setTimeout(() => {
+        logger.error('Could not close connections in time, forcefully shutting down');
+        process.exit(1);
+      }, 10000);
+    };
+
+    process.on('SIGINT', () => shutdown('SIGINT'));
+    process.on('SIGTERM', () => shutdown('SIGTERM'));
   });
 }
+

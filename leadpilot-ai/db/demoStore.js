@@ -186,7 +186,7 @@ const demoStore = {
 
   async createLead(leadData) {
     const lead = {
-      id: leadData.id || 'lead-' + Date.now(),
+      id: leadData.id || 'lead-' + Date.now() + '-' + Math.random().toString(36).substr(2, 6),
       phone: leadData.phone,
       name: leadData.name || '',
       email: leadData.email || '',
@@ -241,7 +241,7 @@ const demoStore = {
   },
 
   async createProperty(propertyData) {
-    const prop = { id: 'prop-' + Date.now(), created_at: new Date().toISOString(), ...propertyData };
+    const prop = { id: propertyData.id || 'prop-' + Date.now() + '-' + Math.random().toString(36).substr(2, 6), created_at: new Date().toISOString(), ...propertyData };
     properties.unshift(prop);
     return prop;
   },
@@ -301,7 +301,7 @@ const demoStore = {
   },
 
   async createTask(taskData) {
-    const task = { id: 'task-' + Date.now(), status: 'Pending', created_at: new Date().toISOString(), ...taskData };
+    const task = { id: taskData.id || 'task-' + Date.now() + '-' + Math.random().toString(36).substr(2, 6), status: 'Pending', created_at: new Date().toISOString(), ...taskData };
     tasks.unshift(task);
     return task;
   },
@@ -355,7 +355,7 @@ const demoStore = {
   },
 
   async createAppointment(data) {
-    const appt = { id: 'appt-' + Date.now(), status: 'Scheduled', created_at: new Date().toISOString(), ...data };
+    const appt = { id: data.id || 'appt-' + Date.now() + '-' + Math.random().toString(36).substr(2, 6), status: 'Scheduled', created_at: new Date().toISOString(), ...data };
     appointments.unshift(appt);
     return appt;
   },
@@ -405,7 +405,7 @@ const demoStore = {
   },
 
   async createDeal(data) {
-    const deal = { id: 'deal-' + Date.now(), deal_stage: 'New', created_at: new Date().toISOString(), ...data };
+    const deal = { id: data.id || 'deal-' + Date.now() + '-' + Math.random().toString(36).substr(2, 6), deal_stage: 'New', created_at: new Date().toISOString(), ...data };
     deals.unshift(deal);
     return deal;
   },
@@ -452,7 +452,7 @@ const demoStore = {
   },
 
   async createNote(data) {
-    const note = { id: 'note-' + Date.now(), created_at: new Date().toISOString(), ...data };
+    const note = { id: data.id || 'note-' + Date.now() + '-' + Math.random().toString(36).substr(2, 6), created_at: new Date().toISOString(), ...data };
     notes.unshift(note);
     return note;
   },

@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.0] - 2026-07-23
+
+### Added
+* **Complete Automated Test Suite**: Built 72 test suites with 363 tests across Unit (`tests/unit/`), Contract (`tests/contracts/`), Integration (`tests/integration/`), and Reliability (`tests/reliability/`) tiers with 100% pass rate.
+* **Production Observability & Diagnostics**: Added `logStartupDiagnostics()` in `server.js` and detailed health probe endpoints (`/health`, `/ready`, `/live`) returning system memory, Node version, environment, uptime, database mode, and startup timestamp.
+* **Request Correlation Middleware**: Created `middleware/requestId.js` generating and tracking `X-Request-ID` headers across request lifecycles, structured logs, and error responses.
+* **Graceful Process Shutdown**: Implemented `SIGINT` / `SIGTERM` signal handlers in `server.js` to cleanly close HTTP server listeners and active connections within a 10-second window.
+* **GitHub Actions CI/CD Pipeline**: Created `.github/workflows/ci.yml` running Node 22 LTS automated linting, unit tests, contract tests, integration tests, stress benchmarks, and coverage artifact uploads on every push & pull request targeting `main` and `develop`.
+* **Repository Hygiene & Templates**: Added `.editorconfig`, `.github/PULL_REQUEST_TEMPLATE.md`, `.github/ISSUE_TEMPLATE/bug_report.md`, and `feature_request.md`.
+
+### Changed
+* **Code Coverage Standards**: Raised Line Coverage to 94.80% in Repository layer, 92.85% in Middleware layer, and 90.33% in Service layer (80.06% overall project coverage).
+* **Security Headers**: Hardened Helmet middleware with strict `X-Content-Type-Options`, `Referrer-Policy`, and production `HSTS` (`Strict-Transport-Security`).
+
+---
+
 ## [1.0.0] - 2026-07-23
 
 ### Added

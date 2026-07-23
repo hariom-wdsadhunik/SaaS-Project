@@ -80,7 +80,8 @@ class ReportService {
 
   async generateDealsReport({ teamId, startDate, endDate }) {
     try {
-      const allDeals = await repository.getDeals();
+      const rawDeals = await repository.getDeals();
+      const allDeals = Array.isArray(rawDeals) ? rawDeals : (rawDeals?.data || []);
       let deals = (allDeals || []).filter(d => !teamId || d.team_id === teamId);
 
       if (startDate) {
