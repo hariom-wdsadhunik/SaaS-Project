@@ -7,6 +7,7 @@ interface ContactsToolbarProps {
   viewMode: "grid" | "table";
   onViewModeChange: (mode: "grid" | "table") => void;
   onRefresh: () => void;
+  onAddContact?: () => void;
   isRefreshing?: boolean;
 }
 
@@ -14,6 +15,7 @@ export function ContactsToolbar({
   viewMode,
   onViewModeChange,
   onRefresh,
+  onAddContact,
   isRefreshing = false,
 }: ContactsToolbarProps) {
   return (
@@ -80,7 +82,7 @@ export function ContactsToolbar({
         <Button
           size="sm"
           variant="default"
-          onClick={() => toast.info("Add Contact Form Triggered (Placeholder)")}
+          onClick={onAddContact}
           className="h-8 text-xs gap-1.5 shadow-sm"
         >
           <Plus className="h-3.5 w-3.5" />

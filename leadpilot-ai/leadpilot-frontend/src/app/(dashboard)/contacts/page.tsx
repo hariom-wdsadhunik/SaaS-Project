@@ -11,6 +11,8 @@ import {
   ContactsEmptyState,
   ContactsErrorState,
 } from "@/components/contacts/contacts-feedback";
+import { ContactDrawer } from "@/components/contacts/drawer/contact-drawer";
+import { ContactModalForm } from "@/components/contacts/forms/contact-modal-form";
 import { initialContactsDataset, contactMockService } from "@/services/contact-mock-service";
 import { ContactEntity, ContactFilterState } from "@/domain/contact/types";
 import { toast } from "sonner";
@@ -31,6 +33,15 @@ export default function ContactsPage() {
 
   const [viewMode, setViewMode] = React.useState<"grid" | "table">("grid");
   const [filters, setFilters] = React.useState<ContactFilterState>(initialFilterState);
+
+  // Drawer State
+  const [selectedContact, setSelectedContact] = React.useState<ContactEntity | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = React.useState(false);
+
+  // Modal Form State
+  const [isFormModalOpen, setIsFormModalOpen] = React.useState(false);
+  const [formMode, setFormMode] = React.useState<"create" | "edit">("create");
+  const [editingContact, setEditingContact] = React.useState<ContactEntity | null>(null);
 
   const handleFilterChange = (newFilters: Partial<ContactFilterState>) => {
     setFilters((prev) => ({ ...prev, ...newFilters }));
@@ -54,6 +65,38 @@ export default function ContactsPage() {
       setIsRefreshing(false);
     }
   };
+
+  const handleOpenCreateModal = () => {
+    setFormMode("create");
+    setEditingContact(null);
+    setIsFormModalOpen(true);
+  };
+
+  const handleFormSuccess = (contact: ContactEntity) => {
+    if (formMode === "create") {
+      setContactsList((prev) => [contact, ...prev]);
+    } else {
+      setContactsList((prev) => prev.map((c) => (c.id === contact.id ? contact : c)));
+    }
+  };
+
+  // Keyboard shortcut `C` for Create Contact
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        (e.key === "c" || e.key === "C") &&
+        !isFormModalOpen &&
+        !isDrawerOpen &&
+        document.activeElement?.tagName !== "INPUT" &&
+        document.activeElement?.tagName !== "TEXTAREA"
+      ) {
+        e.preventDefault();
+        handleOpenCreateModal();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isFormModalOpen, isDrawerOpen]);
 
   const activeFilterCount = Object.values(filters).filter((val) => val !== "").length;
 
@@ -101,6 +144,7 @@ export default function ContactsPage() {
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onRefresh={handleRefresh}
+        onAddContact={handleOpenCreateModal}
         isRefreshing={isRefreshing}
       />
 
@@ -117,16 +161,41 @@ export default function ContactsPage() {
             <ContactCard
               key={contact.id}
               contact={contact}
-              onSelectContact={(c) => toast.info(`Viewing record for ${c.fullName}`)}
+              onSelectContact={(c) => {
+                setSelectedContact(c);
+                setIsDrawerOpen(true);
+              }}
             />
           ))}
         </div>
       ) : (
         <ContactTable
           data={filteredContacts}
-          onSelectContact={(c) => toast.info(`Viewing record for ${c.fullName}`)}
+          onSelectContact={(c) => {
+            setSelectedContact(c);
+            setIsDrawerOpen(true);
+          }}
         />
       )}
+
+      {/* Contact Details Drawer Workspace */}
+      <ContactDrawer
+        contact={selectedContact}
+        isOpen={isDrawerOpen}
+        onClose={() => {
+          setIsDrawerOpen(false);
+          setSelectedContact(null);
+        }}
+      />
+
+      {/* Create / Edit Contact Modal Form */}
+      <ContactModalForm
+        isOpen={isFormModalOpen}
+        mode={formMode}
+        initialData={editingContact}
+        onClose={() => setIsFormModalOpen(false)}
+        onSuccess={handleFormSuccess}
+      />
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { ContactEntity, ContactFilterState } from "@/domain/contact/types";
+import { ContactFormInput } from "@/lib/validations/contact-form";
 import { platformAuditLogger } from "@/platform/audit";
 
 export const initialContactsDataset: ContactEntity[] = [
@@ -112,5 +113,74 @@ export const contactMockService = {
     });
 
     return items;
+  },
+
+  async createContact(input: ContactFormInput): Promise<ContactEntity> {
+    await new Promise((res) => setTimeout(res, 400));
+
+    if (input.email) {
+      const emailMatch = initialContactsDataset.find(
+        (c) => c.email.toLowerCase() === input.email?.toLowerCase()
+      );
+      if (emailMatch) {
+        throw new Error(`A contact with email "${input.email}" already exists.`);
+      }
+    }
+
+    const fullName = `${input.firstName} ${input.lastName}`;
+    const newContact: ContactEntity = {
+      id: `cnt-${Math.floor(300 + Math.random() * 700)}`,
+      fullName,
+      designation: input.designation || "Executive",
+      companyName: input.companyName || "Independent Client",
+      email: input.email || `${input.firstName.toLowerCase()}@client.me`,
+      phone: input.phone || "+971 50 000 0000",
+      status: input.status,
+      tags: input.tags ? input.tags.split(",").map((t) => t.trim()) : ["New Profile"],
+      assignedAgentName: input.assignedAgentName,
+      lastActivity: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+    };
+
+    initialContactsDataset.push(newContact);
+
+    platformAuditLogger.log({
+      action: "CREATE",
+      entityType: "SYSTEM",
+      entityIds: [newContact.id],
+      payload: { fullName },
+      timestamp: new Date().toISOString(),
+    });
+
+    return newContact;
+  },
+
+  async updateContact(id: string, input: ContactFormInput): Promise<ContactEntity> {
+    await new Promise((res) => setTimeout(res, 400));
+
+    const fullName = `${input.firstName} ${input.lastName}`;
+    const updatedContact: ContactEntity = {
+      id,
+      fullName,
+      designation: input.designation || "Executive",
+      companyName: input.companyName || "Independent Client",
+      email: input.email || "contact@client.me",
+      phone: input.phone || "+971 50 000 0000",
+      status: input.status,
+      tags: input.tags ? input.tags.split(",").map((t) => t.trim()) : ["Updated Profile"],
+      assignedAgentName: input.assignedAgentName,
+      lastActivity: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+    };
+
+    platformAuditLogger.log({
+      action: "UPDATE",
+      entityType: "SYSTEM",
+      entityIds: [id],
+      payload: { fullName },
+      timestamp: new Date().toISOString(),
+    });
+
+    return updatedContact;
   },
 };
