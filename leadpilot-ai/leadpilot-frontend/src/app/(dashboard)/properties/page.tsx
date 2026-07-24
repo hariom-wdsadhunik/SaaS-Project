@@ -11,6 +11,8 @@ import {
   PropertiesEmptyState,
   PropertiesErrorState,
 } from "@/components/properties/properties-feedback";
+import { PropertyDrawer } from "@/components/properties/drawer/property-drawer";
+import { PropertyModalForm } from "@/components/properties/forms/property-modal-form";
 import { initialPropertiesDataset, propertyMockService } from "@/services/property-mock-service";
 import { PropertyEntity, PropertyFilterState } from "@/domain/property/types";
 import { toast } from "sonner";
@@ -35,6 +37,15 @@ export default function PropertiesPage() {
   const [viewMode, setViewMode] = React.useState<"grid" | "table">("grid");
   const [filters, setFilters] = React.useState<PropertyFilterState>(initialFilterState);
 
+  // Drawer State
+  const [selectedProperty, setSelectedProperty] = React.useState<PropertyEntity | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = React.useState(false);
+
+  // Modal Form State
+  const [isFormModalOpen, setIsFormModalOpen] = React.useState(false);
+  const [formMode, setFormMode] = React.useState<"create" | "edit">("create");
+  const [editingProperty, setEditingProperty] = React.useState<PropertyEntity | null>(null);
+
   const handleFilterChange = (newFilters: Partial<PropertyFilterState>) => {
     setFilters((prev) => ({ ...prev, ...newFilters }));
   };
@@ -57,6 +68,38 @@ export default function PropertiesPage() {
       setIsRefreshing(false);
     }
   };
+
+  const handleOpenCreateModal = () => {
+    setFormMode("create");
+    setEditingProperty(null);
+    setIsFormModalOpen(true);
+  };
+
+  const handleFormSuccess = (property: PropertyEntity) => {
+    if (formMode === "create") {
+      setPropertiesList((prev) => [property, ...prev]);
+    } else {
+      setPropertiesList((prev) => prev.map((p) => (p.id === property.id ? property : p)));
+    }
+  };
+
+  // Keyboard shortcut `C` for Create Property
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        (e.key === "c" || e.key === "C") &&
+        !isFormModalOpen &&
+        !isDrawerOpen &&
+        document.activeElement?.tagName !== "INPUT" &&
+        document.activeElement?.tagName !== "TEXTAREA"
+      ) {
+        e.preventDefault();
+        handleOpenCreateModal();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isFormModalOpen, isDrawerOpen]);
 
   const activeFilterCount = Object.values(filters).filter((val) => val !== "").length;
 
@@ -82,7 +125,7 @@ export default function PropertiesPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-zinc-800/80 pb-5">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Properties Inventory</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-white">Properties Inventory Workspace</h1>
           <p className="text-xs text-zinc-400 mt-1">
             Real estate inventory management, listing statuses &amp; catalog metrics
           </p>
@@ -105,6 +148,7 @@ export default function PropertiesPage() {
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onRefresh={handleRefresh}
+        onAddProperty={handleOpenCreateModal}
         isRefreshing={isRefreshing}
       />
 
@@ -121,16 +165,41 @@ export default function PropertiesPage() {
             <PropertyCard
               key={property.id}
               property={property}
-              onSelectProperty={(prop) => toast.info(`Viewing details for ${prop.title}`)}
+              onSelectProperty={(prop) => {
+                setSelectedProperty(prop);
+                setIsDrawerOpen(true);
+              }}
             />
           ))}
         </div>
       ) : (
         <PropertyTable
           data={filteredProperties}
-          onSelectProperty={(prop) => toast.info(`Viewing details for ${prop.title}`)}
+          onSelectProperty={(prop) => {
+            setSelectedProperty(prop);
+            setIsDrawerOpen(true);
+          }}
         />
       )}
+
+      {/* Property Details Drawer Workspace */}
+      <PropertyDrawer
+        property={selectedProperty}
+        isOpen={isDrawerOpen}
+        onClose={() => {
+          setIsDrawerOpen(false);
+          setSelectedProperty(null);
+        }}
+      />
+
+      {/* Create / Edit Property Modal Form */}
+      <PropertyModalForm
+        isOpen={isFormModalOpen}
+        mode={formMode}
+        initialData={editingProperty}
+        onClose={() => setIsFormModalOpen(false)}
+        onSuccess={handleFormSuccess}
+      />
     </div>
   );
 }

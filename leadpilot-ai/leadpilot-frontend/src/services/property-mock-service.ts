@@ -1,4 +1,5 @@
 import { PropertyEntity, PropertyFilterState } from "@/domain/property/types";
+import { PropertyFormInput } from "@/lib/validations/property-form";
 import { platformAuditLogger } from "@/platform/audit";
 
 export const initialPropertiesDataset: PropertyEntity[] = [
@@ -148,5 +149,89 @@ export const propertyMockService = {
     });
 
     return items;
+  },
+
+  async createProperty(input: PropertyFormInput): Promise<PropertyEntity> {
+    await new Promise((res) => setTimeout(res, 400));
+
+    if (
+      initialPropertiesDataset.some(
+        (p) => p.title.toLowerCase() === input.title.toLowerCase()
+      )
+    ) {
+      throw new Error(`A property listing titled "${input.title}" already exists.`);
+    }
+
+    const newProp: PropertyEntity = {
+      id: `prop-${Math.floor(100 + Math.random() * 900)}`,
+      mlsId: `MLS-${Math.floor(90000 + Math.random() * 9999)}`,
+      title: input.title,
+      address: input.address,
+      city: input.city,
+      state: input.state,
+      zipCode: input.zipCode,
+      price: input.price,
+      bedrooms: input.bedrooms,
+      bathrooms: input.bathrooms,
+      areaSqFt: input.areaSqFt,
+      propertyType: input.propertyType,
+      status: input.status,
+      coverImageUrl:
+        input.coverImageUrl ||
+        "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800",
+      assignedAgentName: input.assignedAgentName,
+      yearBuilt: 2024,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    initialPropertiesDataset.push(newProp);
+
+    platformAuditLogger.log({
+      action: "CREATE",
+      entityType: "PROPERTY",
+      entityIds: [newProp.id],
+      payload: { title: newProp.title },
+      timestamp: new Date().toISOString(),
+    });
+
+    return newProp;
+  },
+
+  async updateProperty(id: string, input: PropertyFormInput): Promise<PropertyEntity> {
+    await new Promise((res) => setTimeout(res, 400));
+
+    const updatedProp: PropertyEntity = {
+      id,
+      mlsId: "MLS-99401",
+      title: input.title,
+      address: input.address,
+      city: input.city,
+      state: input.state,
+      zipCode: input.zipCode,
+      price: input.price,
+      bedrooms: input.bedrooms,
+      bathrooms: input.bathrooms,
+      areaSqFt: input.areaSqFt,
+      propertyType: input.propertyType,
+      status: input.status,
+      coverImageUrl:
+        input.coverImageUrl ||
+        "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800",
+      assignedAgentName: input.assignedAgentName,
+      yearBuilt: 2024,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    platformAuditLogger.log({
+      action: "UPDATE",
+      entityType: "PROPERTY",
+      entityIds: [id],
+      payload: { title: updatedProp.title },
+      timestamp: new Date().toISOString(),
+    });
+
+    return updatedProp;
   },
 };

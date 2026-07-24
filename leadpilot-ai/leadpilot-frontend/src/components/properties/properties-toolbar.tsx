@@ -7,6 +7,7 @@ interface PropertiesToolbarProps {
   viewMode: "grid" | "table";
   onViewModeChange: (mode: "grid" | "table") => void;
   onRefresh: () => void;
+  onAddProperty?: () => void;
   isRefreshing?: boolean;
 }
 
@@ -14,6 +15,7 @@ export function PropertiesToolbar({
   viewMode,
   onViewModeChange,
   onRefresh,
+  onAddProperty,
   isRefreshing = false,
 }: PropertiesToolbarProps) {
   return (
@@ -80,7 +82,7 @@ export function PropertiesToolbar({
         <Button
           size="sm"
           variant="default"
-          onClick={() => toast.info("Add Property Wizard Triggered (Placeholder)")}
+          onClick={onAddProperty}
           className="h-8 text-xs gap-1.5 shadow-sm"
         >
           <Plus className="h-3.5 w-3.5" />
