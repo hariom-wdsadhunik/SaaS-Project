@@ -8,6 +8,8 @@ import { DealsBoard } from "@/components/deals/deals-board";
 import { DealsLoading, DealsEmptyState, DealsErrorState } from "@/components/deals/deals-feedback";
 import { DealDrawer } from "@/components/deals/drawer/lead-drawer";
 import { DealModalForm } from "@/components/deals/forms/lead-modal-form";
+import { DealConfirmationDialog } from "@/components/deals/actions/deal-action-dialogs";
+import { DealStatusAssignModal } from "@/components/deals/actions/deal-status-assign-modal";
 import { initialDealsDataset, DealItem, DealStage } from "@/services/deal-mock-service";
 import { toast } from "sonner";
 
@@ -34,6 +36,19 @@ export default function DealsPage() {
   const [isFormModalOpen, setIsFormModalOpen] = React.useState(false);
   const [formMode, setFormMode] = React.useState<"create" | "edit">("create");
   const [editingDeal, setEditingDeal] = React.useState<DealItem | null>(null);
+
+  // Action Modals State
+  const [confirmDialog, setConfirmDialog] = React.useState<{
+    isOpen: boolean;
+    type: "DELETE" | "ARCHIVE";
+  }>({ isOpen: false, type: "DELETE" });
+
+  const [assignStatusModal, setAssignStatusModal] = React.useState<{
+    isOpen: boolean;
+    mode: "ASSIGN" | "STAGE";
+  }>({ isOpen: false, mode: "ASSIGN" });
+
+  const [isActionProcessing] = React.useState(false);
 
   const handleFilterChange = (newFilters: Partial<DealFilterState>) => {
     setFilters((prev) => ({ ...prev, ...newFilters }));
@@ -67,9 +82,11 @@ export default function DealsPage() {
     }
   };
 
-  const handleDealStageChange = (dealId: string, newStage: DealStage) => {
+  const handleDealStageChange = (dealId: string, newStage: DealStage, newProbability: number) => {
     setDealsList((prev) =>
-      prev.map((d) => (d.id === dealId ? { ...d, stage: newStage } : d))
+      prev.map((d) =>
+        d.id === dealId ? { ...d, stage: newStage, probability: newProbability } : d
+      )
     );
   };
 
@@ -80,6 +97,8 @@ export default function DealsPage() {
         (e.key === "c" || e.key === "C") &&
         !isFormModalOpen &&
         !isDrawerOpen &&
+        !confirmDialog.isOpen &&
+        !assignStatusModal.isOpen &&
         document.activeElement?.tagName !== "INPUT" &&
         document.activeElement?.tagName !== "TEXTAREA"
       ) {
@@ -89,7 +108,7 @@ export default function DealsPage() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isFormModalOpen, isDrawerOpen]);
+  }, [isFormModalOpen, isDrawerOpen, confirmDialog, assignStatusModal]);
 
   const activeFilterCount = Object.values(filters).filter((val) => val !== "").length;
 
@@ -114,7 +133,7 @@ export default function DealsPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-zinc-800/80 pb-5">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Deals Pipeline</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-white">Deals Pipeline Workspace</h1>
           <p className="text-xs text-zinc-400 mt-1">
             Visual Kanban management for active real estate acquisitions &amp; sales negotiations
           </p>
@@ -174,6 +193,32 @@ export default function DealsPage() {
         initialData={editingDeal}
         onClose={() => setIsFormModalOpen(false)}
         onSuccess={handleFormSuccess}
+      />
+
+      {/* Single / Bulk Delete & Archive Confirmation Dialog */}
+      <DealConfirmationDialog
+        isOpen={confirmDialog.isOpen}
+        type={confirmDialog.type}
+        itemCount={1}
+        isProcessing={isActionProcessing}
+        onConfirm={() => {
+          toast.success(`Action executed successfully.`);
+          setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
+        }}
+        onCancel={() => setConfirmDialog((prev) => ({ ...prev, isOpen: false }))}
+      />
+
+      {/* Single / Bulk Assign & Stage Change Modal */}
+      <DealStatusAssignModal
+        isOpen={assignStatusModal.isOpen}
+        mode={assignStatusModal.mode}
+        itemCount={1}
+        isProcessing={isActionProcessing}
+        onConfirm={(val) => {
+          toast.success(`Applied ${assignStatusModal.mode} action: ${val}`);
+          setAssignStatusModal((prev) => ({ ...prev, isOpen: false }));
+        }}
+        onClose={() => setAssignStatusModal((prev) => ({ ...prev, isOpen: false }))}
       />
     </div>
   );

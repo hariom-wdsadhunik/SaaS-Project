@@ -3,11 +3,12 @@
 import * as React from "react";
 import { DealColumn } from "./deal-column";
 import { DealItem, DealStage, dealMockService } from "@/services/deal-mock-service";
+import { PipelineTransitionValidator } from "@/services/pipeline-transition-validator";
 import { toast } from "sonner";
 
 interface DealsBoardProps {
   deals: DealItem[];
-  onDealStageChange: (dealId: string, newStage: DealStage) => void;
+  onDealStageChange: (dealId: string, newStage: DealStage, newProbability: number) => void;
   onSelectDeal?: (deal: DealItem) => void;
 }
 
@@ -40,9 +41,20 @@ export function DealsBoard({ deals, onDealStageChange, onSelectDeal }: DealsBoar
     const targetDeal = deals.find((d) => d.id === dealId);
     if (!targetDeal || targetDeal.stage === targetStage) return;
 
-    // Optimistic UI state update
-    onDealStageChange(dealId, targetStage);
-    toast.success(`Moved "${targetDeal.title}" to ${targetStage}`);
+    // Pipeline Business Rule Validation
+    const validation = PipelineTransitionValidator.validateTransition(
+      targetDeal.stage,
+      targetStage
+    );
+
+    if (!validation.allowed) {
+      toast.error(`Transition Blocked: ${validation.reason}`);
+      return;
+    }
+
+    // Optimistic UI state update with recalculated win probability
+    onDealStageChange(dealId, targetStage, validation.recommendedProbability);
+    toast.success(`Moved "${targetDeal.title}" to ${targetStage} (${validation.recommendedProbability}% Win Prob)`);
 
     // Telemetry & Service update
     await dealMockService.moveDealStage(dealId, targetStage);
