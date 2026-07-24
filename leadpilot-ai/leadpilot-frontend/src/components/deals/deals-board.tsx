@@ -22,46 +22,55 @@ const STAGES_CONFIG: { id: DealStage; title: string; color: string }[] = [
 ];
 
 export function DealsBoard({ deals, onDealStageChange, onSelectDeal }: DealsBoardProps) {
-  const handleDragStart = (e: React.DragEvent, dealId: string) => {
+  const handleDragStart = React.useCallback((e: React.DragEvent, dealId: string) => {
     e.dataTransfer.setData("text/plain", dealId);
     e.dataTransfer.effectAllowed = "move";
-  };
+  }, []);
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = React.useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
-  };
+  }, []);
 
-  const handleDrop = async (e: React.DragEvent, targetStage: DealStage) => {
-    e.preventDefault();
-    const dealId = e.dataTransfer.getData("text/plain");
+  const handleDrop = React.useCallback(
+    async (e: React.DragEvent, targetStage: DealStage) => {
+      e.preventDefault();
+      const dealId = e.dataTransfer.getData("text/plain");
 
-    if (!dealId) return;
+      if (!dealId) return;
 
-    const targetDeal = deals.find((d) => d.id === dealId);
-    if (!targetDeal || targetDeal.stage === targetStage) return;
+      const targetDeal = deals.find((d) => d.id === dealId);
+      if (!targetDeal || targetDeal.stage === targetStage) return;
 
-    // Pipeline Business Rule Validation
-    const validation = PipelineTransitionValidator.validateTransition(
-      targetDeal.stage,
-      targetStage
-    );
+      // Pipeline Business Rule Validation
+      const validation = PipelineTransitionValidator.validateTransition(
+        targetDeal.stage,
+        targetStage
+      );
 
-    if (!validation.allowed) {
-      toast.error(`Transition Blocked: ${validation.reason}`);
-      return;
-    }
+      if (!validation.allowed) {
+        toast.error(`Transition Blocked: ${validation.reason}`);
+        return;
+      }
 
-    // Optimistic UI state update with recalculated win probability
-    onDealStageChange(dealId, targetStage, validation.recommendedProbability);
-    toast.success(`Moved "${targetDeal.title}" to ${targetStage} (${validation.recommendedProbability}% Win Prob)`);
+      // Optimistic UI state update with recalculated win probability
+      onDealStageChange(dealId, targetStage, validation.recommendedProbability);
+      toast.success(
+        `Moved "${targetDeal.title}" to ${targetStage} (${validation.recommendedProbability}% Win Prob)`
+      );
 
-    // Telemetry & Service update
-    await dealMockService.moveDealStage(dealId, targetStage);
-  };
+      // Telemetry & Service update
+      await dealMockService.moveDealStage(dealId, targetStage);
+    },
+    [deals, onDealStageChange]
+  );
 
   return (
-    <div className="flex items-start gap-4 overflow-x-auto pb-4 pt-1 no-scrollbar select-none">
+    <div
+      role="region"
+      aria-label="Deals Kanban Pipeline Board"
+      className="flex items-start gap-4 overflow-x-auto pb-4 pt-1 no-scrollbar select-none"
+    >
       {STAGES_CONFIG.map((stage) => {
         const stageDeals = deals.filter((d) => d.stage === stage.id);
         return (
