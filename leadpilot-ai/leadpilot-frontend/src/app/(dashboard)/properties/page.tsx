@@ -13,6 +13,8 @@ import {
 } from "@/components/properties/properties-feedback";
 import { PropertyDrawer } from "@/components/properties/drawer/property-drawer";
 import { PropertyModalForm } from "@/components/properties/forms/property-modal-form";
+import { PropertyConfirmationDialog } from "@/components/properties/actions/property-action-dialogs";
+import { PropertyStatusAssignModal } from "@/components/properties/actions/property-status-assign-modal";
 import { initialPropertiesDataset, propertyMockService } from "@/services/property-mock-service";
 import { PropertyEntity, PropertyFilterState } from "@/domain/property/types";
 import { toast } from "sonner";
@@ -45,6 +47,19 @@ export default function PropertiesPage() {
   const [isFormModalOpen, setIsFormModalOpen] = React.useState(false);
   const [formMode, setFormMode] = React.useState<"create" | "edit">("create");
   const [editingProperty, setEditingProperty] = React.useState<PropertyEntity | null>(null);
+
+  // Action Modals State
+  const [confirmDialog, setConfirmDialog] = React.useState<{
+    isOpen: boolean;
+    type: "DELETE" | "ARCHIVE";
+  }>({ isOpen: false, type: "DELETE" });
+
+  const [assignStatusModal, setAssignStatusModal] = React.useState<{
+    isOpen: boolean;
+    mode: "ASSIGN" | "STATUS";
+  }>({ isOpen: false, mode: "ASSIGN" });
+
+  const [isActionProcessing] = React.useState(false);
 
   const handleFilterChange = (newFilters: Partial<PropertyFilterState>) => {
     setFilters((prev) => ({ ...prev, ...newFilters }));
@@ -90,6 +105,8 @@ export default function PropertiesPage() {
         (e.key === "c" || e.key === "C") &&
         !isFormModalOpen &&
         !isDrawerOpen &&
+        !confirmDialog.isOpen &&
+        !assignStatusModal.isOpen &&
         document.activeElement?.tagName !== "INPUT" &&
         document.activeElement?.tagName !== "TEXTAREA"
       ) {
@@ -99,7 +116,7 @@ export default function PropertiesPage() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isFormModalOpen, isDrawerOpen]);
+  }, [isFormModalOpen, isDrawerOpen, confirmDialog, assignStatusModal]);
 
   const activeFilterCount = Object.values(filters).filter((val) => val !== "").length;
 
@@ -199,6 +216,32 @@ export default function PropertiesPage() {
         initialData={editingProperty}
         onClose={() => setIsFormModalOpen(false)}
         onSuccess={handleFormSuccess}
+      />
+
+      {/* Single / Bulk Delete & Archive Confirmation Dialog */}
+      <PropertyConfirmationDialog
+        isOpen={confirmDialog.isOpen}
+        type={confirmDialog.type}
+        itemCount={1}
+        isProcessing={isActionProcessing}
+        onConfirm={() => {
+          toast.success(`Action executed successfully.`);
+          setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
+        }}
+        onCancel={() => setConfirmDialog((prev) => ({ ...prev, isOpen: false }))}
+      />
+
+      {/* Single / Bulk Assign & Status Change Modal */}
+      <PropertyStatusAssignModal
+        isOpen={assignStatusModal.isOpen}
+        mode={assignStatusModal.mode}
+        itemCount={1}
+        isProcessing={isActionProcessing}
+        onConfirm={(val) => {
+          toast.success(`Applied ${assignStatusModal.mode} action: ${val}`);
+          setAssignStatusModal((prev) => ({ ...prev, isOpen: false }));
+        }}
+        onClose={() => setAssignStatusModal((prev) => ({ ...prev, isOpen: false }))}
       />
     </div>
   );
