@@ -18,9 +18,10 @@ import { toast } from "sonner";
 interface DealCardProps {
   deal: DealItem;
   onDragStart: (e: React.DragEvent, dealId: string) => void;
+  onSelectDeal?: (deal: DealItem) => void;
 }
 
-export function DealCard({ deal, onDragStart }: DealCardProps) {
+export function DealCard({ deal, onDragStart, onSelectDeal }: DealCardProps) {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
   const priorityVariantMap = {
@@ -34,6 +35,7 @@ export function DealCard({ deal, onDragStart }: DealCardProps) {
     <Card
       draggable
       onDragStart={(e) => onDragStart(e, deal.id)}
+      onClick={() => onSelectDeal?.(deal)}
       className="p-3.5 border-zinc-800/80 bg-zinc-900/90 hover:border-zinc-700 hover:bg-zinc-900 shadow-sm space-y-3 cursor-grab active:cursor-grabbing transition-all select-none group relative"
     >
       {/* Top Header: Title & Menu */}
@@ -54,7 +56,10 @@ export function DealCard({ deal, onDragStart }: DealCardProps) {
             {deal.priority}
           </Badge>
           <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsMenuOpen(!isMenuOpen);
+            }}
             className="rounded p-1 text-zinc-500 hover:bg-zinc-800 hover:text-white"
             aria-label={`Actions for ${deal.title}`}
           >
@@ -64,7 +69,19 @@ export function DealCard({ deal, onDragStart }: DealCardProps) {
           {isMenuOpen && (
             <div className="absolute right-2 top-8 w-36 rounded-xl border border-zinc-800 bg-zinc-950 p-1 shadow-2xl z-20 animate-in fade-in duration-100">
               <button
-                onClick={() => {
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsMenuOpen(false);
+                  onSelectLeadDrawer(deal, onSelectDeal);
+                }}
+                className="flex w-full items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 rounded-lg text-left"
+              >
+                <User className="h-3.5 w-3.5 text-indigo-400" />
+                <span>View Workspace</span>
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
                   setIsMenuOpen(false);
                   toast.info(`Opening WhatsApp chat for ${deal.contactName}`);
                 }}
@@ -74,7 +91,8 @@ export function DealCard({ deal, onDragStart }: DealCardProps) {
                 <span>WhatsApp</span>
               </button>
               <button
-                onClick={() => {
+                onClick={(e) => {
+                  e.stopPropagation();
                   setIsMenuOpen(false);
                   toast.info(`Calling ${deal.contactName}`);
                 }}
@@ -130,4 +148,8 @@ export function DealCard({ deal, onDragStart }: DealCardProps) {
       </div>
     </Card>
   );
+}
+
+function onSelectLeadDrawer(deal: DealItem, callback?: (deal: DealItem) => void) {
+  callback?.(deal);
 }

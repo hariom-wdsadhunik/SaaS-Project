@@ -5,10 +5,11 @@ import { toast } from "sonner";
 
 interface DealsToolbarProps {
   onRefresh: () => void;
+  onAddDeal?: () => void;
   isRefreshing?: boolean;
 }
 
-export function DealsToolbar({ onRefresh, isRefreshing = false }: DealsToolbarProps) {
+export function DealsToolbar({ onRefresh, onAddDeal, isRefreshing = false }: DealsToolbarProps) {
   const [viewMode, setViewMode] = React.useState<"kanban" | "table">("kanban");
 
   return (
@@ -78,7 +79,7 @@ export function DealsToolbar({ onRefresh, isRefreshing = false }: DealsToolbarPr
         <Button
           size="sm"
           variant="default"
-          onClick={() => toast.info("Add Deal Modal Triggered (Reserved for Phase G2)")}
+          onClick={onAddDeal}
           className="h-8 text-xs gap-1.5 shadow-sm"
         >
           <Plus className="h-3.5 w-3.5" />

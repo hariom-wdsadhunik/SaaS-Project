@@ -8,6 +8,7 @@ import { toast } from "sonner";
 interface DealsBoardProps {
   deals: DealItem[];
   onDealStageChange: (dealId: string, newStage: DealStage) => void;
+  onSelectDeal?: (deal: DealItem) => void;
 }
 
 const STAGES_CONFIG: { id: DealStage; title: string; color: string }[] = [
@@ -19,7 +20,7 @@ const STAGES_CONFIG: { id: DealStage; title: string; color: string }[] = [
   { id: "LOST", title: "Lost", color: "bg-red-500" },
 ];
 
-export function DealsBoard({ deals, onDealStageChange }: DealsBoardProps) {
+export function DealsBoard({ deals, onDealStageChange, onSelectDeal }: DealsBoardProps) {
   const handleDragStart = (e: React.DragEvent, dealId: string) => {
     e.dataTransfer.setData("text/plain", dealId);
     e.dataTransfer.effectAllowed = "move";
@@ -61,6 +62,7 @@ export function DealsBoard({ deals, onDealStageChange }: DealsBoardProps) {
             onDragStart={handleDragStart}
             onDragOver={handleDragOver}
             onDrop={handleDrop}
+            onSelectDeal={onSelectDeal}
           />
         );
       })}

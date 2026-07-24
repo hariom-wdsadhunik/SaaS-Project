@@ -1,4 +1,5 @@
 import { auditLogger } from "@/services/lead-action-service";
+import { DealFormInput } from "@/lib/validations/deal-form";
 
 export type DealStage = "NEW" | "QUALIFIED" | "PROPOSAL_SENT" | "NEGOTIATION" | "WON" | "LOST";
 export type DealPriority = "URGENT" | "HIGH" | "NORMAL" | "LOW";
@@ -31,7 +32,7 @@ export const initialDealsDataset: DealItem[] = [
     assignedAgentName: "Alex Morgan",
     agentAvatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
     expectedCloseDate: "2026-08-15",
-    createdAt: "2026-07-20T10:00:00Z",
+    createdAt: "2026-07-20T10:30:00Z",
   },
   {
     id: "dl-202",
@@ -112,5 +113,70 @@ export const dealMockService = {
       timestamp: new Date().toISOString(),
     });
     return true;
+  },
+
+  async createDeal(input: DealFormInput): Promise<DealItem> {
+    await new Promise((res) => setTimeout(res, 400));
+
+    // Duplicate Check
+    if (
+      initialDealsDataset.some(
+        (d) => d.title.toLowerCase() === input.title.toLowerCase()
+      )
+    ) {
+      throw new Error(`A deal with title "${input.title}" already exists.`);
+    }
+
+    const newDeal: DealItem = {
+      id: `dl-${Math.floor(200 + Math.random() * 800)}`,
+      title: input.title,
+      companyName: input.companyName || "Apex Enterprises",
+      contactName: "Lead Inquiry Contact",
+      value: input.value,
+      stage: input.stage,
+      priority: input.priority,
+      probability: input.probability,
+      assignedAgentName: input.assignedAgentName,
+      expectedCloseDate: input.expectedCloseDate,
+      createdAt: new Date().toISOString(),
+    };
+
+    initialDealsDataset.push(newDeal);
+
+    auditLogger.log({
+      action: "CREATE",
+      leadIds: [newDeal.id],
+      payload: { title: newDeal.title, entity: "DEAL" },
+      timestamp: new Date().toISOString(),
+    });
+
+    return newDeal;
+  },
+
+  async updateDeal(id: string, input: DealFormInput): Promise<DealItem> {
+    await new Promise((res) => setTimeout(res, 400));
+
+    const updatedDeal: DealItem = {
+      id,
+      title: input.title,
+      companyName: input.companyName || "Apex Enterprises",
+      contactName: "Lead Inquiry Contact",
+      value: input.value,
+      stage: input.stage,
+      priority: input.priority,
+      probability: input.probability,
+      assignedAgentName: input.assignedAgentName,
+      expectedCloseDate: input.expectedCloseDate,
+      createdAt: new Date().toISOString(),
+    };
+
+    auditLogger.log({
+      action: "UPDATE",
+      leadIds: [id],
+      payload: { title: updatedDeal.title, entity: "DEAL" },
+      timestamp: new Date().toISOString(),
+    });
+
+    return updatedDeal;
   },
 };

@@ -6,6 +6,8 @@ import { DealsFilters, DealFilterState } from "@/components/deals/deals-filters"
 import { DealsToolbar } from "@/components/deals/deals-toolbar";
 import { DealsBoard } from "@/components/deals/deals-board";
 import { DealsLoading, DealsEmptyState, DealsErrorState } from "@/components/deals/deals-feedback";
+import { DealDrawer } from "@/components/deals/drawer/lead-drawer";
+import { DealModalForm } from "@/components/deals/forms/lead-modal-form";
 import { initialDealsDataset, DealItem, DealStage } from "@/services/deal-mock-service";
 import { toast } from "sonner";
 
@@ -23,6 +25,15 @@ export default function DealsPage() {
   const [isRefreshing, setIsRefreshing] = React.useState(false);
 
   const [filters, setFilters] = React.useState<DealFilterState>(initialFilterState);
+
+  // Drawer State
+  const [selectedDeal, setSelectedDeal] = React.useState<DealItem | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = React.useState(false);
+
+  // Form Modal State
+  const [isFormModalOpen, setIsFormModalOpen] = React.useState(false);
+  const [formMode, setFormMode] = React.useState<"create" | "edit">("create");
+  const [editingDeal, setEditingDeal] = React.useState<DealItem | null>(null);
 
   const handleFilterChange = (newFilters: Partial<DealFilterState>) => {
     setFilters((prev) => ({ ...prev, ...newFilters }));
@@ -42,11 +53,43 @@ export default function DealsPage() {
     }, 500);
   };
 
+  const handleOpenCreateModal = () => {
+    setFormMode("create");
+    setEditingDeal(null);
+    setIsFormModalOpen(true);
+  };
+
+  const handleFormSuccess = (deal: DealItem) => {
+    if (formMode === "create") {
+      setDealsList((prev) => [deal, ...prev]);
+    } else {
+      setDealsList((prev) => prev.map((d) => (d.id === deal.id ? deal : d)));
+    }
+  };
+
   const handleDealStageChange = (dealId: string, newStage: DealStage) => {
     setDealsList((prev) =>
       prev.map((d) => (d.id === dealId ? { ...d, stage: newStage } : d))
     );
   };
+
+  // Keyboard shortcut `C` for Create Deal
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        (e.key === "c" || e.key === "C") &&
+        !isFormModalOpen &&
+        !isDrawerOpen &&
+        document.activeElement?.tagName !== "INPUT" &&
+        document.activeElement?.tagName !== "TEXTAREA"
+      ) {
+        e.preventDefault();
+        handleOpenCreateModal();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isFormModalOpen, isDrawerOpen]);
 
   const activeFilterCount = Object.values(filters).filter((val) => val !== "").length;
 
@@ -90,22 +133,48 @@ export default function DealsPage() {
       />
 
       {/* Toolbar */}
-      <DealsToolbar onRefresh={handleRefresh} isRefreshing={isRefreshing} />
+      <DealsToolbar
+        onRefresh={handleRefresh}
+        onAddDeal={handleOpenCreateModal}
+        isRefreshing={isRefreshing}
+      />
 
       {/* Primary Kanban Surface */}
       {isLoading ? (
         <DealsLoading />
       ) : isError ? (
         <DealsErrorState onRetry={() => setIsError(false)} />
-      ) : filteredLeadsLengthZeroCheck(filteredDeals) ? (
+      ) : filteredDeals.length === 0 ? (
         <DealsEmptyState onResetFilters={handleResetFilters} />
       ) : (
-        <DealsBoard deals={filteredDeals} onDealStageChange={handleDealStageChange} />
+        <DealsBoard
+          deals={filteredDeals}
+          onDealStageChange={handleDealStageChange}
+          onSelectDeal={(deal) => {
+            setSelectedDeal(deal);
+            setIsDrawerOpen(true);
+          }}
+        />
       )}
+
+      {/* Deal Details Drawer Workspace */}
+      <DealDrawer
+        deal={selectedDeal}
+        isOpen={isDrawerOpen}
+        onClose={() => {
+          setIsDrawerOpen(false);
+          setSelectedDeal(null);
+        }}
+      />
+
+      {/* Create / Edit Deal Modal Form */}
+      <DealModalForm
+        isOpen={isFormModalOpen}
+        mode={formMode}
+        initialData={editingDeal}
+        onClose={() => setIsFormModalOpen(false)}
+        onSuccess={handleFormSuccess}
+      />
     </div>
   );
-}
-
-function filteredLeadsLengthZeroCheck(deals: DealItem[]) {
-  return deals.length === 0;
 }
