@@ -1,6 +1,6 @@
 // Decoupled Observability & Audit Logger Interface
 export interface AuditLogEvent {
-  action: "ASSIGN" | "CHANGE_STATUS" | "ARCHIVE" | "DELETE";
+  action: "CREATE" | "UPDATE" | "ASSIGN" | "CHANGE_STATUS" | "ARCHIVE" | "DELETE";
   leadIds: string[];
   payload?: Record<string, unknown>;
   timestamp: string;
@@ -9,11 +9,31 @@ export interface AuditLogEvent {
 export const auditLogger = {
   log: (event: AuditLogEvent) => {
     // Extension point for Datadog / PostHog / Segment analytics telemetry
-    console.log("[LeadPilot Telemetry Audit]", event);
+    if (typeof window !== "undefined") {
+      console.log("[LeadPilot Telemetry Audit]", event);
+    }
   },
 };
 
 export const leadActionService = {
+  async logLeadCreation(leadId: string, payload: Record<string, unknown>): Promise<void> {
+    auditLogger.log({
+      action: "CREATE",
+      leadIds: [leadId],
+      payload,
+      timestamp: new Date().toISOString(),
+    });
+  },
+
+  async logLeadUpdate(leadId: string, payload: Record<string, unknown>): Promise<void> {
+    auditLogger.log({
+      action: "UPDATE",
+      leadIds: [leadId],
+      payload,
+      timestamp: new Date().toISOString(),
+    });
+  },
+
   async assignAgent(leadIds: string[], brokerName: string): Promise<{ success: boolean; count: number }> {
     await new Promise((res) => setTimeout(res, 400));
     auditLogger.log({

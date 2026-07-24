@@ -7,6 +7,7 @@ import { X, UserPlus, Edit3, AlertCircle } from "lucide-react";
 
 import { leadFormSchema, LeadFormInput } from "@/lib/validations/lead-form";
 import { leadMockService } from "@/services/lead-mock-service";
+import { leadActionService } from "@/services/lead-action-service";
 import { LeadItem } from "@/components/leads/lead-feedback";
 import { LeadFormSections } from "./lead-form-sections";
 import { UnsavedChangesDialog } from "./unsaved-changes-dialog";
@@ -85,10 +86,12 @@ export function LeadModalForm({
     try {
       if (mode === "create") {
         const createdLead = await leadMockService.createLead(data);
+        await leadActionService.logLeadCreation(createdLead.id, { name: createdLead.fullName });
         toast.success(`Lead "${createdLead.fullName}" created successfully!`);
         onSuccess(createdLead);
       } else if (mode === "edit" && initialData) {
         const updatedLead = await leadMockService.updateLead(initialData.id, data);
+        await leadActionService.logLeadUpdate(updatedLead.id, { name: updatedLead.fullName });
         toast.success(`Lead "${updatedLead.fullName}" updated successfully!`);
         onSuccess(updatedLead);
       }
@@ -132,6 +135,7 @@ export function LeadModalForm({
 
             <button
               onClick={handleCloseAttempt}
+              aria-label="Close dialog"
               className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors"
             >
               <X className="h-5 w-5" />
