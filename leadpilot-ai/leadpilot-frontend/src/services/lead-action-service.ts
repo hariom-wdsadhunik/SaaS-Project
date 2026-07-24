@@ -1,34 +1,21 @@
-// Decoupled Observability & Audit Logger Interface
-export interface AuditLogEvent {
-  action: "CREATE" | "UPDATE" | "ASSIGN" | "CHANGE_STATUS" | "ARCHIVE" | "DELETE";
-  leadIds: string[];
-  payload?: Record<string, unknown>;
-  timestamp: string;
-}
-
-export const auditLogger = {
-  log: (event: AuditLogEvent) => {
-    // Extension point for Datadog / PostHog / Segment analytics telemetry
-    if (typeof window !== "undefined") {
-      console.log("[LeadPilot Telemetry Audit]", event);
-    }
-  },
-};
+import { platformAuditLogger } from "@/platform/audit";
 
 export const leadActionService = {
   async logLeadCreation(leadId: string, payload: Record<string, unknown>): Promise<void> {
-    auditLogger.log({
+    platformAuditLogger.log({
       action: "CREATE",
-      leadIds: [leadId],
+      entityType: "LEAD",
+      entityIds: [leadId],
       payload,
       timestamp: new Date().toISOString(),
     });
   },
 
   async logLeadUpdate(leadId: string, payload: Record<string, unknown>): Promise<void> {
-    auditLogger.log({
+    platformAuditLogger.log({
       action: "UPDATE",
-      leadIds: [leadId],
+      entityType: "LEAD",
+      entityIds: [leadId],
       payload,
       timestamp: new Date().toISOString(),
     });
@@ -36,9 +23,10 @@ export const leadActionService = {
 
   async assignAgent(leadIds: string[], brokerName: string): Promise<{ success: boolean; count: number }> {
     await new Promise((res) => setTimeout(res, 400));
-    auditLogger.log({
+    platformAuditLogger.log({
       action: "ASSIGN",
-      leadIds,
+      entityType: "LEAD",
+      entityIds: leadIds,
       payload: { brokerName },
       timestamp: new Date().toISOString(),
     });
@@ -47,9 +35,10 @@ export const leadActionService = {
 
   async changeStatus(leadIds: string[], newStatus: string): Promise<{ success: boolean; count: number }> {
     await new Promise((res) => setTimeout(res, 400));
-    auditLogger.log({
+    platformAuditLogger.log({
       action: "CHANGE_STATUS",
-      leadIds,
+      entityType: "LEAD",
+      entityIds: leadIds,
       payload: { newStatus },
       timestamp: new Date().toISOString(),
     });
@@ -58,9 +47,10 @@ export const leadActionService = {
 
   async archiveLeads(leadIds: string[]): Promise<{ success: boolean; count: number }> {
     await new Promise((res) => setTimeout(res, 400));
-    auditLogger.log({
+    platformAuditLogger.log({
       action: "ARCHIVE",
-      leadIds,
+      entityType: "LEAD",
+      entityIds: leadIds,
       timestamp: new Date().toISOString(),
     });
     return { success: true, count: leadIds.length };
@@ -68,9 +58,10 @@ export const leadActionService = {
 
   async deleteLeads(leadIds: string[]): Promise<{ success: boolean; count: number }> {
     await new Promise((res) => setTimeout(res, 400));
-    auditLogger.log({
+    platformAuditLogger.log({
       action: "DELETE",
-      leadIds,
+      entityType: "LEAD",
+      entityIds: leadIds,
       timestamp: new Date().toISOString(),
     });
     return { success: true, count: leadIds.length };

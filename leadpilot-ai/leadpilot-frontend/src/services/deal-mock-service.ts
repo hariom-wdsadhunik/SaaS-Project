@@ -1,4 +1,4 @@
-import { auditLogger } from "@/services/lead-action-service";
+import { platformAuditLogger } from "@/platform/audit";
 import { DealFormInput } from "@/lib/validations/deal-form";
 
 export type DealStage = "NEW" | "QUALIFIED" | "PROPOSAL_SENT" | "NEGOTIATION" | "WON" | "LOST";
@@ -12,7 +12,7 @@ export interface DealItem {
   value: number;
   stage: DealStage;
   priority: DealPriority;
-  probability: number; // 0 - 100
+  probability: number;
   assignedAgentName: string;
   agentAvatarUrl?: string;
   expectedCloseDate: string;
@@ -106,10 +106,11 @@ export const initialDealsDataset: DealItem[] = [
 export const dealMockService = {
   async moveDealStage(dealId: string, newStage: DealStage): Promise<boolean> {
     await new Promise((res) => setTimeout(res, 200));
-    auditLogger.log({
+    platformAuditLogger.log({
       action: "CHANGE_STATUS",
-      leadIds: [dealId],
-      payload: { newStage, entity: "DEAL" },
+      entityType: "DEAL",
+      entityIds: [dealId],
+      payload: { newStage },
       timestamp: new Date().toISOString(),
     });
     return true;
@@ -118,7 +119,6 @@ export const dealMockService = {
   async createDeal(input: DealFormInput): Promise<DealItem> {
     await new Promise((res) => setTimeout(res, 400));
 
-    // Duplicate Check
     if (
       initialDealsDataset.some(
         (d) => d.title.toLowerCase() === input.title.toLowerCase()
@@ -143,10 +143,11 @@ export const dealMockService = {
 
     initialDealsDataset.push(newDeal);
 
-    auditLogger.log({
+    platformAuditLogger.log({
       action: "CREATE",
-      leadIds: [newDeal.id],
-      payload: { title: newDeal.title, entity: "DEAL" },
+      entityType: "DEAL",
+      entityIds: [newDeal.id],
+      payload: { title: newDeal.title },
       timestamp: new Date().toISOString(),
     });
 
@@ -170,10 +171,11 @@ export const dealMockService = {
       createdAt: new Date().toISOString(),
     };
 
-    auditLogger.log({
+    platformAuditLogger.log({
       action: "UPDATE",
-      leadIds: [id],
-      payload: { title: updatedDeal.title, entity: "DEAL" },
+      entityType: "DEAL",
+      entityIds: [id],
+      payload: { title: updatedDeal.title },
       timestamp: new Date().toISOString(),
     });
 
