@@ -14,7 +14,10 @@ interface PropertyCardProps {
   onSelectProperty?: (property: PropertyEntity) => void;
 }
 
-export function PropertyCard({ property, onSelectProperty }: PropertyCardProps) {
+export const PropertyCard = React.memo(function PropertyCard({
+  property,
+  onSelectProperty,
+}: PropertyCardProps) {
   const statusVariantMap = {
     AVAILABLE: "success",
     RESERVED: "warning",
@@ -124,4 +127,4 @@ export function PropertyCard({ property, onSelectProperty }: PropertyCardProps) 
       </div>
     </Card>
   );
-}
+});
