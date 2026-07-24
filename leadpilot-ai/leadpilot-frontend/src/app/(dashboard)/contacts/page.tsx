@@ -13,8 +13,11 @@ import {
 } from "@/components/contacts/contacts-feedback";
 import { ContactDrawer } from "@/components/contacts/drawer/contact-drawer";
 import { ContactModalForm } from "@/components/contacts/forms/contact-modal-form";
+import { ContactConfirmationDialog } from "@/components/contacts/actions/contact-action-dialogs";
+import { ContactStatusAssignModal } from "@/components/contacts/actions/contact-status-assign-modal";
 import { initialContactsDataset, contactMockService } from "@/services/contact-mock-service";
-import { ContactEntity, ContactFilterState } from "@/domain/contact/types";
+import { contactActionService } from "@/services/contact-action-service";
+import { ContactEntity, ContactFilterState, ContactStatus } from "@/domain/contact/types";
 import { toast } from "sonner";
 
 const initialFilterState: ContactFilterState = {
@@ -42,6 +45,22 @@ export default function ContactsPage() {
   const [isFormModalOpen, setIsFormModalOpen] = React.useState(false);
   const [formMode, setFormMode] = React.useState<"create" | "edit">("create");
   const [editingContact, setEditingContact] = React.useState<ContactEntity | null>(null);
+
+  // Action Dialog States
+  const [actionDialog, setActionDialog] = React.useState<{
+    isOpen: boolean;
+    type: "delete" | "archive";
+    contactId?: string;
+    contactName?: string;
+  }>({ isOpen: false, type: "delete" });
+
+  const [assignModal, setAssignModal] = React.useState<{
+    isOpen: boolean;
+    mode: "status" | "agent";
+    contactId?: string;
+  }>({ isOpen: false, mode: "status" });
+
+  const [isActionProcessing, setIsActionProcessing] = React.useState(false);
 
   const handleFilterChange = (newFilters: Partial<ContactFilterState>) => {
     setFilters((prev) => ({ ...prev, ...newFilters }));
@@ -80,23 +99,51 @@ export default function ContactsPage() {
     }
   };
 
-  // Keyboard shortcut `C` for Create Contact
-  React.useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (
-        (e.key === "c" || e.key === "C") &&
-        !isFormModalOpen &&
-        !isDrawerOpen &&
-        document.activeElement?.tagName !== "INPUT" &&
-        document.activeElement?.tagName !== "TEXTAREA"
-      ) {
-        e.preventDefault();
-        handleOpenCreateModal();
+  const handleConfirmAction = async () => {
+    if (!actionDialog.contactId) return;
+    setIsActionProcessing(true);
+    try {
+      if (actionDialog.type === "delete") {
+        await contactActionService.deleteContacts([actionDialog.contactId]);
+        setContactsList((prev) => prev.filter((c) => c.id !== actionDialog.contactId));
+        toast.success(`Contact record deleted.`);
+      } else {
+        await contactActionService.archiveContacts([actionDialog.contactId]);
+        setContactsList((prev) => prev.filter((c) => c.id !== actionDialog.contactId));
+        toast.success(`Contact record archived.`);
       }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isFormModalOpen, isDrawerOpen]);
+      setActionDialog({ isOpen: false, type: "delete" });
+    } catch {
+      toast.error(`Action failed.`);
+    } finally {
+      setIsActionProcessing(false);
+    }
+  };
+
+  const handleConfirmAssign = async (val: string) => {
+    if (!assignModal.contactId) return;
+    setIsActionProcessing(true);
+    try {
+      if (assignModal.mode === "status") {
+        await contactActionService.updateStatus([assignModal.contactId], val as ContactStatus);
+        setContactsList((prev) =>
+          prev.map((c) => (c.id === assignModal.contactId ? { ...c, status: val as ContactStatus } : c))
+        );
+        toast.success(`Contact status updated to ${val}.`);
+      } else {
+        await contactActionService.assignAgent([assignModal.contactId], val);
+        setContactsList((prev) =>
+          prev.map((c) => (c.id === assignModal.contactId ? { ...c, assignedAgentName: val } : c))
+        );
+        toast.success(`Contact assigned to ${val}.`);
+      }
+      setAssignModal({ isOpen: false, mode: "status" });
+    } catch {
+      toast.error(`Assignment failed.`);
+    } finally {
+      setIsActionProcessing(false);
+    }
+  };
 
   const activeFilterCount = Object.values(filters).filter((val) => val !== "").length;
 
@@ -195,6 +242,26 @@ export default function ContactsPage() {
         initialData={editingContact}
         onClose={() => setIsFormModalOpen(false)}
         onSuccess={handleFormSuccess}
+      />
+
+      {/* Action Dialogs */}
+      <ContactConfirmationDialog
+        isOpen={actionDialog.isOpen}
+        actionType={actionDialog.type}
+        contactCount={1}
+        contactName={actionDialog.contactName}
+        onConfirm={handleConfirmAction}
+        onClose={() => setActionDialog({ isOpen: false, type: "delete" })}
+        isProcessing={isActionProcessing}
+      />
+
+      <ContactStatusAssignModal
+        isOpen={assignModal.isOpen}
+        mode={assignModal.mode}
+        contactCount={1}
+        onConfirm={handleConfirmAssign}
+        onClose={() => setAssignModal({ isOpen: false, mode: "status" })}
+        isProcessing={isActionProcessing}
       />
     </div>
   );
