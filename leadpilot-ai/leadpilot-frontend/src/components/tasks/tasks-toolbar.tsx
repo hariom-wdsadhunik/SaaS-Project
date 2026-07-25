@@ -7,6 +7,7 @@ interface TasksToolbarProps {
   viewMode: "grid" | "table";
   onViewModeChange: (mode: "grid" | "table") => void;
   onRefresh: () => void;
+  onAddTask?: () => void;
   isRefreshing?: boolean;
 }
 
@@ -14,6 +15,7 @@ export function TasksToolbar({
   viewMode,
   onViewModeChange,
   onRefresh,
+  onAddTask,
   isRefreshing = false,
 }: TasksToolbarProps) {
   return (
@@ -80,7 +82,7 @@ export function TasksToolbar({
         <Button
           size="sm"
           variant="default"
-          onClick={() => toast.info("Create Task Modal Triggered (Placeholder)")}
+          onClick={onAddTask}
           className="h-8 text-xs gap-1.5 shadow-sm"
         >
           <Plus className="h-3.5 w-3.5" />

@@ -7,6 +7,8 @@ import { TasksToolbar } from "@/components/tasks/tasks-toolbar";
 import { TaskCard } from "@/components/tasks/task-card";
 import { TaskTable } from "@/components/tasks/task-table";
 import { EntityEmptyState, EntityErrorState } from "@/platform/ui/entity-feedback";
+import { TaskDrawer } from "@/components/tasks/drawer/task-drawer";
+import { TaskModalForm } from "@/components/tasks/forms/task-modal-form";
 import { initialTasksDataset, taskMockService } from "@/services/task-mock-service";
 import { TaskEntity, TaskFilterState } from "@/domain/task/types";
 import { toast } from "sonner";
@@ -26,6 +28,15 @@ export default function TasksPage() {
 
   const [viewMode, setViewMode] = React.useState<"grid" | "table">("grid");
   const [filters, setFilters] = React.useState<TaskFilterState>(initialFilterState);
+
+  // Drawer State
+  const [selectedTask, setSelectedTask] = React.useState<TaskEntity | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = React.useState(false);
+
+  // Modal Form State
+  const [isFormModalOpen, setIsFormModalOpen] = React.useState(false);
+  const [formMode, setFormMode] = React.useState<"create" | "edit">("create");
+  const [editingTask, setEditingTask] = React.useState<TaskEntity | null>(null);
 
   const handleFilterChange = (newFilters: Partial<TaskFilterState>) => {
     setFilters((prev) => ({ ...prev, ...newFilters }));
@@ -49,6 +60,44 @@ export default function TasksPage() {
       setIsRefreshing(false);
     }
   };
+
+  const handleOpenCreateModal = () => {
+    setFormMode("create");
+    setEditingTask(null);
+    setIsFormModalOpen(true);
+  };
+
+  const handleOpenEditModal = (task: TaskEntity) => {
+    setFormMode("edit");
+    setEditingTask(task);
+    setIsFormModalOpen(true);
+  };
+
+  const handleFormSuccess = (task: TaskEntity) => {
+    if (formMode === "create") {
+      setTasksList((prev) => [task, ...prev]);
+    } else {
+      setTasksList((prev) => prev.map((t) => (t.id === task.id ? task : t)));
+    }
+  };
+
+  // Keyboard shortcut `T` for Create Task
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        (e.key === "t" || e.key === "T") &&
+        !isFormModalOpen &&
+        !isDrawerOpen &&
+        document.activeElement?.tagName !== "INPUT" &&
+        document.activeElement?.tagName !== "TEXTAREA"
+      ) {
+        e.preventDefault();
+        handleOpenCreateModal();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isFormModalOpen, isDrawerOpen]);
 
   const activeFilterCount = Object.values(filters).filter((val) => val !== "").length;
 
@@ -96,6 +145,7 @@ export default function TasksPage() {
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onRefresh={handleRefresh}
+        onAddTask={handleOpenCreateModal}
         isRefreshing={isRefreshing}
       />
 
@@ -120,16 +170,46 @@ export default function TasksPage() {
             <TaskCard
               key={task.id}
               task={task}
-              onSelectTask={(t) => toast.info(`Viewing task: "${t.title}"`)}
+              onSelectTask={(t) => {
+                setSelectedTask(t);
+                setIsDrawerOpen(true);
+              }}
             />
           ))}
         </div>
       ) : (
         <TaskTable
           data={filteredTasks}
-          onSelectTask={(t) => toast.info(`Viewing task: "${t.title}"`)}
+          onSelectTask={(t) => {
+            setSelectedTask(t);
+            setIsDrawerOpen(true);
+          }}
         />
       )}
+
+      {/* Task Drawer Workspace */}
+      <TaskDrawer
+        task={selectedTask}
+        isOpen={isDrawerOpen}
+        onClose={() => {
+          setIsDrawerOpen(false);
+          setSelectedTask(null);
+        }}
+        onEdit={() => {
+          if (selectedTask) {
+            handleOpenEditModal(selectedTask);
+          }
+        }}
+      />
+
+      {/* Create / Edit Task Modal Form */}
+      <TaskModalForm
+        isOpen={isFormModalOpen}
+        mode={formMode}
+        initialData={editingTask}
+        onClose={() => setIsFormModalOpen(false)}
+        onSuccess={handleFormSuccess}
+      />
     </div>
   );
 }

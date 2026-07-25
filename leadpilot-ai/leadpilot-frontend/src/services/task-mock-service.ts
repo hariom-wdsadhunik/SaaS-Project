@@ -1,4 +1,5 @@
 import { TaskEntity, TaskFilterState } from "@/domain/task/types";
+import { TaskFormInput } from "@/lib/validations/task-form";
 import { platformAuditLogger } from "@/platform/audit";
 
 export const initialTasksDataset: TaskEntity[] = [
@@ -103,5 +104,65 @@ export const taskMockService = {
     });
 
     return items;
+  },
+
+  async createTask(input: TaskFormInput): Promise<TaskEntity> {
+    await new Promise((res) => setTimeout(res, 350));
+
+    const newTask: TaskEntity = {
+      id: `tsk-${Math.floor(500 + Math.random() * 500)}`,
+      title: input.title,
+      description: input.description,
+      status: input.status,
+      priority: input.priority,
+      category: input.category,
+      dueDate: input.dueDate || new Date().toISOString(),
+      assignedAgentName: input.assignedAgentName,
+      relatedEntityType: input.relatedEntityType,
+      relatedEntityName: input.relatedEntityName,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    initialTasksDataset.push(newTask);
+
+    platformAuditLogger.log({
+      action: "CREATE",
+      entityType: "SYSTEM",
+      entityIds: [newTask.id],
+      payload: { title: newTask.title },
+      timestamp: new Date().toISOString(),
+    });
+
+    return newTask;
+  },
+
+  async updateTask(id: string, input: TaskFormInput): Promise<TaskEntity> {
+    await new Promise((res) => setTimeout(res, 350));
+
+    const updatedTask: TaskEntity = {
+      id,
+      title: input.title,
+      description: input.description,
+      status: input.status,
+      priority: input.priority,
+      category: input.category,
+      dueDate: input.dueDate || new Date().toISOString(),
+      assignedAgentName: input.assignedAgentName,
+      relatedEntityType: input.relatedEntityType,
+      relatedEntityName: input.relatedEntityName,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    platformAuditLogger.log({
+      action: "UPDATE",
+      entityType: "SYSTEM",
+      entityIds: [id],
+      payload: { title: updatedTask.title },
+      timestamp: new Date().toISOString(),
+    });
+
+    return updatedTask;
   },
 };
