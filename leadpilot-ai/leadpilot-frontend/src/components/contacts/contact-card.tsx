@@ -13,7 +13,10 @@ interface ContactCardProps {
   onSelectContact?: (contact: ContactEntity) => void;
 }
 
-export function ContactCard({ contact, onSelectContact }: ContactCardProps) {
+export const ContactCard = React.memo(function ContactCard({
+  contact,
+  onSelectContact,
+}: ContactCardProps) {
   const statusVariantMap = {
     VIP: "danger",
     CLIENT: "success",
@@ -111,4 +114,4 @@ export function ContactCard({ contact, onSelectContact }: ContactCardProps) {
       </div>
     </Card>
   );
-}
+});
