@@ -7,7 +7,7 @@ import { ConversationList } from "@/components/communication/conversation-list";
 import { ConversationThread } from "@/components/communication/conversation-thread";
 import { ConversationDrawer } from "@/components/communication/conversation-drawer";
 import { EntityEmptyState } from "@/platform/ui/entity-feedback";
-import { communicationService } from "@/domain/communication/services/CommunicationService";
+import { CommunicationFacade } from "@/domain/communication/CommunicationFacade";
 import { ConversationEntity, MessageEntity, CommunicationFilterState } from "@/domain/communication/types";
 import { toast } from "sonner";
 
@@ -32,8 +32,7 @@ export default function CommunicationPage() {
 
   React.useEffect(() => {
     let isMounted = true;
-    communicationService
-      .getConversations(filters)
+    CommunicationFacade.getConversations(filters)
       .then((data) => {
         if (isMounted) {
           setConversations(data);
@@ -80,7 +79,7 @@ export default function CommunicationPage() {
     setIsRefreshing(true);
     toast.info("Refreshing inbox...");
     try {
-      const freshData = await communicationService.getConversations(filters);
+      const freshData = await CommunicationFacade.getConversations(filters);
       setConversations(freshData);
       toast.success("Inbox updated");
     } catch {
@@ -94,7 +93,11 @@ export default function CommunicationPage() {
     if (!selectedConversation) return;
     setIsSending(true);
     try {
-      const newMsg = await communicationService.sendMessage(selectedConversation.id, content);
+      const newMsg = await CommunicationFacade.sendMessage({
+        conversationId: selectedConversation.id,
+        recipient: "+14155552671",
+        content,
+      });
       setMessages((prev) => [...prev, newMsg]);
       toast.success("Message dispatched");
     } catch {
