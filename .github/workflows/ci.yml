@@ -1,0 +1,28 @@
+name: LeadPilot AI CRM CI Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci --prefix leadpilot-ai/leadpilot-frontend
+
+      - name: Run ESLint
+        run: npm run lint --prefix leadpilot-ai/leadpilot-frontend
+
+      - name: Run Next.js Build
+        run: npm run build --prefix leadpilot-ai/leadpilot-frontend
