@@ -1,4 +1,5 @@
 import { AppointmentEntity, AppointmentFilterState } from "../types";
+import { AppointmentFormInput } from "@/lib/validations/appointment-form";
 import { platformAuditLogger } from "@/platform/audit";
 
 export const initialAppointmentsDataset: AppointmentEntity[] = [
@@ -54,15 +55,7 @@ export const initialAppointmentsDataset: AppointmentEntity[] = [
 
 export const appointmentService = {
   async getAppointments(filters?: Partial<AppointmentFilterState>): Promise<AppointmentEntity[]> {
-    await new Promise((res) => setTimeout(res, 200));
-
-    platformAuditLogger.log({
-      action: "UPDATE",
-      entityType: "SYSTEM",
-      entityIds: ["appointments-list"],
-      payload: { filters },
-      timestamp: new Date().toISOString(),
-    });
+    await new Promise((res) => setTimeout(res, 150));
 
     if (!filters) return initialAppointmentsDataset;
 
@@ -80,5 +73,73 @@ export const appointmentService = {
       if (filters.assignedAgent && apt.assignedAgentName !== filters.assignedAgent) return false;
       return true;
     });
+  },
+
+  async createAppointment(input: AppointmentFormInput): Promise<AppointmentEntity> {
+    await new Promise((res) => setTimeout(res, 250));
+
+    const newApt: AppointmentEntity = {
+      id: `apt-${Date.now()}`,
+      title: input.title,
+      description: input.description,
+      customerName: input.customerName,
+      propertyName: input.propertyName,
+      assignedAgentName: input.assignedAgentName,
+      start: input.start,
+      end: input.end,
+      status: input.status,
+      priority: input.priority,
+      appointmentType: input.appointmentType,
+      notes: input.notes,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    initialAppointmentsDataset.unshift(newApt);
+
+    platformAuditLogger.log({
+      action: "CREATE",
+      entityType: "SYSTEM",
+      entityIds: [newApt.id],
+      payload: { title: newApt.title, type: newApt.appointmentType },
+      timestamp: new Date().toISOString(),
+    });
+
+    return newApt;
+  },
+
+  async updateAppointment(id: string, input: AppointmentFormInput): Promise<AppointmentEntity> {
+    await new Promise((res) => setTimeout(res, 250));
+
+    const index = initialAppointmentsDataset.findIndex((a) => a.id === id);
+    if (index === -1) throw new Error("Appointment not found");
+
+    const updatedApt: AppointmentEntity = {
+      ...initialAppointmentsDataset[index],
+      title: input.title,
+      description: input.description,
+      customerName: input.customerName,
+      propertyName: input.propertyName,
+      assignedAgentName: input.assignedAgentName,
+      start: input.start,
+      end: input.end,
+      status: input.status,
+      priority: input.priority,
+      appointmentType: input.appointmentType,
+      notes: input.notes,
+      updatedAt: new Date().toISOString(),
+    };
+
+    initialAppointmentsDataset[index] = updatedApt;
+
+    platformAuditLogger.log({
+      action: "UPDATE",
+      entityType: "SYSTEM",
+      entityIds: [id],
+      payload: { updatedFields: Object.keys(input) },
+      timestamp: new Date().toISOString(),
+    });
+
+    return updatedApt;
   },
 };

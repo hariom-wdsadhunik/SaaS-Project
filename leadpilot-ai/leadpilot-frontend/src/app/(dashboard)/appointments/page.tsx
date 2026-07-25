@@ -7,6 +7,8 @@ import { AppointmentToolbar } from "@/components/appointments/appointment-toolba
 import { AppointmentCard } from "@/components/appointments/appointment-card";
 import { AppointmentTable } from "@/components/appointments/appointment-table";
 import { EntityEmptyState } from "@/platform/ui/entity-feedback";
+import { AppointmentDrawer } from "@/components/appointments/drawer/appointment-drawer";
+import { AppointmentModalForm } from "@/components/appointments/forms/appointment-modal-form";
 import { appointmentService } from "@/domain/appointment/services/AppointmentService";
 import { AppointmentEntity, AppointmentFilterState } from "@/domain/appointment/types";
 import { toast } from "sonner";
@@ -25,6 +27,13 @@ export default function AppointmentsPage() {
   const [isRefreshing, setIsRefreshing] = React.useState(false);
   const [viewMode, setViewMode] = React.useState<"grid" | "table">("grid");
   const [filters, setFilters] = React.useState<AppointmentFilterState>(initialFilterState);
+
+  // Drawer & Form State
+  const [selectedAppointment, setSelectedAppointment] = React.useState<AppointmentEntity | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = React.useState(false);
+  const [isFormModalOpen, setIsFormModalOpen] = React.useState(false);
+  const [formMode, setFormMode] = React.useState<"create" | "edit">("create");
+  const [editingAppointment, setEditingAppointment] = React.useState<AppointmentEntity | null>(null);
 
   React.useEffect(() => {
     let isMounted = true;
@@ -71,6 +80,29 @@ export default function AppointmentsPage() {
     }
   };
 
+  const handleOpenCreateModal = () => {
+    setFormMode("create");
+    setEditingAppointment(null);
+    setIsFormModalOpen(true);
+  };
+
+  const handleOpenEditModal = (apt: AppointmentEntity) => {
+    setFormMode("edit");
+    setEditingAppointment(apt);
+    setIsFormModalOpen(true);
+  };
+
+  const handleFormSuccess = (apt: AppointmentEntity) => {
+    if (formMode === "create") {
+      setAppointmentsList((prev) => [apt, ...prev]);
+    } else {
+      setAppointmentsList((prev) => prev.map((a) => (a.id === apt.id ? apt : a)));
+      if (selectedAppointment?.id === apt.id) {
+        setSelectedAppointment(apt);
+      }
+    }
+  };
+
   const activeFilterCount = Object.values(filters).filter((v) => v !== "").length;
 
   return (
@@ -101,7 +133,7 @@ export default function AppointmentsPage() {
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onRefresh={handleRefresh}
-        onAddAppointment={() => toast.info("Book Appointment Modal Triggered")}
+        onAddAppointment={handleOpenCreateModal}
         isRefreshing={isRefreshing}
       />
 
@@ -124,16 +156,46 @@ export default function AppointmentsPage() {
             <AppointmentCard
               key={apt.id}
               appointment={apt}
-              onSelectAppointment={(selected) => toast.info(`Selected appointment: "${selected.title}"`)}
+              onSelectAppointment={(selected) => {
+                setSelectedAppointment(selected);
+                setIsDrawerOpen(true);
+              }}
             />
           ))}
         </div>
       ) : (
         <AppointmentTable
           data={appointmentsList}
-          onSelectAppointment={(selected) => toast.info(`Selected appointment: "${selected.title}"`)}
+          onSelectAppointment={(selected) => {
+            setSelectedAppointment(selected);
+            setIsDrawerOpen(true);
+          }}
         />
       )}
+
+      {/* Appointment Drawer Workspace */}
+      <AppointmentDrawer
+        appointment={selectedAppointment}
+        isOpen={isDrawerOpen}
+        onClose={() => {
+          setIsDrawerOpen(false);
+          setSelectedAppointment(null);
+        }}
+        onEdit={() => {
+          if (selectedAppointment) {
+            handleOpenEditModal(selectedAppointment);
+          }
+        }}
+      />
+
+      {/* Appointment Modal Form */}
+      <AppointmentModalForm
+        isOpen={isFormModalOpen}
+        mode={formMode}
+        initialData={editingAppointment}
+        onClose={() => setIsFormModalOpen(false)}
+        onSuccess={handleFormSuccess}
+      />
     </div>
   );
 }
