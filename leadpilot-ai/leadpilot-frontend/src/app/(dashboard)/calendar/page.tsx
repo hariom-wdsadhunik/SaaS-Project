@@ -8,7 +8,7 @@ import { CalendarGrid } from "@/components/calendar/calendar-grid";
 import { EntityEmptyState } from "@/platform/ui/entity-feedback";
 import { CalendarDrawer } from "@/components/calendar/drawer/calendar-drawer";
 import { CalendarModalForm } from "@/components/calendar/forms/calendar-modal-form";
-import { calendarEventService } from "@/domain/calendar/services/CalendarEventService";
+import { CalendarSchedulingFacade } from "@/domain/calendar/CalendarSchedulingFacade";
 import { CalendarEventEntity, CalendarFilterState, CalendarViewMode } from "@/domain/calendar/types";
 import { toast } from "sonner";
 
@@ -35,8 +35,7 @@ export default function CalendarPage() {
 
   React.useEffect(() => {
     let isMounted = true;
-    calendarEventService
-      .getEvents(filters)
+    CalendarSchedulingFacade.getEvents(filters)
       .then((data) => {
         if (isMounted) {
           setEventsList(data);
