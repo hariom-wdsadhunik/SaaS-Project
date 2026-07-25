@@ -1,4 +1,5 @@
 import { CalendarEventEntity, CalendarFilterState } from "../types";
+import { CalendarEventFormInput } from "@/lib/validations/calendar-event-form";
 import { platformAuditLogger } from "@/platform/audit";
 
 export const initialCalendarDataset: CalendarEventEntity[] = [
@@ -89,5 +90,41 @@ export const calendarEventService = {
       if (filters.assignedAgent && evt.assignedAgentName !== filters.assignedAgent) return false;
       return true;
     });
+  },
+
+  async createEvent(input: CalendarEventFormInput): Promise<CalendarEventEntity> {
+    await new Promise((res) => setTimeout(res, 350));
+    const newEvent: CalendarEventEntity = {
+      id: `evt-${Date.now()}`,
+      ...input,
+    };
+
+    platformAuditLogger.log({
+      action: "CREATE",
+      entityType: "SYSTEM",
+      entityIds: [newEvent.id],
+      payload: { title: newEvent.title, eventType: newEvent.eventType },
+      timestamp: new Date().toISOString(),
+    });
+
+    return newEvent;
+  },
+
+  async updateEvent(id: string, input: CalendarEventFormInput): Promise<CalendarEventEntity> {
+    await new Promise((res) => setTimeout(res, 350));
+    const updatedEvent: CalendarEventEntity = {
+      id,
+      ...input,
+    };
+
+    platformAuditLogger.log({
+      action: "UPDATE",
+      entityType: "SYSTEM",
+      entityIds: [id],
+      payload: { title: updatedEvent.title, eventType: updatedEvent.eventType },
+      timestamp: new Date().toISOString(),
+    });
+
+    return updatedEvent;
   },
 };

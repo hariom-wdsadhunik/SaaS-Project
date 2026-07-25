@@ -6,6 +6,8 @@ import { CalendarFilters } from "@/components/calendar/calendar-filters";
 import { CalendarToolbar } from "@/components/calendar/calendar-toolbar";
 import { CalendarGrid } from "@/components/calendar/calendar-grid";
 import { EntityEmptyState } from "@/platform/ui/entity-feedback";
+import { CalendarDrawer } from "@/components/calendar/drawer/calendar-drawer";
+import { CalendarModalForm } from "@/components/calendar/forms/calendar-modal-form";
 import { calendarEventService } from "@/domain/calendar/services/CalendarEventService";
 import { CalendarEventEntity, CalendarFilterState, CalendarViewMode } from "@/domain/calendar/types";
 import { toast } from "sonner";
@@ -23,6 +25,13 @@ export default function CalendarPage() {
   const [isLoading, setIsLoading] = React.useState(true);
   const [viewMode, setViewMode] = React.useState<CalendarViewMode>("month");
   const [filters, setFilters] = React.useState<CalendarFilterState>(initialFilterState);
+
+  // Drawer & Form State
+  const [selectedEvent, setSelectedEvent] = React.useState<CalendarEventEntity | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = React.useState(false);
+  const [isFormModalOpen, setIsFormModalOpen] = React.useState(false);
+  const [formMode, setFormMode] = React.useState<"create" | "edit">("create");
+  const [editingEvent, setEditingEvent] = React.useState<CalendarEventEntity | null>(null);
 
   React.useEffect(() => {
     let isMounted = true;
@@ -53,6 +62,26 @@ export default function CalendarPage() {
   const handleResetFilters = () => {
     setFilters(initialFilterState);
     toast.info("Calendar filters reset");
+  };
+
+  const handleOpenCreateModal = () => {
+    setFormMode("create");
+    setEditingEvent(null);
+    setIsFormModalOpen(true);
+  };
+
+  const handleOpenEditModal = (evt: CalendarEventEntity) => {
+    setFormMode("edit");
+    setEditingEvent(evt);
+    setIsFormModalOpen(true);
+  };
+
+  const handleFormSuccess = (evt: CalendarEventEntity) => {
+    if (formMode === "create") {
+      setEventsList((prev) => [evt, ...prev]);
+    } else {
+      setEventsList((prev) => prev.map((e) => (e.id === evt.id ? evt : e)));
+    }
   };
 
   const activeFilterCount = Object.values(filters).filter((v) => v !== "").length;
@@ -88,6 +117,7 @@ export default function CalendarPage() {
         onPrevDate={() => toast.info("Previous Month")}
         onNextDate={() => toast.info("Next Month")}
         onToday={() => toast.info("Navigated to Today")}
+        onAddEvent={handleOpenCreateModal}
       />
 
       {/* Main Grid View */}
@@ -105,9 +135,36 @@ export default function CalendarPage() {
         <CalendarGrid
           events={eventsList}
           viewMode={viewMode}
-          onSelectEvent={(evt) => toast.info(`Selected event: "${evt.title}"`)}
+          onSelectEvent={(evt) => {
+            setSelectedEvent(evt);
+            setIsDrawerOpen(true);
+          }}
         />
       )}
+
+      {/* Calendar Drawer Workspace */}
+      <CalendarDrawer
+        event={selectedEvent}
+        isOpen={isDrawerOpen}
+        onClose={() => {
+          setIsDrawerOpen(false);
+          setSelectedEvent(null);
+        }}
+        onEdit={() => {
+          if (selectedEvent) {
+            handleOpenEditModal(selectedEvent);
+          }
+        }}
+      />
+
+      {/* Calendar Event Modal Form */}
+      <CalendarModalForm
+        isOpen={isFormModalOpen}
+        mode={formMode}
+        initialData={editingEvent}
+        onClose={() => setIsFormModalOpen(false)}
+        onSuccess={handleFormSuccess}
+      />
     </div>
   );
 }

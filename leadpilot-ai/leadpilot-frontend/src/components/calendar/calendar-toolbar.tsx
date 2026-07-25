@@ -1,5 +1,5 @@
 import * as React from "react";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Grid, List } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Grid, List, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CalendarViewMode } from "@/domain/calendar/types";
 
@@ -10,6 +10,7 @@ interface CalendarToolbarProps {
   onPrevDate: () => void;
   onNextDate: () => void;
   onToday: () => void;
+  onAddEvent?: () => void;
 }
 
 export function CalendarToolbar({
@@ -19,6 +20,7 @@ export function CalendarToolbar({
   onPrevDate,
   onNextDate,
   onToday,
+  onAddEvent,
 }: CalendarToolbarProps) {
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-zinc-950 p-2.5 rounded-xl border border-zinc-800">
@@ -46,35 +48,42 @@ export function CalendarToolbar({
         <span className="text-sm font-bold text-white px-2 font-mono">{currentDateText}</span>
       </div>
 
-      {/* View Mode Switcher */}
-      <div className="flex items-center rounded-lg border border-zinc-800 bg-zinc-900 p-1">
-        <button
-          onClick={() => onViewModeChange("month")}
-          className={`flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-md transition-colors ${
-            viewMode === "month" ? "bg-zinc-800 text-white shadow-sm" : "text-zinc-400 hover:text-white"
-          }`}
-        >
-          <Grid className="h-3.5 w-3.5" />
-          <span>Month</span>
-        </button>
-        <button
-          onClick={() => onViewModeChange("week")}
-          className={`flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-md transition-colors ${
-            viewMode === "week" ? "bg-zinc-800 text-white shadow-sm" : "text-zinc-400 hover:text-white"
-          }`}
-        >
-          <CalendarIcon className="h-3.5 w-3.5" />
-          <span>Week</span>
-        </button>
-        <button
-          onClick={() => onViewModeChange("agenda")}
-          className={`flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-md transition-colors ${
-            viewMode === "agenda" ? "bg-zinc-800 text-white shadow-sm" : "text-zinc-400 hover:text-white"
-          }`}
-        >
-          <List className="h-3.5 w-3.5" />
-          <span>Agenda</span>
-        </button>
+      {/* Right controls: View Switcher & Action */}
+      <div className="flex items-center gap-3">
+        <div className="flex items-center rounded-lg border border-zinc-800 bg-zinc-900 p-1">
+          <button
+            onClick={() => onViewModeChange("month")}
+            className={`flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-md transition-colors ${
+              viewMode === "month" ? "bg-zinc-800 text-white shadow-sm" : "text-zinc-400 hover:text-white"
+            }`}
+          >
+            <Grid className="h-3.5 w-3.5" />
+            <span>Month</span>
+          </button>
+          <button
+            onClick={() => onViewModeChange("week")}
+            className={`flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-md transition-colors ${
+              viewMode === "week" ? "bg-zinc-800 text-white shadow-sm" : "text-zinc-400 hover:text-white"
+            }`}
+          >
+            <CalendarIcon className="h-3.5 w-3.5" />
+            <span>Week</span>
+          </button>
+          <button
+            onClick={() => onViewModeChange("agenda")}
+            className={`flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-md transition-colors ${
+              viewMode === "agenda" ? "bg-zinc-800 text-white shadow-sm" : "text-zinc-400 hover:text-white"
+            }`}
+          >
+            <List className="h-3.5 w-3.5" />
+            <span>Agenda</span>
+          </button>
+        </div>
+
+        <Button size="sm" variant="default" onClick={onAddEvent} className="h-8 text-xs gap-1.5 shadow-sm">
+          <Plus className="h-3.5 w-3.5" />
+          <span>Schedule Event</span>
+        </Button>
       </div>
     </div>
   );
