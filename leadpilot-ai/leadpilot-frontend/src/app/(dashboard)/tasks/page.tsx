@@ -9,8 +9,11 @@ import { TaskTable } from "@/components/tasks/task-table";
 import { EntityEmptyState, EntityErrorState } from "@/platform/ui/entity-feedback";
 import { TaskDrawer } from "@/components/tasks/drawer/task-drawer";
 import { TaskModalForm } from "@/components/tasks/forms/task-modal-form";
+import { TaskConfirmationDialog } from "@/components/tasks/actions/task-action-dialogs";
+import { TaskStatusAssignModal } from "@/components/tasks/actions/task-status-assign-modal";
 import { initialTasksDataset, taskMockService } from "@/services/task-mock-service";
-import { TaskEntity, TaskFilterState } from "@/domain/task/types";
+import { taskActionService } from "@/services/task-action-service";
+import { TaskEntity, TaskFilterState, TaskStatus, TaskPriority } from "@/domain/task/types";
 import { toast } from "sonner";
 
 const initialFilterState: TaskFilterState = {
@@ -37,6 +40,22 @@ export default function TasksPage() {
   const [isFormModalOpen, setIsFormModalOpen] = React.useState(false);
   const [formMode, setFormMode] = React.useState<"create" | "edit">("create");
   const [editingTask, setEditingTask] = React.useState<TaskEntity | null>(null);
+
+  // Action Dialog States
+  const [actionDialog, setActionDialog] = React.useState<{
+    isOpen: boolean;
+    type: "delete" | "archive";
+    taskId?: string;
+    taskTitle?: string;
+  }>({ isOpen: false, type: "delete" });
+
+  const [assignModal, setAssignModal] = React.useState<{
+    isOpen: boolean;
+    mode: "status" | "priority" | "agent";
+    taskId?: string;
+  }>({ isOpen: false, mode: "status" });
+
+  const [isActionProcessing, setIsActionProcessing] = React.useState(false);
 
   const handleFilterChange = (newFilters: Partial<TaskFilterState>) => {
     setFilters((prev) => ({ ...prev, ...newFilters }));
@@ -81,23 +100,57 @@ export default function TasksPage() {
     }
   };
 
-  // Keyboard shortcut `T` for Create Task
-  React.useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (
-        (e.key === "t" || e.key === "T") &&
-        !isFormModalOpen &&
-        !isDrawerOpen &&
-        document.activeElement?.tagName !== "INPUT" &&
-        document.activeElement?.tagName !== "TEXTAREA"
-      ) {
-        e.preventDefault();
-        handleOpenCreateModal();
+  const handleConfirmAction = async () => {
+    if (!actionDialog.taskId) return;
+    setIsActionProcessing(true);
+    try {
+      if (actionDialog.type === "delete") {
+        await taskActionService.deleteTasks([actionDialog.taskId]);
+        setTasksList((prev) => prev.filter((t) => t.id !== actionDialog.taskId));
+        toast.success(`Task deleted.`);
+      } else {
+        await taskActionService.archiveTasks([actionDialog.taskId]);
+        setTasksList((prev) => prev.filter((t) => t.id !== actionDialog.taskId));
+        toast.success(`Task archived.`);
       }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isFormModalOpen, isDrawerOpen]);
+      setActionDialog({ isOpen: false, type: "delete" });
+    } catch {
+      toast.error(`Action failed.`);
+    } finally {
+      setIsActionProcessing(false);
+    }
+  };
+
+  const handleConfirmAssign = async (val: string) => {
+    if (!assignModal.taskId) return;
+    setIsActionProcessing(true);
+    try {
+      if (assignModal.mode === "status") {
+        await taskActionService.updateStatus([assignModal.taskId], val as TaskStatus);
+        setTasksList((prev) =>
+          prev.map((t) => (t.id === assignModal.taskId ? { ...t, status: val as TaskStatus } : t))
+        );
+        toast.success(`Task status updated to ${val}.`);
+      } else if (assignModal.mode === "priority") {
+        await taskActionService.updatePriority([assignModal.taskId], val as TaskPriority);
+        setTasksList((prev) =>
+          prev.map((t) => (t.id === assignModal.taskId ? { ...t, priority: val as TaskPriority } : t))
+        );
+        toast.success(`Task priority updated to ${val}.`);
+      } else {
+        await taskActionService.assignAgent([assignModal.taskId], val);
+        setTasksList((prev) =>
+          prev.map((t) => (t.id === assignModal.taskId ? { ...t, assignedAgentName: val } : t))
+        );
+        toast.success(`Task assigned to ${val}.`);
+      }
+      setAssignModal({ isOpen: false, mode: "status" });
+    } catch {
+      toast.error(`Assignment failed.`);
+    } finally {
+      setIsActionProcessing(false);
+    }
+  };
 
   const activeFilterCount = Object.values(filters).filter((val) => val !== "").length;
 
@@ -209,6 +262,26 @@ export default function TasksPage() {
         initialData={editingTask}
         onClose={() => setIsFormModalOpen(false)}
         onSuccess={handleFormSuccess}
+      />
+
+      {/* Action Dialogs */}
+      <TaskConfirmationDialog
+        isOpen={actionDialog.isOpen}
+        actionType={actionDialog.type}
+        taskCount={1}
+        taskTitle={actionDialog.taskTitle}
+        onConfirm={handleConfirmAction}
+        onClose={() => setActionDialog({ isOpen: false, type: "delete" })}
+        isProcessing={isActionProcessing}
+      />
+
+      <TaskStatusAssignModal
+        isOpen={assignModal.isOpen}
+        mode={assignModal.mode}
+        taskCount={1}
+        onConfirm={handleConfirmAssign}
+        onClose={() => setAssignModal({ isOpen: false, mode: "status" })}
+        isProcessing={isActionProcessing}
       />
     </div>
   );
