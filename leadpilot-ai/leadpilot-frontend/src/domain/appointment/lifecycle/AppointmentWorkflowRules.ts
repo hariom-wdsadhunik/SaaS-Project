@@ -1,0 +1,11 @@
+import { AppointmentStatus } from "../types";
+
+export const ALLOWED_APPOINTMENT_TRANSITIONS: Record<AppointmentStatus, AppointmentStatus[]> = {
+  SCHEDULED: ["CONFIRMED", "RESCHEDULED", "CANCELLED", "NO_SHOW"],
+  CONFIRMED: ["CHECKED_IN", "COMPLETED", "RESCHEDULED", "CANCELLED", "NO_SHOW"],
+  CHECKED_IN: ["COMPLETED", "CANCELLED"],
+  COMPLETED: [],
+  CANCELLED: ["SCHEDULED"],
+  NO_SHOW: ["SCHEDULED", "RESCHEDULED"],
+  RESCHEDULED: ["CONFIRMED", "CANCELLED"],
+};
