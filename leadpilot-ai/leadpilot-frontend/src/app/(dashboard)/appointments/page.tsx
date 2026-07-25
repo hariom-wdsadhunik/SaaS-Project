@@ -9,7 +9,7 @@ import { AppointmentTable } from "@/components/appointments/appointment-table";
 import { EntityEmptyState } from "@/platform/ui/entity-feedback";
 import { AppointmentDrawer } from "@/components/appointments/drawer/appointment-drawer";
 import { AppointmentModalForm } from "@/components/appointments/forms/appointment-modal-form";
-import { appointmentService } from "@/domain/appointment/services/AppointmentService";
+import { AppointmentLifecycleFacade } from "@/domain/appointment/AppointmentLifecycleFacade";
 import { AppointmentEntity, AppointmentFilterState } from "@/domain/appointment/types";
 import { toast } from "sonner";
 
@@ -37,8 +37,7 @@ export default function AppointmentsPage() {
 
   React.useEffect(() => {
     let isMounted = true;
-    appointmentService
-      .getAppointments(filters)
+    AppointmentLifecycleFacade.getAppointments(filters)
       .then((data) => {
         if (isMounted) {
           setAppointmentsList(data);
@@ -70,7 +69,7 @@ export default function AppointmentsPage() {
     setIsRefreshing(true);
     toast.info("Refreshing appointments...");
     try {
-      const freshData = await appointmentService.getAppointments(filters);
+      const freshData = await AppointmentLifecycleFacade.getAppointments(filters);
       setAppointmentsList(freshData);
       toast.success("Appointments updated");
     } catch {
