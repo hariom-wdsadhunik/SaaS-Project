@@ -13,13 +13,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { loginSchema, LoginInput } from "@/lib/validations/auth";
-import { authService } from "@/services/auth-service";
-import { useAuthStore } from "@/store/use-auth-store";
+import { useAuthContext } from "@/lib/auth/auth-provider";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { setAuth } = useAuthStore();
+  const { login } = useAuthContext();
 
   const [showPassword, setShowPassword] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -49,17 +48,15 @@ function LoginForm() {
   const onSubmit = async (data: LoginInput) => {
     setIsSubmitting(true);
     try {
-      const response = await authService.login(data);
-      setAuth(response.user, response.token);
+      const response = await login(data.email, data.password);
       toast.success("Welcome back!", {
-        description: `Logged in as ${response.user.name}`,
+        description: `Logged in as ${response.user.fullName}`,
       });
       router.push("/dashboard");
     } catch (error: unknown) {
-      const err = error as { response?: { data?: { error?: string } } };
-      const errorMessage = err?.response?.data?.error || "Invalid email or password";
+      const msg = error instanceof Error ? error.message : "Invalid email or password";
       toast.error("Authentication Failed", {
-        description: errorMessage,
+        description: msg,
       });
     } finally {
       setIsSubmitting(false);

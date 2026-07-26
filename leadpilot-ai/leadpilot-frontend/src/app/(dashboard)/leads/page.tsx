@@ -10,7 +10,7 @@ import { LeadDrawer } from "@/components/leads/drawer/lead-drawer";
 import { LeadModalForm } from "@/components/leads/forms/lead-modal-form";
 import { LeadConfirmationDialog } from "@/components/leads/actions/lead-action-dialogs";
 import { LeadStatusAssignModal } from "@/components/leads/actions/lead-status-assign-modal";
-import { leadActionService } from "@/services/lead-action-service";
+import { supabaseLeadRepository } from "@/services/supabase-lead-repository";
 import {
   LeadItem,
   LeadLoadingSkeleton,
@@ -19,104 +19,6 @@ import {
   LeadCardMobile,
 } from "@/components/leads/lead-feedback";
 import { toast } from "sonner";
-
-const initialLeadDataset: LeadItem[] = [
-  {
-    id: "ld-101",
-    fullName: "John Doe",
-    avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
-    email: "john.doe@example.com",
-    phone: "+1 (555) 234-5678",
-    source: "WhatsApp Business API",
-    status: "QUALIFIED",
-    aiPropensityScore: 88,
-    budgetMin: 1000000,
-    budgetMax: 1500000,
-    assignedBrokerName: "Alex Morgan",
-    createdAt: "2026-07-20T10:30:00Z",
-  },
-  {
-    id: "ld-102",
-    fullName: "Sarah Jenkins",
-    avatarUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150",
-    email: "sarah.jenkins@agency.io",
-    phone: "+1 (555) 876-5432",
-    source: "Meta / IG Lead Ads",
-    status: "NEW",
-    aiPropensityScore: 64,
-    budgetMin: 750000,
-    budgetMax: 900000,
-    assignedBrokerName: "Sarah Jenkins",
-    createdAt: "2026-07-21T14:15:00Z",
-  },
-  {
-    id: "ld-103",
-    fullName: "Alexander Montgomery-Wellington III",
-    email: "alexander.wellington.investments@estate-corp.com",
-    phone: "+1 (555) 999-0011",
-    source: "Client Referrals",
-    status: "QUALIFIED",
-    aiPropensityScore: 94,
-    budgetMin: 2500000,
-    budgetMax: 4000000,
-    assignedBrokerName: "Alex Morgan",
-    createdAt: "2026-07-22T09:00:00Z",
-  },
-  {
-    id: "ld-104",
-    fullName: "Michael Chen",
-    avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
-    email: "m.chen@techholdings.com",
-    phone: "+1 (555) 444-3322",
-    source: "Website Webhook",
-    status: "CONTACTED",
-    aiPropensityScore: 72,
-    budgetMin: 1200000,
-    budgetMax: 1800000,
-    assignedBrokerName: "Michael Chen",
-    createdAt: "2026-07-22T11:45:00Z",
-  },
-  {
-    id: "ld-105",
-    fullName: "Emily Watson",
-    email: "emily.watson@designstudio.org",
-    phone: "+1 (555) 111-2233",
-    source: "Meta / IG Lead Ads",
-    status: "NURTURING",
-    aiPropensityScore: 52,
-    budgetMin: 500000,
-    budgetMax: 700000,
-    assignedBrokerName: "Unassigned",
-    createdAt: "2026-07-23T08:20:00Z",
-  },
-  {
-    id: "ld-106",
-    fullName: "David Miller",
-    email: "dmiller@construction.net",
-    phone: "+1 (555) 666-7788",
-    source: "WhatsApp Business API",
-    status: "LOST",
-    aiPropensityScore: 28,
-    budgetMin: 400000,
-    budgetMax: 600000,
-    assignedBrokerName: "Michael Chen",
-    createdAt: "2026-07-18T16:00:00Z",
-  },
-  {
-    id: "ld-107",
-    fullName: "Jessica Taylor",
-    avatarUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150",
-    email: "jtaylor@luxuryhomes.com",
-    phone: "+1 (555) 333-8899",
-    source: "Client Referrals",
-    status: "QUALIFIED",
-    aiPropensityScore: 82,
-    budgetMin: 1800000,
-    budgetMax: 2200000,
-    assignedBrokerName: "Alex Morgan",
-    createdAt: "2026-07-23T15:30:00Z",
-  },
-];
 
 const initialFilterState: LeadFilterState = {
   search: "",
@@ -127,8 +29,8 @@ const initialFilterState: LeadFilterState = {
 };
 
 export default function LeadsPage() {
-  const [leadsList, setLeadsList] = React.useState<LeadItem[]>(initialLeadDataset);
-  const [isLoading] = React.useState(false);
+  const [leadsList, setLeadsList] = React.useState<LeadItem[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
   const [isError, setIsError] = React.useState(false);
   const [isRefreshing, setIsRefreshing] = React.useState(false);
 
@@ -157,6 +59,30 @@ export default function LeadsPage() {
 
   const [isActionProcessing, setIsActionProcessing] = React.useState(false);
 
+  // Fetch leads from Supabase repository via async effect
+  React.useEffect(() => {
+    let isMounted = true;
+    supabaseLeadRepository
+      .getLeads(filters)
+      .then((data) => {
+        if (isMounted) {
+          setLeadsList(data);
+          setIsLoading(false);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setIsError(true);
+          toast.error("Failed to load leads from Supabase repository.");
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [filters]);
+
   const handleFilterChange = (newFilters: Partial<LeadFilterState>) => {
     setFilters((prev) => ({ ...prev, ...newFilters }));
   };
@@ -166,13 +92,18 @@ export default function LeadsPage() {
     toast.info("All lead filters reset");
   };
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setIsRefreshing(true);
     toast.info("Syncing lead catalogue...");
-    setTimeout(() => {
-      setIsRefreshing(false);
+    try {
+      const data = await supabaseLeadRepository.getLeads(filters);
+      setLeadsList(data);
       toast.success("Lead database updated");
-    }, 600);
+    } catch {
+      toast.error("Failed to refresh leads.");
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   const handleOpenCreateModal = () => {
@@ -201,11 +132,11 @@ export default function LeadsPage() {
     setIsActionProcessing(true);
     try {
       if (confirmDialog.type === "DELETE") {
-        await leadActionService.deleteLeads(selectedLeadIds);
+        await supabaseLeadRepository.bulkDeleteLeads(selectedLeadIds);
         setLeadsList((prev) => prev.filter((l) => !selectedRowIds[l.id]));
         toast.success(`Successfully deleted ${selectedCount} lead record(s)`);
       } else {
-        await leadActionService.archiveLeads(selectedLeadIds);
+        await supabaseLeadRepository.bulkDeleteLeads(selectedLeadIds);
         setLeadsList((prev) => prev.filter((l) => !selectedRowIds[l.id]));
         toast.success(`Successfully archived ${selectedCount} lead record(s)`);
       }
@@ -222,7 +153,7 @@ export default function LeadsPage() {
     setIsActionProcessing(true);
     try {
       if (assignStatusModal.mode === "ASSIGN") {
-        await leadActionService.assignAgent(selectedLeadIds, val);
+        await Promise.all(selectedLeadIds.map((id) => supabaseLeadRepository.assignBroker(id, val)));
         setLeadsList((prev) =>
           prev.map((l) =>
             selectedRowIds[l.id] ? { ...l, assignedBrokerName: val } : l
@@ -230,7 +161,11 @@ export default function LeadsPage() {
         );
         toast.success(`Assigned ${selectedCount} lead(s) to ${val}`);
       } else {
-        await leadActionService.changeStatus(selectedLeadIds, val);
+        await Promise.all(
+          selectedLeadIds.map((id) =>
+            supabaseLeadRepository.changeStatus(id, val as LeadItem["status"])
+          )
+        );
         setLeadsList((prev) =>
           prev.map((l) =>
             selectedRowIds[l.id]
@@ -323,7 +258,7 @@ export default function LeadsPage() {
       {isLoading ? (
         <LeadLoadingSkeleton />
       ) : isError ? (
-        <LeadErrorState onRetry={() => setIsError(false)} />
+        <LeadErrorState onRetry={handleRefresh} />
       ) : filteredLeads.length === 0 ? (
         <LeadEmptyState onResetFilters={handleResetFilters} />
       ) : (

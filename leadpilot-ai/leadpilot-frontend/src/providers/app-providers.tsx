@@ -3,6 +3,7 @@
 import * as React from "react";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { AuthProvider } from "@/lib/auth/auth-provider";
 import { Toaster } from "sonner";
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
@@ -27,20 +28,22 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       disableTransitionOnChange
     >
       <QueryClientProvider client={queryClient}>
-        {children}
-        <Toaster
-          position="top-right"
-          theme="dark"
-          richColors
-          closeButton
-          toastOptions={{
-            style: {
-              background: "#18181b",
-              border: "1px solid #27272a",
-              color: "#f4f4f5",
-            },
-          }}
-        />
+        <AuthProvider>
+          {children}
+          <Toaster
+            position="top-right"
+            theme="dark"
+            richColors
+            closeButton
+            toastOptions={{
+              style: {
+                background: "#18181b",
+                border: "1px solid #27272a",
+                color: "#f4f4f5",
+              },
+            }}
+          />
+        </AuthProvider>
       </QueryClientProvider>
     </NextThemesProvider>
   );

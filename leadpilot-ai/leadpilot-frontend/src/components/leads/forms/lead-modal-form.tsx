@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { X, UserPlus, Edit3, AlertCircle } from "lucide-react";
 
 import { leadFormSchema, LeadFormInput } from "@/lib/validations/lead-form";
-import { leadMockService } from "@/services/lead-mock-service";
+import { supabaseLeadRepository } from "@/services/supabase-lead-repository";
 import { leadActionService } from "@/services/lead-action-service";
 import { LeadItem } from "@/components/leads/lead-feedback";
 import { LeadFormSections } from "./lead-form-sections";
@@ -85,12 +85,12 @@ export function LeadModalForm({
     setServerError(null);
     try {
       if (mode === "create") {
-        const createdLead = await leadMockService.createLead(data);
+        const createdLead = await supabaseLeadRepository.createLead(data);
         await leadActionService.logLeadCreation(createdLead.id, { name: createdLead.fullName });
         toast.success(`Lead "${createdLead.fullName}" created successfully!`);
         onSuccess(createdLead);
       } else if (mode === "edit" && initialData) {
-        const updatedLead = await leadMockService.updateLead(initialData.id, data);
+        const updatedLead = await supabaseLeadRepository.updateLead(initialData.id, data);
         await leadActionService.logLeadUpdate(updatedLead.id, { name: updatedLead.fullName });
         toast.success(`Lead "${updatedLead.fullName}" updated successfully!`);
         onSuccess(updatedLead);
