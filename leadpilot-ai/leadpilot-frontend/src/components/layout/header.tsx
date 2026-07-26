@@ -1,12 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { Search, Bell, Sparkles, Sun, Moon, User, LogOut, ChevronDown, ShieldCheck } from "lucide-react";
+import { Search, Sparkles, Sun, Moon, User, LogOut, ChevronDown, ShieldCheck } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useUIStore } from "@/store/use-ui-store";
 import { useAuthContext } from "@/lib/auth/auth-provider";
 import { Breadcrumb } from "./breadcrumb";
 import { Avatar } from "@/components/ui/avatar";
+import { NotificationCenter } from "@/platform/notifications/NotificationCenter";
 
 export function Header() {
   const { theme, setTheme } = useTheme();
@@ -58,14 +59,8 @@ export function Header() {
           {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </button>
 
-        {/* Notification Bell */}
-        <button
-          className="relative flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors"
-          title="Notifications"
-        >
-          <Bell className="h-4 w-4" />
-          <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-indigo-500" />
-        </button>
+        {/* Real-time Notification Center */}
+        <NotificationCenter userId={user?.id || "user-system"} />
 
         {/* User Menu & Session Indicator */}
         <div className="relative">

@@ -9,14 +9,11 @@
 - **v0.5.0:** Task & Activity Management Module (Tasks, Comments, Activity Log, Kanban View, Dashboard Widgets, AI Task Tool).
 - **v0.5.1:** Engineering Hardening, Database B-Tree Indexing, RLS Audit, System Documentation & ADRs.
 - **v0.6.0:** Calendar & Appointment Management Platform (Appointments, Attendees, Reminders, Activity Log, Month/Week/Day/Agenda Views, AI Appointment Tool).
+- **v0.6.5:** Platform Infrastructure (Supabase Realtime Engine, Domain Event Bus, Notification Engine, Background Job Queue, User Presence, Audit Stream).
 
 ---
 
 ## Upcoming Releases
-
-### Release v0.6.5 — Realtime Infrastructure & WebSockets
-- Supabase Realtime WebSocket channels for live task board and calendar updates.
-- Optimistic UI updates with instant push sync.
 
 ### Release v0.7.0 — Omnichannel Communication Hub
 - WhatsApp Webhook inbox with AI auto-responder.
