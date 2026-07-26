@@ -7,20 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.0.0] - 2026-07-26
+## [1.0.1] - 2026-07-26
 
 ### Added
-* **AI Workspace (`src/domain/ai/workspace/`)**: Introduced `AIConversation`, `AIContextBuilder` (aggregating multi-entity context), `AIResponseFormatter`, `ConversationMemory`, and `AIWorkspace` facade.
-* **Workflow Automation Engine (`src/platform/workflows/`)**: Introduced `WorkflowDefinition`, `TriggerRegistry`, `ConditionEvaluator`, `ActionExecutor`, `WorkflowValidator`, `WorkflowRunner`, `WorkflowRepository`, and `WorkflowEngine`.
-* **RAG Knowledge Base (`src/domain/knowledge/`)**: Introduced `KnowledgeDocument`, `EmbeddingProvider` interface, `VectorStoreAdapter` interface, `KnowledgeIndexer`, `KnowledgeSearch`, and `KnowledgeRepository`.
-* **Multi-Tenant SaaS Foundation (`src/platform/tenant/`)**: Enforced organizational tenant boundary isolation (`organization_id`, `TenantContext`, `TenantMiddleware`).
-* **Observability Suite (`src/platform/observability/`)**: Introduced `MonitoringService`, `HealthCheckService`, `MetricsCollector`, and `AuditDashboard`.
-* **Security & Production Hardening**: Created `SECURITY_AUDIT.md`, `DeploymentChecklist.md`, `ProductionChecklist.md`, `Runbook.md`, `DisasterRecovery.md`, `BackupStrategy.md`, `ScalingGuide.md`.
-* **Unit & System Integration Test Suite**: Created `workflow.test.ts`, `knowledge.test.ts`, `tenant.test.ts`, `ai-workspace.test.ts`, `security.test.ts`, `performance.test.ts`, `integration.test.ts`.
+* **First Run Experience (`src/components/onboarding/OnboardingWizard.tsx`)**: Created `OnboardingWizard` and `SampleDataLoader.ts` for workspace setup, team invitations, and sample CRM data seeding.
+* **Guided Product Tours (`src/platform/tour/`)**: Created `ProductTourService` and `ProductTourOverlay` supporting guided tours for Dashboard, Leads, Deals, Calendar, Documents, Communication, Analytics, and AI Workspace.
+* **Demo Mode Subsystem (`src/platform/demo/DemoModeService.ts`)**: Created interactive demo workspace toggle.
+* **Enhanced Error Pages & Resiliency**: Built branded 404 page (`src/app/not-found.tsx`), 500 error boundary (`src/app/error.tsx`), and network offline alert (`src/components/common/OfflineBanner.tsx`).
+* **Accessibility Hardening (`src/platform/a11y/accessibility.ts`)**: Added screen reader announcer helper and focus trapping utilities.
+* **Launch Documentation**: Created `GettingStarted.md`, `AdministratorGuide.md`, and `UserGuide.md`.
+* **Unit Test Suite**: Added `onboarding.test.ts`, `demo.test.ts`, `tour.test.ts`, and `a11y.test.ts`.
 
 ---
 
-## [0.9.0] - 2026-07-26
+## [1.0.0] - 2026-07-26
 
 ### Added
-* **Analytics Domain Model (`src/domain/analytics/types.ts`)**: Defined `AnalyticsMetric`, `Dashboard`, `DashboardWidget`, `Report`, `ReportFilter`, `KPI`, `Forecast`, and `Insight` entities.
+* **AI Workspace (`src/domain/ai/workspace/`)**: Introduced `AIConversation`, `AIContextBuilder`, `AIResponseFormatter`, `ConversationMemory`, and `AIWorkspace` facade.

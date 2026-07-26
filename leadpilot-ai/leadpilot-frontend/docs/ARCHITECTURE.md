@@ -2,12 +2,12 @@
 
 ---
 
-## 1. Enterprise System Architecture (v1.0.0 GA)
+## 1. Enterprise System Architecture (v1.0.1 Launch Readiness)
 
 ```
 +-----------------------------------------------------------------------------------+
 |                                  Next.js 15 Client App                            |
-|             (React 19, Tailwind CSS v4, Zustand Store, Lucide Icons)              |
+| (OnboardingWizard, ProductTourOverlay, OfflineBanner, Custom Error Boundaries)    |
 +-------------------+-------------------+-------------------+-----------------------+
                     |                   |                   |
                     v                   v                   v
@@ -28,10 +28,9 @@
 
 ---
 
-## 2. Key Enterprise Subsystems
+## 2. Key Product Readiness Modules
 
-- **AI Workspace (`src/domain/ai/workspace/`):** Conversational copilot aggregating context across Leads, Contacts, Deals, Tasks, Appointments, Communications, Documents, and Analytics.
-- **Workflow Automation Engine (`src/platform/workflows/`):** Event-driven trigger/condition/action runner listening to domain event bus.
-- **RAG Knowledge Base (`src/domain/knowledge/`):** Decoupled chunking, embedding, and vector similarity search.
-- **Multi-Tenant SaaS Foundation (`src/platform/tenant/`):** Organization tenancy isolation middleware (`organization_id`).
-- **Observability Suite (`src/platform/observability/`):** Health check, latency metrics collector, system monitoring, and audit dashboard services.
+- **First Run Experience (`src/components/onboarding/OnboardingWizard.tsx`):** Welcome wizard, organization setup, team invitation, and sample data loader.
+- **Guided Product Tours (`src/platform/tour/ProductTourService.ts`):** Module-specific step tours.
+- **Demo Mode (`src/platform/demo/DemoModeService.ts`):** Interactive demo workspace toggle.
+- **Error Boundaries (`src/app/not-found.tsx`, `src/app/error.tsx`):** Custom 404, 500, and offline network state alerts.
