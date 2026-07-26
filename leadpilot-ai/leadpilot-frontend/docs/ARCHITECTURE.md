@@ -2,7 +2,7 @@
 
 ---
 
-## 1. High-Level System Architecture
+## 1. Enterprise System Architecture (v1.0.0 GA)
 
 ```
 +-----------------------------------------------------------------------------------+
@@ -12,9 +12,9 @@
                     |                   |                   |
                     v                   v                   v
 +-------------------+---+   +-----------+-------+   +-------+---------------+
-| Analytics & BI Engine |   |  Domain Event Bus |   |  Notification Engine  |
-| (KPIEngine/Reports/   |   | (DomainEvents/    |   | (NotificationService/ |
-| Forecast/Insights)    |   | EventDispatcher)  |   | Preferences/Center)   |
+|    AI Workspace   |   |  Workflow Engine  |   |   RAG Knowledge Base  |
+| (AIContextBuilder/|   | (TriggerRegistry/ |   | (KnowledgeIndexer/    |
+| AIResponseFormat) |   | ConditionEval)    |   | VectorStoreAdapter)   |
 +-------------------+---+   +-----------+-------+   +-------+---------------+
                     |                   |                   |
                     +-------------------+-------------------+
@@ -22,16 +22,16 @@
                                         v
                     +-------------------+-------------------+
                     |        Supabase PostgreSQL Backend    |
-                    | (26 Tables, RLS Enabled, B-Tree Ind.)|
+                    | (26 Tables, Strict Multi-Tenant RLS) |
                     +---------------------------------------+
 ```
 
 ---
 
-## 2. Analytics & Business Intelligence Architecture (Sprint v0.9.0)
+## 2. Key Enterprise Subsystems
 
-- **KPI Engine (`src/platform/analytics/`):** Evaluates 11 core KPIs with `MetricCache` TTL caching and incremental refresh.
-- **Report Engine (`src/platform/analytics/reports/`):** Builds custom reports, exports (CSV, Excel, PDF), and handles cron scheduling.
-- **Forecast Engine (`src/platform/analytics/forecast/`):** Generates 30-day predictive forecasts for revenue, lead growth, and deal closures.
-- **AI Insight Engine (`src/platform/analytics/insights/`):** Scans CRM data to detect high-priority leads, slow deals, inactive customers, and pipeline risks.
-- **API Versioning (`/api/v1/`):** Versioned API endpoints (`/api/v1/analytics`, `/api/v1/reports`, `/api/v1/dashboard`, `/api/v1/forecast`).
+- **AI Workspace (`src/domain/ai/workspace/`):** Conversational copilot aggregating context across Leads, Contacts, Deals, Tasks, Appointments, Communications, Documents, and Analytics.
+- **Workflow Automation Engine (`src/platform/workflows/`):** Event-driven trigger/condition/action runner listening to domain event bus.
+- **RAG Knowledge Base (`src/domain/knowledge/`):** Decoupled chunking, embedding, and vector similarity search.
+- **Multi-Tenant SaaS Foundation (`src/platform/tenant/`):** Organization tenancy isolation middleware (`organization_id`).
+- **Observability Suite (`src/platform/observability/`):** Health check, latency metrics collector, system monitoring, and audit dashboard services.
