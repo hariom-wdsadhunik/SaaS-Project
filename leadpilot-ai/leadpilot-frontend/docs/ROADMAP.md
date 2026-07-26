@@ -12,14 +12,11 @@
 - **v0.6.5:** Platform Infrastructure (Supabase Realtime Engine, Domain Event Bus, Notification Engine, Background Job Queue, User Presence, Audit Stream).
 - **v0.7.0:** Omnichannel Communication Platform (WhatsApp, Email, SMS Provider Adapters, Communication Repository, Contact Timeline Auto-Append, AI Communication Tool, API v1 Endpoints).
 - **v0.8.0:** Intelligent Document Management Platform (Supabase Storage Abstraction, Versioning, SHA-256 Checksum Validation, AI OCR Pipeline, Contact Timeline Integration, API v1 Endpoints).
+- **v0.9.0:** Analytics & Business Intelligence Platform (11-Metric KPI Engine, TTL Caching, Custom Report Engine with CSV/Excel/PDF Exports, Predictive Forecast Engine, AI Insight Engine, Executive Dashboard, API v1 Endpoints).
 
 ---
 
 ## Upcoming Releases
-
-### Release v0.9.0 — Property & Portfolio Management Platform
-- Unit listing inventory, photo galleries, virtual tour links.
-- Matching algorithm pairing qualified leads with luxury properties.
 
 ### Release v1.0.0 — Enterprise GA & Multi-Tenant SaaS
 - Organization tenancy isolation (`organization_id`).

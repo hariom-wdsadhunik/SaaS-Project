@@ -12,10 +12,9 @@
                     |                   |                   |
                     v                   v                   v
 +-------------------+---+   +-----------+-------+   +-------+---------------+
-| Storage & Document    |   |  Domain Event Bus |   |  Notification Engine  |
-| Management Engine     |   | (DomainEvents/    |   | (NotificationService/ |
-| (StorageService/      |   | EventDispatcher)  |   | Preferences/Center)   |
-| SupabaseDocRepo)      |   |                   |   |                       |
+| Analytics & BI Engine |   |  Domain Event Bus |   |  Notification Engine  |
+| (KPIEngine/Reports/   |   | (DomainEvents/    |   | (NotificationService/ |
+| Forecast/Insights)    |   | EventDispatcher)  |   | Preferences/Center)   |
 +-------------------+---+   +-----------+-------+   +-------+---------------+
                     |                   |                   |
                     +-------------------+-------------------+
@@ -29,9 +28,10 @@
 
 ---
 
-## 2. Document & Storage Architecture Stack (Sprint v0.8.0)
+## 2. Analytics & Business Intelligence Architecture (Sprint v0.9.0)
 
-- **Storage Subsystem (`src/platform/storage/`):** Decoupled `StorageService`, `DocumentUploader`, `DocumentDownloader`, `DocumentPreviewGenerator`, `ChecksumValidator`, and `FileValidator`.
-- **Document Repository (`SupabaseDocumentRepository`):** Executes live document management queries against Supabase PostgreSQL and automatically appends events to `contact_timeline`.
-- **AI Copilot Tool (`DocumentTool`):** Registered `document_intelligence_tool` providing OCR text extraction, document summaries, knowledge extraction, and RAG vector store lookups.
-- **API Versioning (`/api/v1/`):** Versioned API endpoints (`/api/v1/documents`, `/api/v1/folders`, `/api/v1/uploads`, `/api/v1/shares`).
+- **KPI Engine (`src/platform/analytics/`):** Evaluates 11 core KPIs with `MetricCache` TTL caching and incremental refresh.
+- **Report Engine (`src/platform/analytics/reports/`):** Builds custom reports, exports (CSV, Excel, PDF), and handles cron scheduling.
+- **Forecast Engine (`src/platform/analytics/forecast/`):** Generates 30-day predictive forecasts for revenue, lead growth, and deal closures.
+- **AI Insight Engine (`src/platform/analytics/insights/`):** Scans CRM data to detect high-priority leads, slow deals, inactive customers, and pipeline risks.
+- **API Versioning (`/api/v1/`):** Versioned API endpoints (`/api/v1/analytics`, `/api/v1/reports`, `/api/v1/dashboard`, `/api/v1/forecast`).

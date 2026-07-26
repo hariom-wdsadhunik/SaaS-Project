@@ -3,7 +3,8 @@ export type JobType =
   | "WORKFLOW_EXECUTION"
   | "AI_TASK"
   | "RECURRING_APPOINTMENT"
-  | "AUDIT_CLEANUP";
+  | "AUDIT_CLEANUP"
+  | "REPORT_GENERATION";
 
 export type JobStatus = "PENDING" | "RUNNING" | "COMPLETED" | "FAILED" | "RETRYING";
 
