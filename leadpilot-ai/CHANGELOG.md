@@ -7,20 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.8.0] - 2026-07-26
+
+### Added
+* **Document Database Migration (`supabase/migrations/20260726170000_create_document_tables.sql`)**: Created `folders`, `documents`, `document_versions`, `document_tags`, `document_permissions`, and `document_previews` tables with strict Row-Level Security (RLS) policies and B-tree indexes.
+* **Storage Subsystem Architecture (`src/platform/storage/`)**: Built `StorageService`, `DocumentUploader`, `DocumentDownloader`, `DocumentPreviewGenerator`, `ChecksumValidator`, and `FileValidator`.
+* **Document Repository (`SupabaseDocumentRepository`)**: Built live Supabase repository supporting upload, download, version creation, version restoration, search, move, rename, and share operations.
+* **Contact Timeline Integration**: Connected document operations to automatically append `Upload`, `Rename`, `Share`, `Delete`, and `Restore` events to `contact_timeline`.
+* **AI Document Tool (`DocumentTool`)**: Built `document_intelligence_tool` (`src/domain/ai/tools/DocumentTool.ts`) for OCR text extraction, document summaries, knowledge extraction, and RAG vector store lookups.
+* **Versioned API v1 Endpoints (`src/app/api/v1/`)**: Introduced `/api/v1/documents`, `/api/v1/folders`, `/api/v1/uploads`, and `/api/v1/shares`.
+* **Unit Test Suite**: Created `document-repository.test.ts`, `storage.test.ts`, `permissions.test.ts`, `upload.test.ts`, `search.test.ts`, and `versioning.test.ts`.
+
+---
+
 ## [0.7.0] - 2026-07-26
 
 ### Added
 * **Omnichannel Database Migration (`supabase/migrations/20260726160000_create_communication_tables.sql`)**: Created `conversations`, `conversation_participants`, `messages`, `attachments`, `message_templates`, and `delivery_receipts` tables with strict Row-Level Security (RLS) policies and B-tree indexes.
-* **Provider Abstraction Architecture (`src/platform/providers/communication/`)**: Implemented decoupled `CommunicationProvider` contract, `WhatsAppProvider` (Meta WhatsApp adapter), `EmailProvider` (SendGrid adapter), `SMSProvider` (Twilio adapter), and `ProviderFactory`.
-* **Communication Repository (`SupabaseCommunicationRepository`)**: Built live Supabase repository handling conversation creation, message dispatch, receiving, search, and archiving.
-* **Contact Timeline Auto-Append**: Connected message creation and receipt to automatically append timeline entries to `contact_timeline` for linked contacts.
-* **AI Communication Tool (`CommunicationTool`)**: Built `communication_intelligence_tool` (`src/domain/ai/tools/CommunicationTool.ts`) for thread summaries, sentiment analysis, and suggested auto-replies.
-* **Versioned API v1 Endpoints (`src/app/api/v1/`)**: Introduced `/api/v1/communications`, `/api/v1/messages`, `/api/v1/templates`, and `/api/v1/notifications`.
-* **Unit Test Suite**: Created `communication-repository.test.ts`, `conversation.test.ts`, `provider-adapter.test.ts`, `notification-integration.test.ts`, and `api-v1.test.ts`.
-
----
-
-## [0.6.5] - 2026-07-26
-
-### Added
-* **Supabase Realtime Infrastructure (`src/platform/realtime/`)**: Built `RealtimeService`, `RealtimeChannelManager`, `RealtimeSubscription`, and `RealtimeEventMapper` powering live streaming for `leads`, `deals`, `contacts`, `tasks`, `appointments`, and `dashboard`.

@@ -6,6 +6,7 @@ import { TaskTool } from "./TaskTool";
 import { AppointmentTool } from "./AppointmentTool";
 import { CalendarTool } from "./CalendarTool";
 import { CommunicationTool } from "./CommunicationTool";
+import { DocumentTool } from "./DocumentTool";
 import { SearchTool } from "./SearchTool";
 
 export class ToolRegistry {
@@ -19,6 +20,7 @@ export class ToolRegistry {
     this.register(new AppointmentTool());
     this.register(new CalendarTool());
     this.register(new CommunicationTool());
+    this.register(new DocumentTool());
     this.register(new SearchTool());
   }
 

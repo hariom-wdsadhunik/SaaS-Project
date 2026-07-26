@@ -11,12 +11,13 @@
 - **v0.6.0:** Calendar & Appointment Management Platform (Appointments, Attendees, Reminders, Activity Log, Month/Week/Day/Agenda Views, AI Appointment Tool).
 - **v0.6.5:** Platform Infrastructure (Supabase Realtime Engine, Domain Event Bus, Notification Engine, Background Job Queue, User Presence, Audit Stream).
 - **v0.7.0:** Omnichannel Communication Platform (WhatsApp, Email, SMS Provider Adapters, Communication Repository, Contact Timeline Auto-Append, AI Communication Tool, API v1 Endpoints).
+- **v0.8.0:** Intelligent Document Management Platform (Supabase Storage Abstraction, Versioning, SHA-256 Checksum Validation, AI OCR Pipeline, Contact Timeline Integration, API v1 Endpoints).
 
 ---
 
 ## Upcoming Releases
 
-### Release v0.8.0 — Property & Portfolio Management
+### Release v0.9.0 — Property & Portfolio Management Platform
 - Unit listing inventory, photo galleries, virtual tour links.
 - Matching algorithm pairing qualified leads with luxury properties.
 

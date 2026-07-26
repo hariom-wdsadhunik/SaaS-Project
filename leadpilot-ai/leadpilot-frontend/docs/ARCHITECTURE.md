@@ -12,9 +12,10 @@
                     |                   |                   |
                     v                   v                   v
 +-------------------+---+   +-----------+-------+   +-------+---------------+
-| Omnichannel Platform  |   |  Domain Event Bus |   |  Notification Engine  |
-| (WhatsApp / Email /   |   | (DomainEvents/    |   | (NotificationService/ |
-| SMS ProviderAdapters) |   | EventDispatcher)  |   | Preferences/Center)   |
+| Storage & Document    |   |  Domain Event Bus |   |  Notification Engine  |
+| Management Engine     |   | (DomainEvents/    |   | (NotificationService/ |
+| (StorageService/      |   | EventDispatcher)  |   | Preferences/Center)   |
+| SupabaseDocRepo)      |   |                   |   |                       |
 +-------------------+---+   +-----------+-------+   +-------+---------------+
                     |                   |                   |
                     +-------------------+-------------------+
@@ -22,15 +23,15 @@
                                         v
                     +-------------------+-------------------+
                     |        Supabase PostgreSQL Backend    |
-                    | (20 Tables, RLS Enabled, B-Tree Ind.)|
+                    | (26 Tables, RLS Enabled, B-Tree Ind.)|
                     +---------------------------------------+
 ```
 
 ---
 
-## 2. Communication & Provider Architecture Stack (Sprint v0.7.0)
+## 2. Document & Storage Architecture Stack (Sprint v0.8.0)
 
-- **Provider Abstractions (`src/platform/providers/communication/`):** Decoupled `CommunicationProvider` interface implemented by `WhatsAppProvider` (Meta WhatsApp), `EmailProvider` (SendGrid), and `SMSProvider` (Twilio). Dynamic factory resolution via `ProviderFactory`.
-- **Communication Repository (`SupabaseCommunicationRepository`):** Executes live messaging queries against Supabase PostgreSQL and automatically appends events to `contact_timeline`.
-- **AI Copilot Tool (`CommunicationTool`):** Registered `communication_intelligence_tool` providing sentiment analysis and suggested auto-replies.
-- **API Versioning (`/api/v1/`):** Public and internal API endpoints (`/api/v1/communications`, `/api/v1/messages`, `/api/v1/templates`, `/api/v1/notifications`).
+- **Storage Subsystem (`src/platform/storage/`):** Decoupled `StorageService`, `DocumentUploader`, `DocumentDownloader`, `DocumentPreviewGenerator`, `ChecksumValidator`, and `FileValidator`.
+- **Document Repository (`SupabaseDocumentRepository`):** Executes live document management queries against Supabase PostgreSQL and automatically appends events to `contact_timeline`.
+- **AI Copilot Tool (`DocumentTool`):** Registered `document_intelligence_tool` providing OCR text extraction, document summaries, knowledge extraction, and RAG vector store lookups.
+- **API Versioning (`/api/v1/`):** Versioned API endpoints (`/api/v1/documents`, `/api/v1/folders`, `/api/v1/uploads`, `/api/v1/shares`).
