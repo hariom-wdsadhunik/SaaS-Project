@@ -1,6 +1,7 @@
 import { AITool } from "./Tool";
 import { ToolResult } from "./ToolResult";
 import { ToolPermissionLevel } from "./ToolPermission";
+import { supabaseDealRepository } from "@/infrastructure/repositories/SupabaseDealRepository";
 
 export class DealTool implements AITool {
   name(): string {
@@ -8,7 +9,7 @@ export class DealTool implements AITool {
   }
 
   description(): string {
-    return "Generates automated deal negotiation strategies and probability scores.";
+    return "Generates automated deal negotiation strategies and probability scores from live CRM deals.";
   }
 
   category(): string {
@@ -24,11 +25,30 @@ export class DealTool implements AITool {
   }
 
   async execute(params: Record<string, unknown>): Promise<ToolResult> {
-    await new Promise((res) => setTimeout(res, 100));
+    const dealId = params.dealId as string;
+    const deal = await supabaseDealRepository.getDealById(dealId);
+
+    if (!deal) {
+      return {
+        toolName: this.name(),
+        success: false,
+        data: { error: `Deal record with ID ${dealId} not found in database.` },
+        timestamp: new Date().toISOString(),
+      };
+    }
+
     return {
       toolName: this.name(),
       success: true,
-      data: { dealId: params.dealId, winProbability: "85%", nextAction: "VIP Penthouse Showing" },
+      data: {
+        dealId: deal.id,
+        title: deal.title,
+        value: deal.value,
+        stage: deal.stage,
+        winProbability: `${deal.probability}%`,
+        nextAction: deal.stage === "WON" ? "Contract Finalized" : "Schedule High-Value Property Showing",
+        assignedAgent: deal.assignedAgentName,
+      },
       timestamp: new Date().toISOString(),
     };
   }

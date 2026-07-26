@@ -10,7 +10,8 @@ import { DealDrawer } from "@/components/deals/drawer/lead-drawer";
 import { DealModalForm } from "@/components/deals/forms/lead-modal-form";
 import { DealConfirmationDialog } from "@/components/deals/actions/deal-action-dialogs";
 import { DealStatusAssignModal } from "@/components/deals/actions/deal-status-assign-modal";
-import { initialDealsDataset, DealItem, DealStage } from "@/services/deal-mock-service";
+import { supabaseDealRepository } from "@/infrastructure/repositories/SupabaseDealRepository";
+import { DealItem, DealStage } from "@/services/deal-mock-service";
 import { toast } from "sonner";
 
 const initialFilterState: DealFilterState = {
@@ -21,8 +22,8 @@ const initialFilterState: DealFilterState = {
 };
 
 export default function DealsPage() {
-  const [dealsList, setDealsList] = React.useState<DealItem[]>(initialDealsDataset);
-  const [isLoading] = React.useState(false);
+  const [dealsList, setDealsList] = React.useState<DealItem[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
   const [isError, setIsError] = React.useState(false);
   const [isRefreshing, setIsRefreshing] = React.useState(false);
 
@@ -48,7 +49,31 @@ export default function DealsPage() {
     mode: "ASSIGN" | "STAGE";
   }>({ isOpen: false, mode: "ASSIGN" });
 
-  const [isActionProcessing] = React.useState(false);
+  const [isActionProcessing, setIsActionProcessing] = React.useState(false);
+
+  // Fetch deals from Supabase repository
+  React.useEffect(() => {
+    let isMounted = true;
+    supabaseDealRepository
+      .getDeals(filters)
+      .then((data) => {
+        if (isMounted) {
+          setDealsList(data);
+          setIsLoading(false);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setIsError(true);
+          toast.error("Failed to load deals from Supabase repository.");
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [filters]);
 
   const handleFilterChange = (newFilters: Partial<DealFilterState>) => {
     setFilters((prev) => ({ ...prev, ...newFilters }));
@@ -59,13 +84,18 @@ export default function DealsPage() {
     toast.info("All deal filters reset");
   };
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setIsRefreshing(true);
-    toast.info("Refreshing deal pipeline...");
-    setTimeout(() => {
+    toast.info("Syncing deal pipeline...");
+    try {
+      const data = await supabaseDealRepository.getDeals(filters);
+      setDealsList(data);
+      toast.success("Pipeline database updated");
+    } catch {
+      toast.error("Failed to refresh deal pipeline.");
+    } finally {
       setIsRefreshing(false);
-      toast.success("Pipeline updated");
-    }, 500);
+    }
   };
 
   const handleOpenCreateModal = () => {
@@ -82,12 +112,36 @@ export default function DealsPage() {
     }
   };
 
-  const handleDealStageChange = (dealId: string, newStage: DealStage, newProbability: number) => {
+  const handleDealStageChange = async (dealId: string, newStage: DealStage, newProbability: number) => {
+    // Optimistic UI update
     setDealsList((prev) =>
       prev.map((d) =>
         d.id === dealId ? { ...d, stage: newStage, probability: newProbability } : d
       )
     );
+
+    try {
+      await supabaseDealRepository.changeStage(dealId, newStage, newProbability);
+      toast.success(`Deal moved to ${newStage}`);
+    } catch {
+      toast.error("Failed to update deal stage in database.");
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedDeal) return;
+    setIsActionProcessing(true);
+    try {
+      await supabaseDealRepository.deleteDeal(selectedDeal.id);
+      setDealsList((prev) => prev.filter((d) => d.id !== selectedDeal.id));
+      toast.success(`Deal "${selectedDeal.title}" deleted.`);
+      setConfirmDialog({ isOpen: false, type: "DELETE" });
+      setSelectedDeal(null);
+    } catch {
+      toast.error("Failed to delete deal.");
+    } finally {
+      setIsActionProcessing(false);
+    }
   };
 
   // Keyboard shortcut `C` for Create Deal
@@ -162,7 +216,7 @@ export default function DealsPage() {
       {isLoading ? (
         <DealsLoading />
       ) : isError ? (
-        <DealsErrorState onRetry={() => setIsError(false)} />
+        <DealsErrorState onRetry={handleRefresh} />
       ) : filteredDeals.length === 0 ? (
         <DealsEmptyState onResetFilters={handleResetFilters} />
       ) : (
@@ -201,10 +255,7 @@ export default function DealsPage() {
         type={confirmDialog.type}
         itemCount={1}
         isProcessing={isActionProcessing}
-        onConfirm={() => {
-          toast.success(`Action executed successfully.`);
-          setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
-        }}
+        onConfirm={handleConfirmDelete}
         onCancel={() => setConfirmDialog((prev) => ({ ...prev, isOpen: false }))}
       />
 

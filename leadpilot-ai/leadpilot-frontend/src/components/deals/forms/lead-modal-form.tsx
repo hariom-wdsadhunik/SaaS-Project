@@ -6,7 +6,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { X, Layers, Edit3, AlertCircle } from "lucide-react";
 
 import { dealFormSchema, DealFormInput } from "@/lib/validations/deal-form";
-import { dealMockService, DealItem } from "@/services/deal-mock-service";
+import { supabaseDealRepository } from "@/infrastructure/repositories/SupabaseDealRepository";
+import { DealItem } from "@/services/deal-mock-service";
 import { DealFormSections } from "./deal-form-sections";
 import { UnsavedChangesDialog } from "@/components/leads/forms/unsaved-changes-dialog";
 import { Button } from "@/components/ui/button";
@@ -81,11 +82,11 @@ export function DealModalForm({
     setServerError(null);
     try {
       if (mode === "create") {
-        const createdDeal = await dealMockService.createDeal(data);
+        const createdDeal = await supabaseDealRepository.createDeal(data);
         toast.success(`Deal "${createdDeal.title}" created successfully!`);
         onSuccess(createdDeal);
       } else if (mode === "edit" && initialData) {
-        const updatedDeal = await dealMockService.updateDeal(initialData.id, data);
+        const updatedDeal = await supabaseDealRepository.updateDeal(initialData.id, data);
         toast.success(`Deal "${updatedDeal.title}" updated successfully!`);
         onSuccess(updatedDeal);
       }
