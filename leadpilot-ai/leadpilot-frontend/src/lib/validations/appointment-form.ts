@@ -1,42 +1,24 @@
 import { z } from "zod";
 
-export const appointmentFormSchema = z
-  .object({
-    title: z.string().min(2, "Title must be at least 2 characters."),
-    description: z.string().optional(),
-    customerName: z.string().min(1, "Customer name is required."),
-    propertyName: z.string().min(1, "Property name is required."),
-    assignedAgentName: z.string().min(1, "Assigned agent is required."),
-    start: z.string().min(1, "Start time is required."),
-    end: z.string().min(1, "End time is required."),
-    priority: z.enum(["URGENT", "HIGH", "MEDIUM", "LOW"]),
-    status: z.enum([
-      "SCHEDULED",
-      "CONFIRMED",
-      "CHECKED_IN",
-      "COMPLETED",
-      "CANCELLED",
-      "NO_SHOW",
-      "RESCHEDULED",
-    ]),
-    appointmentType: z.enum([
-      "PROPERTY_VIEWING",
-      "CLIENT_CONSULTATION",
-      "LISTING_PRESENTATION",
-      "CONTRACT_SIGNING",
-      "INSPECTION",
-    ]),
-    notes: z.string().optional(),
-  })
-  .refine(
-    (data) => {
-      if (!data.start || !data.end) return true;
-      return new Date(data.start) < new Date(data.end);
-    },
-    {
-      message: "End time must be strictly after start time.",
-      path: ["end"],
-    }
-  );
+export const appointmentFormSchema = z.object({
+  title: z.string().min(2, "Meeting title is required"),
+  description: z.string().optional(),
+  location: z.string().min(2, "Location or meeting link is required"),
+  meetingType: z.enum(["CALL", "VIDEO", "IN_PERSON", "SITE_VISIT", "DEMO", "FOLLOW_UP"], {
+    message: "Meeting type is required",
+  }),
+  status: z.enum(["SCHEDULED", "CONFIRMED", "COMPLETED", "CANCELLED", "NO_SHOW"], {
+    message: "Status is required",
+  }),
+  startTime: z.string().min(1, "Start time is required"),
+  endTime: z.string().min(1, "End time is required"),
+  assignedTo: z.string().min(2, "Assigned broker is required"),
+  meetingLink: z.string().optional(),
+  contactId: z.string().optional(),
+  leadId: z.string().optional(),
+  dealId: z.string().optional(),
+  taskId: z.string().optional(),
+  notes: z.string().optional(),
+});
 
 export type AppointmentFormInput = z.infer<typeof appointmentFormSchema>;

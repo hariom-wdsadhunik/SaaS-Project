@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { X, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { appointmentFormSchema, AppointmentFormInput } from "@/lib/validations/appointment-form";
-import { appointmentService } from "@/domain/appointment/services/AppointmentService";
+import { supabaseAppointmentRepository } from "@/infrastructure/repositories/SupabaseAppointmentRepository";
 import { AppointmentEntity } from "@/domain/appointment/types";
 import { SectionTitleAndType, SectionScheduleAndHost } from "./appointment-form-sections";
 import { UnsavedChangesDialog } from "@/components/leads/forms/unsaved-changes-dialog";
@@ -33,28 +33,30 @@ export function AppointmentModalForm({
       return {
         title: initialData.title,
         description: initialData.description || "",
-        customerName: initialData.customerName,
-        propertyName: initialData.propertyName,
-        assignedAgentName: initialData.assignedAgentName,
-        start: initialData.start ? initialData.start.slice(0, 16) : "",
-        end: initialData.end ? initialData.end.slice(0, 16) : "",
-        priority: initialData.priority,
-        status: initialData.status,
-        appointmentType: initialData.appointmentType,
+        location: initialData.location || "Online Video Link",
+        meetingType: initialData.meetingType || "VIDEO",
+        status: initialData.status || "SCHEDULED",
+        startTime: initialData.startTime ? initialData.startTime.slice(0, 16) : "",
+        endTime: initialData.endTime ? initialData.endTime.slice(0, 16) : "",
+        assignedTo: initialData.assignedTo || "Alex Morgan",
+        meetingLink: initialData.meetingLink || "",
         notes: initialData.notes || "",
+        contactId: initialData.contactId,
+        leadId: initialData.leadId,
+        dealId: initialData.dealId,
+        taskId: initialData.taskId,
       };
     }
     return {
       title: "",
       description: "",
-      customerName: "",
-      propertyName: "",
-      assignedAgentName: "Alex Morgan",
-      start: "",
-      end: "",
-      priority: "HIGH",
+      location: "Online Video Link",
+      meetingType: "VIDEO",
       status: "SCHEDULED",
-      appointmentType: "PROPERTY_VIEWING",
+      startTime: "",
+      endTime: "",
+      assignedTo: "Alex Morgan",
+      meetingLink: "",
       notes: "",
     };
   }, [mode, initialData]);
@@ -90,17 +92,18 @@ export function AppointmentModalForm({
     setIsSubmitting(true);
     try {
       if (mode === "create") {
-        const created = await appointmentService.createAppointment(data);
-        toast.success(`Appointment "${created.title}" booked successfully!`);
+        const created = await supabaseAppointmentRepository.createAppointment(data);
+        toast.success(`Appointment "${created.title}" scheduled successfully!`);
         onSuccess(created);
       } else if (mode === "edit" && initialData) {
-        const updated = await appointmentService.updateAppointment(initialData.id, data);
+        const updated = await supabaseAppointmentRepository.updateAppointment(initialData.id, data);
         toast.success(`Appointment "${updated.title}" updated successfully!`);
         onSuccess(updated);
       }
       onClose();
-    } catch {
-      toast.error("Failed to save appointment.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to save appointment";
+      toast.error(msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -146,7 +149,7 @@ export function AppointmentModalForm({
             <Button size="sm" variant="outline" onClick={handleSafeClose} disabled={isSubmitting}>
               Cancel
             </Button>
-            <Button size="sm" type="submit" form="appointment-form" isLoading={isSubmitting} className="gap-1.5">
+            <Button size="sm" type="submit" form="appointment-form" isLoading={isSubmitting} className="gap-1.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-medium">
               <span>{mode === "create" ? "Confirm Booking" : "Save Changes"}</span>
             </Button>
           </div>

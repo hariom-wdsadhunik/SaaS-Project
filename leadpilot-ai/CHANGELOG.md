@@ -7,38 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.5.1] - 2026-07-26
+## [0.6.0] - 2026-07-26
 
 ### Added
-* **Database Performance Tuning**: Created migration `supabase/migrations/20260726140000_performance_and_security_tuning.sql` adding B-tree indexes for foreign keys (`lead_id`, `contact_id`, `deal_id`, `task_id`), statuses, priorities, assigned brokers, due dates, and timestamp ordering across all 10 core tables.
-* **RLS Hardening Audit**: Audited Row Level Security policies across `profiles`, `user_roles`, `leads`, `deals`, `contacts`, `contact_timeline`, `tasks`, `task_comments`, and `task_activity` ensuring **0 `USING (true)` policies**.
-* **System Architectural Documentation**: Published comprehensive system documentation:
-  - [`docs/ARCHITECTURE.md`](file:///c:/Users/Hari%20Om%20Kumar/Desktop/GitHub%20Projects/SaaS%20Project/leadpilot-ai/leadpilot-frontend/docs/ARCHITECTURE.md)
-  - [`docs/ROADMAP.md`](file:///c:/Users/Hari%20Om%20Kumar/Desktop/GitHub%20Projects/SaaS%20Project/leadpilot-ai/leadpilot-frontend/docs/ROADMAP.md)
-  - [`docs/RELEASE_PROCESS.md`](file:///c:/Users/Hari%20Om%20Kumar/Desktop/GitHub%20Projects/SaaS%20Project/leadpilot-ai/leadpilot-frontend/docs/RELEASE_PROCESS.md)
-  - [`docs/SECURITY.md`](file:///c:/Users/Hari%20Om%20Kumar/Desktop/GitHub%20Projects/SaaS%20Project/leadpilot-ai/leadpilot-frontend/docs/SECURITY.md)
-  - [`docs/CONTRIBUTING.md`](file:///c:/Users/Hari%20Om%20Kumar/Desktop/GitHub%20Projects/SaaS%20Project/leadpilot-ai/leadpilot-frontend/docs/CONTRIBUTING.md)
-  - [`docs/engineering-audit-v0.5.1.md`](file:///c:/Users/Hari%20Om%20Kumar/Desktop/GitHub%20Projects/SaaS%20Project/leadpilot-ai/leadpilot-frontend/docs/engineering-audit-v0.5.1.md)
-* **Architectural Decision Records (ADRs)**: Created 7 ADRs under `docs/adr/`:
-  - `0001-ddd.md` (Domain-Driven Design)
-  - `0002-repository-pattern.md` (Repository Abstraction Layer)
-  - `0003-ai-platform.md` (AI Copilot & Tool Registry)
-  - `0004-supabase.md` (Supabase PostgreSQL & RLS)
-  - `0005-rbac.md` (Role-Based Access Control)
-  - `0006-contact-domain.md` (Customer Management & Timeline)
-  - `0007-task-domain.md` (Task & Activity Management)
+* **Calendar & Appointment Management Domain**: Built production-grade `public.appointments`, `public.appointment_attendees`, `public.appointment_reminders`, and `public.appointment_activity` tables backed by live Supabase repository [`SupabaseAppointmentRepository`](file:///c:/Users/Hari%20Om%20Kumar/Desktop/GitHub%20Projects/SaaS%20Project/leadpilot-ai/leadpilot-frontend/src/infrastructure/repositories/SupabaseAppointmentRepository.ts).
+* **Multi-Entity Relationships**: Supported linking appointments to `Lead`, `Contact`, `Deal`, and `Task` entities without data duplication.
+* **Meeting Statuses & Types**: Supported meeting statuses (`SCHEDULED`, `CONFIRMED`, `COMPLETED`, `CANCELLED`, `NO_SHOW`) and meeting types (`CALL`, `VIDEO`, `IN_PERSON`, `SITE_VISIT`, `DEMO`, `FOLLOW_UP`).
+* **Cross-Module Timeline Integration**: Connected appointment creation, confirmation, completion, and cancellation events to automatically append to the `contact_timeline` when linked to contacts.
+* **Calendar Workspaces & Views**: Integrated Month, Week, Day, and Agenda views on `/calendar` and `/appointments` with appointment drawers, modal forms, date navigation, and color-coded status badges.
+* **Reminder Architecture Foundation**: Built underlying schema and repository structures for Email, SMS, WhatsApp, and Push notification reminders.
+* **Executive Dashboard Appointment Widgets**: Integrated `Today's Meetings`, `Upcoming Meetings`, `This Week`, `No Shows`, and `Completed Meetings` widgets into the Executive Control Panel.
+* **AI Appointment Intelligence Tool**: Created `appointment_intelligence_tool` (`src/domain/ai/tools/AppointmentTool.ts`) enabling AI copilot analysis of upcoming schedules, today's meetings, and meeting histories.
+* **Unit Test Suite**: Created `appointment-repository.test.ts`, `appointment-reminder.test.ts`, `appointment-timeline.test.ts`, and `calendar-view.test.ts`.
 
 ### Changed
-* **Master Database Bootstrap**: Updated `supabase/bootstrap.sql` to incorporate Section 5 performance indexes and strict RLS policy definitions.
-
-### Fixed
-* **Repository & Workflow Typing**: Synchronized `TaskStatus` transitions and workflow rules across domain boundaries.
+* **Database Master Bootstrap**: Updated `supabase/bootstrap.sql` to include Section 2.11 - 2.14 (`appointments`, `appointment_attendees`, `appointment_reminders`, `appointment_activity`), strict RLS policies, performance B-tree indexes, and seed data.
 
 ---
 
-## [0.5.0] - 2026-07-26
+## [0.5.1] - 2026-07-26
 
 ### Added
-* **Task & Activity Management Module**: Built `public.tasks`, `public.task_comments`, and `public.task_activity` tables backed by live Supabase repository `SupabaseTaskRepository`.
-* **Kanban, Table, and Grid UI Views**: Built interactive task workspace supporting Kanban board columns, tabular list views, grid views, priority badges, and status assignment modals.
-* **Executive Dashboard Task Widgets**: Integrated `Today's Tasks`, `Overdue Tasks`, `Upcoming Tasks`, and `Completion Rate` widgets into Executive Dashboard.
+* **Database Performance Tuning**: Created migration `20260726140000_performance_and_security_tuning.sql` adding B-tree indexes for foreign keys and timestamp ordering across all 10 core tables.
+* **System Architectural Documentation**: Published `docs/ARCHITECTURE.md`, `docs/ROADMAP.md`, `docs/RELEASE_PROCESS.md`, `docs/SECURITY.md`, `docs/CONTRIBUTING.md`, `docs/engineering-audit-v0.5.1.md`, and 7 ADRs under `docs/adr/`.

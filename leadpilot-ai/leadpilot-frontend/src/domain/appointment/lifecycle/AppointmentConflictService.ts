@@ -11,7 +11,7 @@ export const AppointmentConflictService = {
     targetStart: string,
     targetEnd: string,
     agentName: string,
-    propertyName: string,
+    locationName: string,
     existingAppointments: AppointmentEntity[],
     excludeId?: string
   ): AppointmentConflictResult {
@@ -28,16 +28,16 @@ export const AppointmentConflictService = {
 
     const conflicts = existingAppointments.filter((apt) => {
       if (excludeId && apt.id === excludeId) return false;
-      const eStart = new Date(apt.start).getTime();
-      const eEnd = new Date(apt.end).getTime();
+      const eStart = new Date(apt.startTime).getTime();
+      const eEnd = new Date(apt.endTime).getTime();
 
       const timeOverlaps = tStart < eEnd && tEnd > eStart;
       if (!timeOverlaps) return false;
 
-      const agentConflict = apt.assignedAgentName.toLowerCase() === agentName.toLowerCase();
-      const propertyConflict = apt.propertyName.toLowerCase() === propertyName.toLowerCase();
+      const agentConflict = (apt.assignedTo || "").toLowerCase() === agentName.toLowerCase();
+      const locationConflict = (apt.location || "").toLowerCase() === locationName.toLowerCase();
 
-      return agentConflict || propertyConflict;
+      return agentConflict || locationConflict;
     });
 
     return {

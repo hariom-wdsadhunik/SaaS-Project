@@ -1,7 +1,6 @@
 import * as React from "react";
 import { AppointmentEntity } from "@/domain/appointment/types";
-import { Calendar, Clock, Home, User } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Calendar, Clock, MapPin, User } from "lucide-react";
 import { EntityStatusBadge } from "@/platform/ui/entity-status-badge";
 import { formatDate } from "@/utils/formatters";
 
@@ -11,13 +10,6 @@ interface AppointmentCardProps {
 }
 
 export function AppointmentCard({ appointment, onSelectAppointment }: AppointmentCardProps) {
-  const priorityVariantMap = {
-    URGENT: "danger",
-    HIGH: "warning",
-    MEDIUM: "secondary",
-    LOW: "default",
-  } as const;
-
   return (
     <div
       onClick={() => onSelectAppointment?.(appointment)}
@@ -25,14 +17,9 @@ export function AppointmentCard({ appointment, onSelectAppointment }: Appointmen
     >
       <div className="flex items-start justify-between gap-2">
         <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md border border-indigo-500/30 bg-indigo-500/10 text-indigo-300">
-          {appointment.appointmentType.replace("_", " ")}
+          {(appointment.meetingType || "VIDEO").replace("_", " ")}
         </span>
-        <div className="flex items-center gap-1.5">
-          <Badge variant={priorityVariantMap[appointment.priority]} className="text-[10px]">
-            {appointment.priority}
-          </Badge>
-          <EntityStatusBadge status={appointment.status} />
-        </div>
+        <EntityStatusBadge status={appointment.status} />
       </div>
 
       <div>
@@ -45,22 +32,22 @@ export function AppointmentCard({ appointment, onSelectAppointment }: Appointmen
       <div className="space-y-1.5 text-xs text-zinc-300 border-t border-zinc-800/80 pt-3">
         <div className="flex items-center gap-2">
           <User className="h-3.5 w-3.5 text-indigo-400 shrink-0" />
-          <span className="font-semibold text-white truncate">{appointment.customerName}</span>
+          <span className="font-semibold text-white truncate">{appointment.assignedTo}</span>
         </div>
         <div className="flex items-center gap-2">
-          <Home className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
-          <span className="text-zinc-400 truncate">{appointment.propertyName}</span>
+          <MapPin className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+          <span className="text-zinc-400 truncate">{appointment.location}</span>
         </div>
       </div>
 
       <div className="flex items-center justify-between border-t border-zinc-800/80 pt-2 text-[11px] text-zinc-400 font-mono">
         <div className="flex items-center gap-1.5">
           <Calendar className="h-3.5 w-3.5 text-indigo-400" />
-          <span>{formatDate(appointment.start)}</span>
+          <span>{formatDate(appointment.startTime)}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <Clock className="h-3.5 w-3.5 text-zinc-500" />
-          <span>{appointment.assignedAgentName}</span>
+          <span>{new Date(appointment.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
         </div>
       </div>
     </div>

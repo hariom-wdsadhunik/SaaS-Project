@@ -23,7 +23,7 @@ export function SectionTitleAndType({ form }: FormSectionProps) {
           <label className="text-xs font-medium text-zinc-300">Appointment Title *</label>
           <Input
             {...register("title")}
-            placeholder="e.g., VIP Penthouse Private Viewing"
+            placeholder="e.g., Penthouse Acquisition Presentation"
             className="mt-1 text-xs bg-zinc-900 border-zinc-800 focus:border-indigo-500"
           />
           {errors.title && <p className="text-[11px] text-red-400 mt-1">{errors.title.message}</p>}
@@ -31,29 +31,31 @@ export function SectionTitleAndType({ form }: FormSectionProps) {
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-xs font-medium text-zinc-300">Appointment Type *</label>
+            <label className="text-xs font-medium text-zinc-300">Meeting Type *</label>
             <select
-              {...register("appointmentType")}
+              {...register("meetingType")}
               className="mt-1 w-full h-9 rounded-md border border-zinc-800 bg-zinc-900 px-2.5 text-xs text-zinc-300 focus:border-indigo-500 focus:outline-none"
             >
-              <option value="PROPERTY_VIEWING">Property Viewing</option>
-              <option value="CLIENT_CONSULTATION">Client Consultation</option>
-              <option value="LISTING_PRESENTATION">Listing Presentation</option>
-              <option value="CONTRACT_SIGNING">Contract Signing</option>
-              <option value="INSPECTION">Inspection</option>
+              <option value="VIDEO">Video Call</option>
+              <option value="CALL">Phone Call</option>
+              <option value="IN_PERSON">In Person</option>
+              <option value="SITE_VISIT">Site Visit / Inspection</option>
+              <option value="DEMO">Product Demo</option>
+              <option value="FOLLOW_UP">Follow-up</option>
             </select>
           </div>
 
           <div>
-            <label className="text-xs font-medium text-zinc-300">Priority Level *</label>
+            <label className="text-xs font-medium text-zinc-300">Workflow Status *</label>
             <select
-              {...register("priority")}
+              {...register("status")}
               className="mt-1 w-full h-9 rounded-md border border-zinc-800 bg-zinc-900 px-2.5 text-xs text-zinc-300 focus:border-indigo-500 focus:outline-none"
             >
-              <option value="URGENT">Urgent</option>
-              <option value="HIGH">High</option>
-              <option value="MEDIUM">Medium</option>
-              <option value="LOW">Low</option>
+              <option value="SCHEDULED">Scheduled</option>
+              <option value="CONFIRMED">Confirmed</option>
+              <option value="COMPLETED">Completed</option>
+              <option value="CANCELLED">Cancelled</option>
+              <option value="NO_SHOW">No Show</option>
             </select>
           </div>
         </div>
@@ -81,7 +83,7 @@ export function SectionScheduleAndHost({ form }: FormSectionProps) {
   return (
     <div className="space-y-4 pt-2 border-t border-zinc-800/80">
       <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-400 font-mono">
-        2. Schedule &amp; Entities
+        2. Schedule &amp; Location
       </h4>
       <div className="space-y-3">
         <div className="grid grid-cols-2 gap-3">
@@ -89,71 +91,52 @@ export function SectionScheduleAndHost({ form }: FormSectionProps) {
             <label className="text-xs font-medium text-zinc-300">Start Time *</label>
             <Input
               type="datetime-local"
-              {...register("start")}
+              {...register("startTime")}
               className="mt-1 text-xs bg-zinc-900 border-zinc-800 focus:border-indigo-500"
             />
-            {errors.start && <p className="text-[11px] text-red-400 mt-1">{errors.start.message}</p>}
+            {errors.startTime && <p className="text-[11px] text-red-400 mt-1">{errors.startTime.message}</p>}
           </div>
 
           <div>
             <label className="text-xs font-medium text-zinc-300">End Time *</label>
             <Input
               type="datetime-local"
-              {...register("end")}
+              {...register("endTime")}
               className="mt-1 text-xs bg-zinc-900 border-zinc-800 focus:border-indigo-500"
             />
-            {errors.end && <p className="text-[11px] text-red-400 mt-1">{errors.end.message}</p>}
+            {errors.endTime && <p className="text-[11px] text-red-400 mt-1">{errors.endTime.message}</p>}
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-xs font-medium text-zinc-300">Customer Name *</label>
+            <label className="text-xs font-medium text-zinc-300">Location / Venue *</label>
             <Input
-              {...register("customerName")}
-              placeholder="e.g., Marcus Vance"
+              {...register("location")}
+              placeholder="e.g., Google Meet or Business Bay Plot 4"
               className="mt-1 text-xs bg-zinc-900 border-zinc-800 focus:border-indigo-500"
             />
-            {errors.customerName && <p className="text-[11px] text-red-400 mt-1">{errors.customerName.message}</p>}
+            {errors.location && <p className="text-[11px] text-red-400 mt-1">{errors.location.message}</p>}
           </div>
 
-          <div>
-            <label className="text-xs font-medium text-zinc-300">Property Name *</label>
-            <Input
-              {...register("propertyName")}
-              placeholder="e.g., Marina Bay Penthouse"
-              className="mt-1 text-xs bg-zinc-900 border-zinc-800 focus:border-indigo-500"
-            />
-            {errors.propertyName && <p className="text-[11px] text-red-400 mt-1">{errors.propertyName.message}</p>}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="text-xs font-medium text-zinc-300">Assigned Broker *</label>
             <Input
-              {...register("assignedAgentName")}
+              {...register("assignedTo")}
               placeholder="e.g., Alex Morgan"
               className="mt-1 text-xs bg-zinc-900 border-zinc-800 focus:border-indigo-500"
             />
-            {errors.assignedAgentName && <p className="text-[11px] text-red-400 mt-1">{errors.assignedAgentName.message}</p>}
+            {errors.assignedTo && <p className="text-[11px] text-red-400 mt-1">{errors.assignedTo.message}</p>}
           </div>
+        </div>
 
-          <div>
-            <label className="text-xs font-medium text-zinc-300">Workflow Status *</label>
-            <select
-              {...register("status")}
-              className="mt-1 w-full h-9 rounded-md border border-zinc-800 bg-zinc-900 px-2.5 text-xs text-zinc-300 focus:border-indigo-500 focus:outline-none"
-            >
-              <option value="SCHEDULED">Scheduled</option>
-              <option value="CONFIRMED">Confirmed</option>
-              <option value="CHECKED_IN">Checked In</option>
-              <option value="COMPLETED">Completed</option>
-              <option value="CANCELLED">Cancelled</option>
-              <option value="NO_SHOW">No Show</option>
-              <option value="RESCHEDULED">Rescheduled</option>
-            </select>
-          </div>
+        <div>
+          <label className="text-xs font-medium text-zinc-300">Video Link / URL (Optional)</label>
+          <Input
+            {...register("meetingLink")}
+            placeholder="https://meet.google.com/xyz-abc-123"
+            className="mt-1 text-xs bg-zinc-900 border-zinc-800 focus:border-indigo-500"
+          />
         </div>
       </div>
     </div>

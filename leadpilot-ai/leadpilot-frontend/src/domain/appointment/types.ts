@@ -1,37 +1,56 @@
 export type AppointmentStatus =
   | "SCHEDULED"
   | "CONFIRMED"
-  | "CHECKED_IN"
   | "COMPLETED"
   | "CANCELLED"
-  | "NO_SHOW"
-  | "RESCHEDULED";
+  | "NO_SHOW";
 
-export type AppointmentPriority = "URGENT" | "HIGH" | "MEDIUM" | "LOW";
+export type MeetingType =
+  | "CALL"
+  | "VIDEO"
+  | "IN_PERSON"
+  | "SITE_VISIT"
+  | "DEMO"
+  | "FOLLOW_UP";
 
-export type AppointmentType =
-  | "PROPERTY_VIEWING"
-  | "CLIENT_CONSULTATION"
-  | "LISTING_PRESENTATION"
-  | "CONTRACT_SIGNING"
-  | "INSPECTION";
+export interface AppointmentAttendee {
+  id: string;
+  appointmentId: string;
+  name: string;
+  email: string;
+  role: "ORGANIZER" | "ATTENDEE" | "GUEST";
+  status: "ACCEPTED" | "DECLINED" | "TENTATIVE";
+  createdAt: string;
+}
+
+export interface AppointmentReminder {
+  id: string;
+  appointmentId: string;
+  channel: "EMAIL" | "SMS" | "WHATSAPP" | "PUSH";
+  scheduledAt: string;
+  sentAt?: string;
+  status: "PENDING" | "SENT" | "FAILED" | "CANCELLED";
+  createdAt: string;
+}
 
 export interface AppointmentEntity {
   id: string;
   title: string;
   description?: string;
-  customerName: string;
-  propertyName: string;
-  assignedAgentName: string;
-  start: string;
-  end: string;
+  location: string;
+  meetingType: MeetingType;
   status: AppointmentStatus;
-  priority: AppointmentPriority;
-  appointmentType: AppointmentType;
-  source?: string;
+  startTime: string;
+  endTime: string;
+  timezone: string;
+  contactId?: string;
+  leadId?: string;
+  dealId?: string;
+  taskId?: string;
+  createdBy: string;
+  assignedTo: string;
+  meetingLink?: string;
   notes?: string;
-  reminderOffsetMinutes?: number;
-  metadata?: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
 }
@@ -39,7 +58,21 @@ export interface AppointmentEntity {
 export interface AppointmentFilterState {
   search: string;
   status: string;
-  priority: string;
-  appointmentType: string;
-  assignedAgent: string;
+  meetingType?: string;
+  appointmentType?: string;
+  priority?: string;
+  assignedAgent?: string;
+  assignedTo?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
+export interface AppointmentActivityEntity {
+  id: string;
+  appointmentId: string;
+  eventType: string;
+  title: string;
+  description?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
 }

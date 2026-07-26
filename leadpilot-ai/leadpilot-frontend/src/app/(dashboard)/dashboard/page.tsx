@@ -10,6 +10,7 @@ import { TodaySchedule } from "@/components/dashboard/today-schedule";
 import { RecentActivityTimeline } from "@/components/dashboard/recent-activity-timeline";
 import { QuickActionsGrid } from "@/components/dashboard/quick-actions-grid";
 import { TaskWidgets } from "@/components/dashboard/task-widgets";
+import { AppointmentWidgets } from "@/components/dashboard/appointment-widgets";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -93,6 +94,9 @@ export default function ExecutiveDashboardPage() {
           icon={Sparkles}
         />
       </div>
+
+      {/* Appointment Operational Widgets (Sprint v0.6.0) */}
+      <AppointmentWidgets />
 
       {/* Operational Task Widgets (Sprint v0.5.0) */}
       <TaskWidgets />

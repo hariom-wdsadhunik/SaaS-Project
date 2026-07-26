@@ -1,21 +1,40 @@
 import { AppointmentEntity, AppointmentFilterState } from "./types";
-import { appointmentService } from "./services/AppointmentService";
+import { supabaseAppointmentRepository } from "@/infrastructure/repositories/SupabaseAppointmentRepository";
 import { AppointmentConflictService, AppointmentConflictResult } from "./lifecycle/AppointmentConflictService";
 import { AppointmentAvailabilityService } from "./lifecycle/AppointmentAvailabilityService";
-import { AppointmentReminderService } from "./lifecycle/ReminderService";
 import { AppointmentFormInput } from "@/lib/validations/appointment-form";
 
 export const AppointmentLifecycleFacade = {
   async getAppointments(filters?: Partial<AppointmentFilterState>): Promise<AppointmentEntity[]> {
-    return appointmentService.getAppointments(filters);
+    return supabaseAppointmentRepository.getAppointments(filters);
+  },
+
+  async getAppointmentById(id: string): Promise<AppointmentEntity | null> {
+    return supabaseAppointmentRepository.getAppointmentById(id);
   },
 
   async createAppointment(input: AppointmentFormInput): Promise<AppointmentEntity> {
-    return appointmentService.createAppointment(input);
+    return supabaseAppointmentRepository.createAppointment(input);
   },
 
   async updateAppointment(id: string, input: AppointmentFormInput): Promise<AppointmentEntity> {
-    return appointmentService.updateAppointment(id, input);
+    return supabaseAppointmentRepository.updateAppointment(id, input);
+  },
+
+  async deleteAppointment(id: string): Promise<boolean> {
+    return supabaseAppointmentRepository.deleteAppointment(id);
+  },
+
+  async confirmAppointment(id: string): Promise<AppointmentEntity> {
+    return supabaseAppointmentRepository.confirmAppointment(id);
+  },
+
+  async cancelAppointment(id: string, reason?: string): Promise<AppointmentEntity> {
+    return supabaseAppointmentRepository.cancelAppointment(id, reason);
+  },
+
+  async completeAppointment(id: string): Promise<AppointmentEntity> {
+    return supabaseAppointmentRepository.completeAppointment(id);
   },
 
   detectConflicts(
@@ -38,9 +57,5 @@ export const AppointmentLifecycleFacade = {
 
   checkBusinessHours(startIso: string): boolean {
     return AppointmentAvailabilityService.isWithinBusinessHours(startIso);
-  },
-
-  scheduleReminder(appointmentId: string, offsetMinutes: number): boolean {
-    return AppointmentReminderService.scheduleReminder(appointmentId, offsetMinutes);
   },
 };

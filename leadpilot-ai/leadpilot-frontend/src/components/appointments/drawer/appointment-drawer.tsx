@@ -1,7 +1,7 @@
 import * as React from "react";
 import { AppointmentEntity } from "@/domain/appointment/types";
 import { AppointmentDrawerHeader } from "./appointment-drawer-header";
-import { User, Home, Clock, FileText, History } from "lucide-react";
+import { User, MapPin, Clock, FileText, History } from "lucide-react";
 import { formatDate } from "@/utils/formatters";
 
 interface AppointmentDrawerProps {
@@ -17,7 +17,7 @@ export function AppointmentDrawer({
   onClose,
   onEdit,
 }: AppointmentDrawerProps) {
-  const [activeTab, setActiveTab] = React.useState<"overview" | "customer" | "property" | "history">("overview");
+  const [activeTab, setActiveTab] = React.useState<"overview" | "location" | "history">("overview");
 
   if (!isOpen || !appointment) return null;
 
@@ -41,24 +41,14 @@ export function AppointmentDrawer({
               Overview
             </button>
             <button
-              onClick={() => setActiveTab("customer")}
+              onClick={() => setActiveTab("location")}
               className={`py-3 px-3 border-b-2 font-medium transition-colors ${
-                activeTab === "customer"
+                activeTab === "location"
                   ? "border-indigo-500 text-indigo-400"
                   : "border-transparent text-zinc-400 hover:text-zinc-200"
               }`}
             >
-              Customer
-            </button>
-            <button
-              onClick={() => setActiveTab("property")}
-              className={`py-3 px-3 border-b-2 font-medium transition-colors ${
-                activeTab === "property"
-                  ? "border-indigo-500 text-indigo-400"
-                  : "border-transparent text-zinc-400 hover:text-zinc-200"
-              }`}
-            >
-              Property
+              Location / Link
             </button>
             <button
               onClick={() => setActiveTab("history")}
@@ -89,39 +79,42 @@ export function AppointmentDrawer({
                 <div className="grid grid-cols-2 gap-3">
                   <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-3.5 space-y-1">
                     <span className="text-[10px] text-zinc-400 font-mono uppercase">Start Schedule</span>
-                    <p className="text-xs font-bold text-white font-mono">{formatDate(appointment.start)}</p>
+                    <p className="text-xs font-bold text-white font-mono">{formatDate(appointment.startTime)}</p>
                   </div>
                   <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-3.5 space-y-1">
                     <span className="text-[10px] text-zinc-400 font-mono uppercase">End Schedule</span>
-                    <p className="text-xs font-bold text-white font-mono">{formatDate(appointment.end)}</p>
+                    <p className="text-xs font-bold text-white font-mono">{formatDate(appointment.endTime)}</p>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 space-y-2">
+                  <span className="text-[10px] text-zinc-400 font-mono uppercase">Assigned Broker</span>
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-indigo-400" />
+                    <span className="font-bold text-white text-xs">{appointment.assignedTo}</span>
                   </div>
                 </div>
               </div>
             )}
 
-            {activeTab === "customer" && (
-              <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
-                    <User className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-white">{appointment.customerName}</h4>
-                    <p className="text-xs text-zinc-400 font-mono">Linked VIP Buyer Profile</p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === "property" && (
+            {activeTab === "location" && (
               <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 space-y-3">
                 <div className="flex items-center gap-3">
                   <div className="p-2.5 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
-                    <Home className="h-5 w-5" />
+                    <MapPin className="h-5 w-5" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-white">{appointment.propertyName}</h4>
-                    <p className="text-xs text-zinc-400 font-mono">Real Estate Inventory Item</p>
+                    <h4 className="text-sm font-bold text-white">{appointment.location}</h4>
+                    {appointment.meetingLink && (
+                      <a
+                        href={appointment.meetingLink}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-xs text-indigo-400 underline font-mono mt-1 block truncate"
+                      >
+                        {appointment.meetingLink}
+                      </a>
+                    )}
                   </div>
                 </div>
               </div>

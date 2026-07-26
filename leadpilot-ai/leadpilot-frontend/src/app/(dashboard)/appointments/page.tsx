@@ -18,7 +18,9 @@ const initialFilterState: AppointmentFilterState = {
   status: "",
   priority: "",
   appointmentType: "",
+  meetingType: "",
   assignedAgent: "",
+  assignedTo: "",
 };
 
 export default function AppointmentsPage() {
@@ -102,7 +104,7 @@ export default function AppointmentsPage() {
     }
   };
 
-  const activeFilterCount = Object.values(filters).filter((v) => v !== "").length;
+  const activeFilterCount = Object.values(filters).filter((v) => v !== "" && v !== undefined).length;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
