@@ -1,11 +1,11 @@
 import * as React from "react";
-import { LayoutGrid, List, Plus, Download, Upload, RefreshCw } from "lucide-react";
+import { LayoutGrid, List, Kanban, Plus, Download, Upload, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 interface TasksToolbarProps {
-  viewMode: "grid" | "table";
-  onViewModeChange: (mode: "grid" | "table") => void;
+  viewMode: "grid" | "table" | "kanban";
+  onViewModeChange: (mode: "grid" | "table" | "kanban") => void;
   onRefresh: () => void;
   onAddTask?: () => void;
   isRefreshing?: boolean;
@@ -31,7 +31,7 @@ export function TasksToolbar({
           }`}
         >
           <LayoutGrid className="h-3.5 w-3.5 text-indigo-400" />
-          <span>Grid View</span>
+          <span>Grid</span>
         </button>
         <button
           onClick={() => onViewModeChange("table")}
@@ -41,8 +41,19 @@ export function TasksToolbar({
               : "text-zinc-400 hover:text-zinc-200"
           }`}
         >
-          <List className="h-3.5 w-3.5" />
-          <span>Table View</span>
+          <List className="h-3.5 w-3.5 text-emerald-400" />
+          <span>Table</span>
+        </button>
+        <button
+          onClick={() => onViewModeChange("kanban")}
+          className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+            viewMode === "kanban"
+              ? "bg-zinc-800 text-white shadow-sm"
+              : "text-zinc-400 hover:text-zinc-200"
+          }`}
+        >
+          <Kanban className="h-3.5 w-3.5 text-amber-400" />
+          <span>Kanban</span>
         </button>
       </div>
 
@@ -83,7 +94,7 @@ export function TasksToolbar({
           size="sm"
           variant="default"
           onClick={onAddTask}
-          className="h-8 text-xs gap-1.5 shadow-sm"
+          className="h-8 text-xs gap-1.5 shadow-sm bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-medium"
         >
           <Plus className="h-3.5 w-3.5" />
           <span>Create Task</span>

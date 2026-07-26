@@ -9,6 +9,7 @@ import { AIRecommendationPanel } from "@/components/dashboard/ai-recommendation-
 import { TodaySchedule } from "@/components/dashboard/today-schedule";
 import { RecentActivityTimeline } from "@/components/dashboard/recent-activity-timeline";
 import { QuickActionsGrid } from "@/components/dashboard/quick-actions-grid";
+import { TaskWidgets } from "@/components/dashboard/task-widgets";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -92,6 +93,9 @@ export default function ExecutiveDashboardPage() {
           icon={Sparkles}
         />
       </div>
+
+      {/* Operational Task Widgets (Sprint v0.5.0) */}
+      <TaskWidgets />
 
       {/* Revenue Chart & Acquisition Channels (60/40 Split) */}
       <div className="grid gap-6 lg:grid-cols-12">
