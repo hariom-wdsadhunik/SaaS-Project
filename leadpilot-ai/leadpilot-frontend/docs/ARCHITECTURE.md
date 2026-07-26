@@ -2,34 +2,35 @@
 
 ---
 
-## 1. Enterprise System Architecture (v2.1.0 Marketing & CRM Platform)
+## 1. Enterprise System Architecture (v2.2.0 Billing & Subscription Platform)
 
 ```
 +-----------------------------------------------------------------------------------+
-|                               Next.js 15 Unified Application                      |
-|                                                                                   |
-|  +-------------------------------------+   +-----------------------------------+  |
-|  |     Marketing & Public Presence     |   |          CRM App Dashboard        |  |
-|  | (Home, Features, Pricing, Sitemap)  |   | (Leads, Deals, AI Workspace, BI)  |  |
-|  +------------------+------------------+   +-----------------+-----------------+  |
-|                     |                                        |                    |
-|                     +-------------------+--------------------+                    |
-|                                         |                                         |
-|                                         v                                         |
-|                             Shared Design Tokens (v2.0.0)                         |
-|                             (tokens.css, Button, Card, Badge)                    |
-+-----------------------------------------+-----------------------------------------+
-                                          |
-                                          v
-                      +-------------------+-------------------+
-                      |        Supabase PostgreSQL Backend    |
-                      | (26 Tables, Strict Multi-Tenant RLS) |
-                      +---------------------------------------+
+|                                  Next.js 15 Client App                            |
+|          (Billing Dashboard, Usage Metering, Checkout & Customer Portal)          |
++-------------------+-------------------+-------------------+-----------------------+
+                    |                   |                   |
+                    v                   v                   v
++-------------------+---+   +-----------+-------+   +-------+---------------+
+|   BillingProvider |   | UsageLimitEngine  |   |   WebhookHandler      |
+| (StripeBilling    |   | (Seat/Lead/Storage|   | (Idempotency & HMAC   |
+| Provider Adapter) |   | Metering Engine)  |   | Signature Validator)  |
++-------------------+---+   +-----------+-------+   +-------+---------------+
+                    |                   |                   |
+                    +-------------------+-------------------+
+                                        |
+                                        v
+                    +-------------------+-------------------+
+                    |        Supabase PostgreSQL Backend    |
+                    | (Subscriptions, Invoices, RLS)        |
+                    +---------------------------------------+
 ```
 
 ---
 
-## 2. Marketing Website Architecture
+## 2. Billing & Subscription Architecture
 
-- **Public Routes:** Home (`/`), Features (`/features`), Pricing (`/pricing`).
-- **SEO & Crawling:** Dynamic XML Sitemap (`/sitemap.xml`), Robots (`/robots.txt`), Open Graph & Twitter Cards metadata.
+- **Abstraction Interface:** `BillingProvider.ts` decoupling business logic from payment vendors.
+- **Provider Implementation:** `StripeBillingProvider.ts`.
+- **Idempotency & Security:** `WebhookHandler.ts` signature validation and duplicate event rejection.
+- **Usage Limits:** `UsageLimitEngine.ts` enforces seat quotas, lead capacities, AI queries, and document storage limits per plan tier.

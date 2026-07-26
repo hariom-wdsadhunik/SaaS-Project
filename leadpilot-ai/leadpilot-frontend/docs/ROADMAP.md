@@ -17,3 +17,4 @@
 - **v1.0.1 (Launch & Product Readiness):** First Run Onboarding Wizard, Guided Product Tours, Interactive Demo Mode, Branded 404/500/Offline Error Experience, Accessibility Hardening, Launch Documentation.
 - **v2.0.0 (Brand Identity & Design System):** Enterprise Design System, CSS Design Tokens, Reusable UI Component Primitives, CRM AppLayout Shell, Brand Guidelines, DESIGN.md.
 - **v2.1.0 (Marketing Website & Public Presence):** SaaS Marketing Site, Home Landing Page, Features Matrix, Pricing Tiers, Sitemap XML, robots.txt, Open Graph Metadata.
+- **v2.2.0 (Billing & Subscription Platform):** Stripe Billing Provider Abstraction, Idempotent Webhook Engine, Usage Metering Engine, Database Migrations, API v1 Endpoints, Billing Dashboard UI.
