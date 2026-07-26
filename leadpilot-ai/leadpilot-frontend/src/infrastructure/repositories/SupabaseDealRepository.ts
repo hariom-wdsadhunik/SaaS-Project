@@ -4,264 +4,159 @@ import { DealFormInput } from "@/lib/validations/deal-form";
 import { supabase } from "@/lib/supabase/client";
 import { platformAuditLogger } from "@/platform/audit";
 
-const INITIAL_SEED_DEALS: DealEntity[] = [
-  {
-    id: "dl-201",
-    title: "Penthouse Acquisition — Palm Jumeirah",
-    companyName: "Emaar Properties PJSC",
-    contactName: "Alexander Wellington",
-    value: 3500000,
-    stage: "NEW",
-    priority: "URGENT",
-    probability: 30,
-    assignedAgentName: "Alex Morgan",
-    agentAvatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
-    expectedCloseDate: "2026-08-30",
-    createdAt: "2026-07-20T10:00:00Z",
-  },
-  {
-    id: "dl-202",
-    title: "Commercial Complex Expansion",
-    companyName: "TechHoldings International",
-    contactName: "Michael Chen",
-    value: 1800000,
-    stage: "QUALIFIED",
-    priority: "HIGH",
-    probability: 50,
-    assignedAgentName: "Michael Chen",
-    agentAvatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
-    expectedCloseDate: "2026-09-15",
-    createdAt: "2026-07-21T11:30:00Z",
-  },
-  {
-    id: "dl-203",
-    title: "Luxury Villa Portfolio Sale",
-    companyName: "Jenkins Design Studio",
-    contactName: "Sarah Jenkins",
-    value: 2400000,
-    stage: "PROPOSAL_SENT",
-    priority: "HIGH",
-    probability: 70,
-    assignedAgentName: "Sarah Jenkins",
-    agentAvatarUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150",
-    expectedCloseDate: "2026-08-20",
-    createdAt: "2026-07-22T09:15:00Z",
-  },
-  {
-    id: "dl-204",
-    title: "Waterfront Condominium Buyout",
-    companyName: "Watson Real Estate Ltd",
-    contactName: "Emily Watson",
-    value: 4200000,
-    stage: "NEGOTIATION",
-    priority: "URGENT",
-    probability: 85,
-    assignedAgentName: "Alex Morgan",
-    agentAvatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
-    expectedCloseDate: "2026-08-10",
-    createdAt: "2026-07-23T14:45:00Z",
-  },
-  {
-    id: "dl-205",
-    title: "Downtown Office Tower Lease",
-    companyName: "Global Asset Management",
-    contactName: "Jessica Taylor",
-    value: 1250000,
-    stage: "WON",
-    priority: "NORMAL",
-    probability: 100,
-    assignedAgentName: "Alex Morgan",
-    agentAvatarUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150",
-    expectedCloseDate: "2026-07-28",
-    createdAt: "2026-07-18T16:20:00Z",
-  },
-  {
-    id: "dl-206",
-    title: "Suburban Land Development Plot",
-    companyName: "Miller Construction Co",
-    contactName: "David Miller",
-    value: 650000,
-    stage: "LOST",
-    priority: "LOW",
-    probability: 0,
-    assignedAgentName: "Michael Chen",
-    expectedCloseDate: "2026-07-24",
-    createdAt: "2026-07-15T08:00:00Z",
-  },
-];
-
-const STORAGE_KEY = "leadpilot_supabase_deals_store";
-
-function getLocalStore(): DealEntity[] {
-  if (typeof window === "undefined") return INITIAL_SEED_DEALS;
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (!stored) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_SEED_DEALS));
-    return INITIAL_SEED_DEALS;
-  }
-  try {
-    return JSON.parse(stored);
-  } catch {
-    return INITIAL_SEED_DEALS;
-  }
-}
-
-function setLocalStore(deals: DealEntity[]) {
-  if (typeof window !== "undefined") {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(deals));
-  }
-}
-
 export class SupabaseDealRepository implements DealRepository {
   async getDeals(filters?: Partial<DealFilterState>): Promise<DealEntity[]> {
-    try {
-      const { data, error } = await supabase.from("deals").select("*").order("created_at", { ascending: false });
+    const { data, error } = await supabase
+      .from("deals")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-      if (!error && data && data.length > 0) {
-        const mapped: DealEntity[] = data.map((item) => ({
-          id: item.id,
-          title: item.title,
-          companyName: item.company_name || "",
-          contactName: item.contact_name || "",
-          value: Number(item.value || 0),
-          stage: item.stage as DealStage,
-          priority: item.priority || "NORMAL",
-          probability: Number(item.probability || 50),
-          assignedAgentName: item.assigned_agent_name || "Alex Morgan",
-          agentAvatarUrl: item.agent_avatar_url,
-          expectedCloseDate: item.expected_close_date || "",
-          createdAt: item.created_at,
-        }));
-        setLocalStore(mapped);
-        return this.applyFilters(mapped, filters);
-      }
-    } catch {
-      // Fallback to local store
+    if (error) {
+      console.error("[SupabaseDealRepository] getDeals error:", error.message);
+      throw new Error(`Database error fetching deals: ${error.message}`);
     }
 
-    const localDeals = getLocalStore();
-    return this.applyFilters(localDeals, filters);
+    const mapped: DealEntity[] = (data || []).map((item) => ({
+      id: item.id,
+      title: item.title,
+      companyName: item.company_name || "",
+      contactName: item.contact_name || "",
+      value: Number(item.value || 0),
+      stage: item.stage as DealStage,
+      priority: item.priority || "NORMAL",
+      probability: Number(item.probability || 50),
+      assignedAgentName: item.assigned_agent_name || "Alex Morgan",
+      agentAvatarUrl: item.agent_avatar_url,
+      expectedCloseDate: item.expected_close_date || "",
+      createdAt: item.created_at,
+    }));
+
+    return this.applyFilters(mapped, filters);
   }
 
   async getDealById(id: string): Promise<DealEntity | null> {
-    try {
-      const { data, error } = await supabase.from("deals").select("*").eq("id", id).single();
-      if (!error && data) {
-        return {
-          id: data.id,
-          title: data.title,
-          companyName: data.company_name || "",
-          contactName: data.contact_name || "",
-          value: Number(data.value || 0),
-          stage: data.stage as DealStage,
-          priority: data.priority || "NORMAL",
-          probability: Number(data.probability || 50),
-          assignedAgentName: data.assigned_agent_name || "Alex Morgan",
-          agentAvatarUrl: data.agent_avatar_url,
-          expectedCloseDate: data.expected_close_date || "",
-          createdAt: data.created_at,
-        };
-      }
-    } catch {
-      // Fallback
+    const { data, error } = await supabase
+      .from("deals")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (error) {
+      console.error(`[SupabaseDealRepository] getDealById(${id}) error:`, error.message);
+      throw new Error(`Database error fetching deal ${id}: ${error.message}`);
     }
 
-    const localDeals = getLocalStore();
-    return localDeals.find((d) => d.id === id) || null;
+    if (!data) return null;
+
+    return {
+      id: data.id,
+      title: data.title,
+      companyName: data.company_name || "",
+      contactName: data.contact_name || "",
+      value: Number(data.value || 0),
+      stage: data.stage as DealStage,
+      priority: data.priority || "NORMAL",
+      probability: Number(data.probability || 50),
+      assignedAgentName: data.assigned_agent_name || "Alex Morgan",
+      agentAvatarUrl: data.agent_avatar_url,
+      expectedCloseDate: data.expected_close_date || "",
+      createdAt: data.created_at,
+    };
   }
 
   async createDeal(input: DealFormInput): Promise<DealEntity> {
     const newId = `dl-${Math.floor(200 + Math.random() * 800)}`;
-    const newDeal: DealEntity = {
+    const newDealRecord = {
       id: newId,
       title: input.title,
-      companyName: input.companyName || "",
-      contactName: "Lead Inquiry",
-      value: input.value,
+      company_name: input.companyName || "",
+      contact_name: "Lead Inquiry",
+      lead_id: input.relatedLeadId,
       stage: input.stage as DealStage,
       priority: input.priority || "NORMAL",
+      value: input.value,
       probability: input.probability,
-      assignedAgentName: input.assignedAgentName || "Alex Morgan",
-      expectedCloseDate: input.expectedCloseDate,
-      createdAt: new Date().toISOString(),
+      assigned_agent_name: input.assignedAgentName || "Alex Morgan",
+      expected_close_date: input.expectedCloseDate,
+      notes: input.notes || "",
+      created_at: new Date().toISOString(),
     };
 
-    try {
-      await supabase.from("deals").insert([
-        {
-          id: newDeal.id,
-          title: newDeal.title,
-          company_name: newDeal.companyName,
-          contact_name: newDeal.contactName,
-          lead_id: input.relatedLeadId,
-          stage: newDeal.stage,
-          priority: newDeal.priority,
-          value: newDeal.value,
-          probability: newDeal.probability,
-          assigned_agent_name: newDeal.assignedAgentName,
-          expected_close_date: newDeal.expectedCloseDate,
-          notes: input.notes || "",
-          created_at: newDeal.createdAt,
-        },
-      ]);
-    } catch {
-      // Fallback
+    const { data, error } = await supabase
+      .from("deals")
+      .insert([newDealRecord])
+      .select()
+      .single();
+
+    if (error) {
+      console.error("[SupabaseDealRepository] createDeal error:", error.message);
+      throw new Error(`Database error creating deal: ${error.message}`);
     }
 
-    const current = getLocalStore();
-    const updated = [newDeal, ...current];
-    setLocalStore(updated);
+    const createdDeal: DealEntity = {
+      id: data.id,
+      title: data.title,
+      companyName: data.company_name || "",
+      contactName: data.contact_name || "",
+      value: Number(data.value || 0),
+      stage: data.stage as DealStage,
+      priority: data.priority || "NORMAL",
+      probability: Number(data.probability || 50),
+      assignedAgentName: data.assigned_agent_name || "Alex Morgan",
+      agentAvatarUrl: data.agent_avatar_url,
+      expectedCloseDate: data.expected_close_date || "",
+      createdAt: data.created_at,
+    };
 
     platformAuditLogger.log({
       action: "CREATE",
       entityType: "DEAL",
-      entityIds: [newDeal.id],
-      payload: { event: "Deal Created", title: newDeal.title, value: newDeal.value, stage: newDeal.stage },
+      entityIds: [createdDeal.id],
+      payload: { event: "Deal Created", title: createdDeal.title, value: createdDeal.value, stage: createdDeal.stage },
       timestamp: new Date().toISOString(),
     });
 
-    return newDeal;
+    return createdDeal;
   }
 
   async updateDeal(id: string, input: DealFormInput): Promise<DealEntity> {
-    const existing = await this.getDealById(id);
-    const updatedDeal: DealEntity = {
-      id,
-      title: input.title,
-      companyName: input.companyName || existing?.companyName || "",
-      contactName: existing?.contactName || "Lead Inquiry",
-      value: input.value,
-      stage: input.stage as DealStage,
-      priority: input.priority || existing?.priority || "NORMAL",
-      probability: input.probability,
-      assignedAgentName: input.assignedAgentName || existing?.assignedAgentName || "Alex Morgan",
-      expectedCloseDate: input.expectedCloseDate,
-      createdAt: existing?.createdAt || new Date().toISOString(),
-    };
+    const { data, error } = await supabase
+      .from("deals")
+      .update({
+        title: input.title,
+        company_name: input.companyName || "",
+        stage: input.stage as DealStage,
+        priority: input.priority || "NORMAL",
+        value: input.value,
+        probability: input.probability,
+        assigned_agent_name: input.assignedAgentName || "Alex Morgan",
+        expected_close_date: input.expectedCloseDate,
+        notes: input.notes || "",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id)
+      .select()
+      .single();
 
-    try {
-      await supabase
-        .from("deals")
-        .update({
-          title: updatedDeal.title,
-          company_name: updatedDeal.companyName,
-          stage: updatedDeal.stage,
-          priority: updatedDeal.priority,
-          value: updatedDeal.value,
-          probability: updatedDeal.probability,
-          assigned_agent_name: updatedDeal.assignedAgentName,
-          expected_close_date: updatedDeal.expectedCloseDate,
-          notes: input.notes || "",
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", id);
-    } catch {
-      // Fallback
+    if (error) {
+      console.error(`[SupabaseDealRepository] updateDeal(${id}) error:`, error.message);
+      throw new Error(`Database error updating deal ${id}: ${error.message}`);
     }
 
-    const current = getLocalStore();
-    const updated = current.map((d) => (d.id === id ? updatedDeal : d));
-    setLocalStore(updated);
+    const updatedDeal: DealEntity = {
+      id: data.id,
+      title: data.title,
+      companyName: data.company_name || "",
+      contactName: data.contact_name || "",
+      value: Number(data.value || 0),
+      stage: data.stage as DealStage,
+      priority: data.priority || "NORMAL",
+      probability: Number(data.probability || 50),
+      assignedAgentName: data.assigned_agent_name || "Alex Morgan",
+      agentAvatarUrl: data.agent_avatar_url,
+      expectedCloseDate: data.expected_close_date || "",
+      createdAt: data.created_at,
+    };
 
     platformAuditLogger.log({
       action: "UPDATE",
@@ -275,15 +170,12 @@ export class SupabaseDealRepository implements DealRepository {
   }
 
   async deleteDeal(id: string): Promise<boolean> {
-    try {
-      await supabase.from("deals").delete().eq("id", id);
-    } catch {
-      // Fallback
-    }
+    const { error } = await supabase.from("deals").delete().eq("id", id);
 
-    const current = getLocalStore();
-    const updated = current.filter((d) => d.id !== id);
-    setLocalStore(updated);
+    if (error) {
+      console.error(`[SupabaseDealRepository] deleteDeal(${id}) error:`, error.message);
+      throw new Error(`Database error deleting deal ${id}: ${error.message}`);
+    }
 
     platformAuditLogger.log({
       action: "DELETE",
@@ -301,24 +193,33 @@ export class SupabaseDealRepository implements DealRepository {
     if (!existing) throw new Error("Deal not found");
 
     const prob = newProbability !== undefined ? newProbability : existing.probability;
-    const updatedDeal: DealEntity = {
-      ...existing,
-      stage: newStage,
-      probability: prob,
-    };
 
-    try {
-      await supabase
-        .from("deals")
-        .update({ stage: newStage, probability: prob, updated_at: new Date().toISOString() })
-        .eq("id", id);
-    } catch {
-      // Fallback
+    const { data, error } = await supabase
+      .from("deals")
+      .update({ stage: newStage, probability: prob, updated_at: new Date().toISOString() })
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error(`[SupabaseDealRepository] changeStage(${id}) error:`, error.message);
+      throw new Error(`Database error changing stage for deal ${id}: ${error.message}`);
     }
 
-    const current = getLocalStore();
-    const updated = current.map((d) => (d.id === id ? updatedDeal : d));
-    setLocalStore(updated);
+    const updatedDeal: DealEntity = {
+      id: data.id,
+      title: data.title,
+      companyName: data.company_name || "",
+      contactName: data.contact_name || "",
+      value: Number(data.value || 0),
+      stage: data.stage as DealStage,
+      priority: data.priority || "NORMAL",
+      probability: Number(data.probability || 50),
+      assignedAgentName: data.assigned_agent_name || "Alex Morgan",
+      agentAvatarUrl: data.agent_avatar_url,
+      expectedCloseDate: data.expected_close_date || "",
+      createdAt: data.created_at,
+    };
 
     platformAuditLogger.log({
       action: "CHANGE_STATUS",

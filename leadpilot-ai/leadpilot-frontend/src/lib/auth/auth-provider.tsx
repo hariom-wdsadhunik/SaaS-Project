@@ -13,15 +13,17 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, pass: string) => Promise<{ user: AuthSessionUser; token: string }>;
+  signUp: (input: { fullName: string; email: string; password: string }) => Promise<{ user: AuthSessionUser | null; session: unknown; needsVerification: boolean }>;
   logout: () => Promise<void>;
-  forgotPassword: typeof authService.forgotPassword;
+  forgotPassword: (email: string) => Promise<boolean>;
+  updatePassword: (newPassword: string) => Promise<boolean>;
 }
 
 const AuthContext = React.createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = React.useState<AuthSessionUser | null>(null);
-  const [role, setRole] = React.useState<SystemRole>("ADMIN");
+  const [role, setRole] = React.useState<SystemRole>("BROKER");
   const [isLoading, setIsLoading] = React.useState(true);
   const { setAuth, logout: storeLogout } = useAuthStore();
 
@@ -35,8 +37,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const sessionUser: AuthSessionUser = {
           id: session.user.id,
           email: session.user.email || "",
-          fullName: session.user.user_metadata?.full_name || "Alex Morgan",
-          role: (session.user.user_metadata?.role as SystemRole) || "ADMIN",
+          fullName: session.user.user_metadata?.full_name || "Sales Broker",
+          role: (session.user.user_metadata?.role as SystemRole) || "BROKER",
           avatarUrl: session.user.user_metadata?.avatar_url,
         };
         setUser(sessionUser);
@@ -62,8 +64,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const sessionUser: AuthSessionUser = {
           id: session.user.id,
           email: session.user.email || "",
-          fullName: session.user.user_metadata?.full_name || "Alex Morgan",
-          role: (session.user.user_metadata?.role as SystemRole) || "ADMIN",
+          fullName: session.user.user_metadata?.full_name || "Sales Broker",
+          role: (session.user.user_metadata?.role as SystemRole) || "BROKER",
           avatarUrl: session.user.user_metadata?.avatar_url,
         };
         setUser(sessionUser);
@@ -99,6 +101,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [setAuth]
   );
 
+  const signUp = React.useCallback(
+    async (input: { fullName: string; email: string; password: string }) => {
+      const res = await authService.signUp(input);
+      if (res.user && res.session) {
+        setUser(res.user);
+        setRole(res.user.role);
+        setAuth(
+          {
+            id: res.user.id,
+            name: res.user.fullName,
+            email: res.user.email,
+            role: authService.mapRoleToUserProfileRole(res.user.role),
+            avatarUrl: res.user.avatarUrl,
+          },
+          (res.session as { access_token: string }).access_token
+        );
+      }
+      return res;
+    },
+    [setAuth]
+  );
+
   const logout = React.useCallback(async () => {
     await authService.logout();
     setUser(null);
@@ -112,10 +136,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isAuthenticated: !!user,
       isLoading,
       login,
+      signUp,
       logout,
       forgotPassword: authService.forgotPassword,
+      updatePassword: authService.updatePassword,
     }),
-    [user, role, isLoading, login, logout]
+    [user, role, isLoading, login, signUp, logout]
   );
 
   return (

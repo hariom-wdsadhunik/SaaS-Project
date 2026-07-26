@@ -12,10 +12,11 @@ import { GuestRoute } from "@/components/auth/guest-route";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { resetPasswordSchema, ResetPasswordInput } from "@/lib/validations/auth";
-import { authService } from "@/services/auth-service";
+import { useAuthContext } from "@/lib/auth/auth-provider";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
+  const { updatePassword } = useAuthContext();
   const [showPassword, setShowPassword] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isComplete, setIsComplete] = React.useState(false);
@@ -46,14 +47,15 @@ export default function ResetPasswordPage() {
   const onSubmit = async (data: ResetPasswordInput) => {
     setIsSubmitting(true);
     try {
-      await authService.resetPassword(data.password, "token-placeholder");
+      await updatePassword(data.password);
       setIsComplete(true);
       toast.success("Password Updated", {
         description: "Your credentials have been securely updated.",
       });
       setTimeout(() => router.push("/login"), 2000);
-    } catch {
-      toast.error("Failed to reset password");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to reset password";
+      toast.error("Password Update Failed", { description: msg });
     } finally {
       setIsSubmitting(false);
     }

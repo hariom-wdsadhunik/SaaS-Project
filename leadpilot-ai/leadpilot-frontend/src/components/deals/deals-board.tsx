@@ -2,14 +2,15 @@
 
 import * as React from "react";
 import { DealColumn } from "./deal-column";
-import { DealItem, DealStage, dealMockService } from "@/services/deal-mock-service";
+import { DealItem, DealStage } from "@/services/deal-mock-service";
 import { PipelineTransitionValidator } from "@/services/pipeline-transition-validator";
 import { toast } from "sonner";
 
 interface DealsBoardProps {
   deals: DealItem[];
-  onDealStageChange: (dealId: string, newStage: DealStage, newProbability: number) => void;
+  onDealStageChange: (dealId: string, newStage: DealStage, newProbability: number) => Promise<void> | void;
   onSelectDeal?: (deal: DealItem) => void;
+  onDeleteDeal?: (deal: DealItem) => void;
 }
 
 const STAGES_CONFIG: { id: DealStage; title: string; color: string }[] = [
@@ -21,8 +22,12 @@ const STAGES_CONFIG: { id: DealStage; title: string; color: string }[] = [
   { id: "LOST", title: "Lost", color: "bg-red-500" },
 ];
 
-export function DealsBoard({ deals, onDealStageChange, onSelectDeal }: DealsBoardProps) {
+export function DealsBoard({ deals, onDealStageChange, onSelectDeal, onDeleteDeal }: DealsBoardProps) {
+  const draggedDealIdRef = React.useRef<string | null>(null);
+
   const handleDragStart = React.useCallback((e: React.DragEvent, dealId: string) => {
+    console.log(`[Kanban DnD] onDragStart triggered for dealId: ${dealId}`);
+    draggedDealIdRef.current = dealId;
     e.dataTransfer.setData("text/plain", dealId);
     e.dataTransfer.effectAllowed = "move";
   }, []);
@@ -35,12 +40,26 @@ export function DealsBoard({ deals, onDealStageChange, onSelectDeal }: DealsBoar
   const handleDrop = React.useCallback(
     async (e: React.DragEvent, targetStage: DealStage) => {
       e.preventDefault();
-      const dealId = e.dataTransfer.getData("text/plain");
+      const dealId = e.dataTransfer.getData("text/plain") || draggedDealIdRef.current;
+      draggedDealIdRef.current = null;
 
-      if (!dealId) return;
+      console.log(`[Kanban DnD] onDrop triggered for dealId: ${dealId} -> targetStage: ${targetStage}`);
+
+      if (!dealId) {
+        console.warn("[Kanban DnD] Drop ignored: No dealId found in event context");
+        return;
+      }
 
       const targetDeal = deals.find((d) => d.id === dealId);
-      if (!targetDeal || targetDeal.stage === targetStage) return;
+      if (!targetDeal) {
+        console.warn(`[Kanban DnD] Drop ignored: Deal ${dealId} not found in active state`);
+        return;
+      }
+
+      if (targetDeal.stage === targetStage) {
+        console.log(`[Kanban DnD] Drop ignored: Deal ${dealId} is already in ${targetStage}`);
+        return;
+      }
 
       // Pipeline Business Rule Validation
       const validation = PipelineTransitionValidator.validateTransition(
@@ -49,18 +68,15 @@ export function DealsBoard({ deals, onDealStageChange, onSelectDeal }: DealsBoar
       );
 
       if (!validation.allowed) {
+        console.warn(`[Kanban DnD] Transition blocked: ${validation.reason}`);
         toast.error(`Transition Blocked: ${validation.reason}`);
         return;
       }
 
-      // Optimistic UI state update with recalculated win probability
-      onDealStageChange(dealId, targetStage, validation.recommendedProbability);
-      toast.success(
-        `Moved "${targetDeal.title}" to ${targetStage} (${validation.recommendedProbability}% Win Prob)`
-      );
+      console.log(`[Kanban DnD] Transition approved: ${targetDeal.stage} -> ${targetStage} (${validation.recommendedProbability}%)`);
 
-      // Telemetry & Service update
-      await dealMockService.moveDealStage(dealId, targetStage);
+      // Trigger stage change in parent (Page component)
+      await onDealStageChange(dealId, targetStage, validation.recommendedProbability);
     },
     [deals, onDealStageChange]
   );
@@ -84,6 +100,7 @@ export function DealsBoard({ deals, onDealStageChange, onSelectDeal }: DealsBoar
             onDragOver={handleDragOver}
             onDrop={handleDrop}
             onSelectDeal={onSelectDeal}
+            onDeleteDeal={onDeleteDeal}
           />
         );
       })}

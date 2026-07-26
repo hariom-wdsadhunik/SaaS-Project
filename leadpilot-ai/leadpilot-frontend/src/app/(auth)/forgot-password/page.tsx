@@ -11,9 +11,10 @@ import { GuestRoute } from "@/components/auth/guest-route";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { forgotPasswordSchema, ForgotPasswordInput } from "@/lib/validations/auth";
-import { authService } from "@/services/auth-service";
+import { useAuthContext } from "@/lib/auth/auth-provider";
 
 export default function ForgotPasswordPage() {
+  const { forgotPassword } = useAuthContext();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isSubmitted, setIsSubmitted] = React.useState(false);
   const [resendTimer, setResendTimer] = React.useState(60);
@@ -40,15 +41,16 @@ export default function ForgotPasswordPage() {
   const onSubmit = async (data: ForgotPasswordInput) => {
     setIsSubmitting(true);
     try {
-      await authService.forgotPassword(data.email);
+      await forgotPassword(data.email);
       setSubmittedEmail(data.email);
       setIsSubmitted(true);
       setResendTimer(60);
       toast.success("Password reset link dispatched", {
         description: `Check your inbox at ${data.email}`,
       });
-    } catch {
-      toast.error("Failed to request password reset");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to request password reset";
+      toast.error("Reset Request Failed", { description: msg });
     } finally {
       setIsSubmitting(false);
     }

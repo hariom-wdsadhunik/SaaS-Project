@@ -165,6 +165,14 @@ function LoginForm() {
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </form>
+
+      {/* Footer Link to Registration */}
+      <div className="text-center text-xs text-zinc-400 pt-4 border-t border-zinc-800/80">
+        <span>Don&apos;t have an account? </span>
+        <Link href="/register" className="font-semibold text-indigo-400 hover:text-indigo-300 hover:underline">
+          Create Account
+        </Link>
+      </div>
     </div>
   );
 }

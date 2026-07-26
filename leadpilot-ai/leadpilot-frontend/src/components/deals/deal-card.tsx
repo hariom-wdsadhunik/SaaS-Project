@@ -7,6 +7,7 @@ import {
   MoreHorizontal,
   MessageSquare,
   PhoneCall,
+  Trash2,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -19,9 +20,10 @@ interface DealCardProps {
   deal: DealItem;
   onDragStart: (e: React.DragEvent, dealId: string) => void;
   onSelectDeal?: (deal: DealItem) => void;
+  onDeleteDeal?: (deal: DealItem) => void;
 }
 
-export function DealCard({ deal, onDragStart, onSelectDeal }: DealCardProps) {
+export function DealCard({ deal, onDragStart, onSelectDeal, onDeleteDeal }: DealCardProps) {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
   const priorityVariantMap = {
@@ -67,7 +69,7 @@ export function DealCard({ deal, onDragStart, onSelectDeal }: DealCardProps) {
           </button>
 
           {isMenuOpen && (
-            <div className="absolute right-2 top-8 w-36 rounded-xl border border-zinc-800 bg-zinc-950 p-1 shadow-2xl z-20 animate-in fade-in duration-100">
+            <div className="absolute right-2 top-8 w-40 rounded-xl border border-zinc-800 bg-zinc-950 p-1 shadow-2xl z-20 animate-in fade-in duration-100">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -100,6 +102,17 @@ export function DealCard({ deal, onDragStart, onSelectDeal }: DealCardProps) {
               >
                 <PhoneCall className="h-3.5 w-3.5 text-emerald-400" />
                 <span>Call Lead</span>
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsMenuOpen(false);
+                  onDeleteDeal?.(deal);
+                }}
+                className="flex w-full items-center gap-2 px-2.5 py-1.5 text-xs text-rose-400 hover:bg-rose-500/10 rounded-lg text-left border-t border-zinc-800/60 mt-1 pt-1.5"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                <span>Delete Deal</span>
               </button>
             </div>
           )}

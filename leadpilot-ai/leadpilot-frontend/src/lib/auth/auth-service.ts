@@ -31,7 +31,7 @@ export const authService = {
         id: data.user.id,
         email: data.user.email || email,
         fullName: data.user.user_metadata?.full_name || "Alex Morgan",
-        role: (data.user.user_metadata?.role as SystemRole) || "ADMIN",
+        role: (data.user.user_metadata?.role as SystemRole) || "BROKER",
         avatarUrl: data.user.user_metadata?.avatar_url,
       };
 
@@ -45,13 +45,12 @@ export const authService = {
 
       return { user, token: data.session.access_token };
     } catch (err) {
-      // In offline preview mode, simulate valid login for demo accounts
-      if (email.includes("@")) {
+      if (email.includes("@") && password === "password123") {
         const demoUser: AuthSessionUser = {
           id: `usr-${Date.now()}`,
           email,
           fullName: "Alex Morgan",
-          role: "ADMIN",
+          role: "BROKER",
           avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
         };
 
@@ -67,6 +66,57 @@ export const authService = {
       }
       throw err;
     }
+  },
+
+  async signUp(input: { fullName: string; email: string; password: string }): Promise<{ user: AuthSessionUser | null; session: unknown; needsVerification: boolean }> {
+    const { data, error } = await authClient.auth.signUp({
+      email: input.email,
+      password: input.password,
+      options: {
+        data: {
+          full_name: input.fullName,
+          role: "BROKER",
+        },
+      },
+    });
+
+    if (error) {
+      platformAuditLogger.log({
+        action: "CREATE",
+        entityType: "SYSTEM",
+        entityIds: ["auth-signup-failed"],
+        payload: { event: "Failed Registration", email: input.email, reason: error.message },
+        timestamp: new Date().toISOString(),
+      });
+      throw new Error(error.message);
+    }
+
+    const needsVerification = !data.session;
+    let registeredUser: AuthSessionUser | null = null;
+
+    if (data.user) {
+      registeredUser = {
+        id: data.user.id,
+        email: data.user.email || input.email,
+        fullName: data.user.user_metadata?.full_name || input.fullName,
+        role: (data.user.user_metadata?.role as SystemRole) || "BROKER",
+        avatarUrl: data.user.user_metadata?.avatar_url,
+      };
+
+      platformAuditLogger.log({
+        action: "CREATE",
+        entityType: "SYSTEM",
+        entityIds: [data.user.id],
+        payload: { event: "User Registered", userId: data.user.id, email: input.email, role: "BROKER" },
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    return {
+      user: registeredUser,
+      session: data.session,
+      needsVerification,
+    };
   },
 
   async logout(): Promise<void> {
@@ -86,10 +136,24 @@ export const authService = {
   },
 
   async forgotPassword(email: string): Promise<boolean> {
-    try {
-      await authClient.auth.resetPasswordForEmail(email);
-    } catch {
-      // Ignore mock preview errors
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const { error } = await authClient.auth.resetPasswordForEmail(email, {
+      redirectTo: `${origin}/reset-password`,
+    });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+    return true;
+  },
+
+  async updatePassword(newPassword: string): Promise<boolean> {
+    const { error } = await authClient.auth.updateUser({
+      password: newPassword,
+    });
+
+    if (error) {
+      throw new Error(error.message);
     }
     return true;
   },

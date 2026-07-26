@@ -62,10 +62,11 @@ export default function DealsPage() {
           setIsLoading(false);
         }
       })
-      .catch(() => {
+      .catch((err: unknown) => {
         if (isMounted) {
           setIsError(true);
-          toast.error("Failed to load deals from Supabase repository.");
+          const msg = err instanceof Error ? err.message : "Failed to load deals from Supabase repository.";
+          toast.error(msg);
           setIsLoading(false);
         }
       });
@@ -91,8 +92,9 @@ export default function DealsPage() {
       const data = await supabaseDealRepository.getDeals(filters);
       setDealsList(data);
       toast.success("Pipeline database updated");
-    } catch {
-      toast.error("Failed to refresh deal pipeline.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to refresh deal pipeline.";
+      toast.error(msg);
     } finally {
       setIsRefreshing(false);
     }
@@ -113,6 +115,8 @@ export default function DealsPage() {
   };
 
   const handleDealStageChange = async (dealId: string, newStage: DealStage, newProbability: number) => {
+    const previousList = dealsList;
+
     // Optimistic UI update
     setDealsList((prev) =>
       prev.map((d) =>
@@ -121,11 +125,23 @@ export default function DealsPage() {
     );
 
     try {
-      await supabaseDealRepository.changeStage(dealId, newStage, newProbability);
+      const persistedDeal = await supabaseDealRepository.changeStage(dealId, newStage, newProbability);
+      // Reconcile optimistic update with actual persisted database record
+      setDealsList((prev) =>
+        prev.map((d) => (d.id === dealId ? persistedDeal : d))
+      );
       toast.success(`Deal moved to ${newStage}`);
-    } catch {
-      toast.error("Failed to update deal stage in database.");
+    } catch (err: unknown) {
+      // Rollback optimistic update on error
+      setDealsList(previousList);
+      const msg = err instanceof Error ? err.message : "Failed to update deal stage in database.";
+      toast.error(msg);
     }
+  };
+
+  const handlePromptDeleteDeal = (deal: DealItem) => {
+    setSelectedDeal(deal);
+    setConfirmDialog({ isOpen: true, type: "DELETE" });
   };
 
   const handleConfirmDelete = async () => {
@@ -137,8 +153,9 @@ export default function DealsPage() {
       toast.success(`Deal "${selectedDeal.title}" deleted.`);
       setConfirmDialog({ isOpen: false, type: "DELETE" });
       setSelectedDeal(null);
-    } catch {
-      toast.error("Failed to delete deal.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to delete deal.";
+      toast.error(msg);
     } finally {
       setIsActionProcessing(false);
     }
@@ -227,6 +244,7 @@ export default function DealsPage() {
             setSelectedDeal(deal);
             setIsDrawerOpen(true);
           }}
+          onDeleteDeal={handlePromptDeleteDeal}
         />
       )}
 

@@ -2,6 +2,7 @@ export type SystemRole =
   | "SUPER_ADMIN"
   | "ADMIN"
   | "MANAGER"
+  | "BROKER"
   | "SALES_AGENT"
   | "SUPPORT_AGENT"
   | "VIEWER";
@@ -27,6 +28,11 @@ export const SYSTEM_ROLES: Record<SystemRole, RoleConfig> = {
     id: "MANAGER",
     name: "Sales Manager",
     description: "Team management, analytics access, and approval permissions.",
+  },
+  BROKER: {
+    id: "BROKER",
+    name: "Senior Sales Broker",
+    description: "Standard CRM record management for leads, deals, properties, tasks.",
   },
   SALES_AGENT: {
     id: "SALES_AGENT",

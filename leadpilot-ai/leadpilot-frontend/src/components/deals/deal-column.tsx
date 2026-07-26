@@ -12,6 +12,7 @@ interface DealColumnProps {
   onDragOver: (e: React.DragEvent) => void;
   onDrop: (e: React.DragEvent, targetStage: DealStage) => void;
   onSelectDeal?: (deal: DealItem) => void;
+  onDeleteDeal?: (deal: DealItem) => void;
 }
 
 export function DealColumn({
@@ -23,6 +24,7 @@ export function DealColumn({
   onDragOver,
   onDrop,
   onSelectDeal,
+  onDeleteDeal,
 }: DealColumnProps) {
   const columnTotalValue = deals.reduce((sum, d) => sum + d.value, 0);
 
@@ -61,6 +63,7 @@ export function DealColumn({
               deal={deal}
               onDragStart={onDragStart}
               onSelectDeal={onSelectDeal}
+              onDeleteDeal={onDeleteDeal}
             />
           ))
         )}
