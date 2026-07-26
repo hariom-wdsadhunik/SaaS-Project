@@ -42,12 +42,17 @@ export default function CommunicationPage() {
               {
                 id: "msg-1",
                 conversationId: data[0].id,
+                sender: data[0].customerName || "Marcus Vance",
+                receiver: "Alex Morgan",
+                direction: "INBOUND",
                 senderId: "customer-1",
-                senderName: data[0].customerName,
+                senderName: data[0].customerName || "Marcus Vance",
                 content: data[0].lastMessage || "Hello, inquiring about the property listing.",
                 channel: data[0].channel,
                 status: "READ",
+                provider: "SYSTEM",
                 sentAt: data[0].lastMessageAt,
+                createdAt: data[0].lastMessageAt,
               },
             ]);
           }
@@ -160,12 +165,17 @@ export default function CommunicationPage() {
                   {
                     id: `msg-${conv.id}`,
                     conversationId: conv.id,
+                    sender: conv.customerName || "Marcus Vance",
+                    receiver: "Alex Morgan",
+                    direction: "INBOUND",
                     senderId: "customer-1",
                     senderName: conv.customerName,
                     content: conv.lastMessage || "Hello, checking in on my inquiry.",
                     channel: conv.channel,
                     status: "READ",
+                    provider: "SYSTEM",
                     sentAt: conv.lastMessageAt,
+                    createdAt: conv.lastMessageAt,
                   },
                 ]);
               }}

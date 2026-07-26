@@ -7,21 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.7.0] - 2026-07-26
+
+### Added
+* **Omnichannel Database Migration (`supabase/migrations/20260726160000_create_communication_tables.sql`)**: Created `conversations`, `conversation_participants`, `messages`, `attachments`, `message_templates`, and `delivery_receipts` tables with strict Row-Level Security (RLS) policies and B-tree indexes.
+* **Provider Abstraction Architecture (`src/platform/providers/communication/`)**: Implemented decoupled `CommunicationProvider` contract, `WhatsAppProvider` (Meta WhatsApp adapter), `EmailProvider` (SendGrid adapter), `SMSProvider` (Twilio adapter), and `ProviderFactory`.
+* **Communication Repository (`SupabaseCommunicationRepository`)**: Built live Supabase repository handling conversation creation, message dispatch, receiving, search, and archiving.
+* **Contact Timeline Auto-Append**: Connected message creation and receipt to automatically append timeline entries to `contact_timeline` for linked contacts.
+* **AI Communication Tool (`CommunicationTool`)**: Built `communication_intelligence_tool` (`src/domain/ai/tools/CommunicationTool.ts`) for thread summaries, sentiment analysis, and suggested auto-replies.
+* **Versioned API v1 Endpoints (`src/app/api/v1/`)**: Introduced `/api/v1/communications`, `/api/v1/messages`, `/api/v1/templates`, and `/api/v1/notifications`.
+* **Unit Test Suite**: Created `communication-repository.test.ts`, `conversation.test.ts`, `provider-adapter.test.ts`, `notification-integration.test.ts`, and `api-v1.test.ts`.
+
+---
+
 ## [0.6.5] - 2026-07-26
 
 ### Added
 * **Supabase Realtime Infrastructure (`src/platform/realtime/`)**: Built `RealtimeService`, `RealtimeChannelManager`, `RealtimeSubscription`, and `RealtimeEventMapper` powering live streaming for `leads`, `deals`, `contacts`, `tasks`, `appointments`, and `dashboard`.
-* **Domain Event Bus (`src/platform/events/`)**: Implemented strongly typed event bus (`DomainEvent`, `EventBus`, `EventPublisher`, `EventSubscriber`, `EventRegistry`, `EventDispatcher`).
-* **Notification Engine (`src/platform/notifications/`)**: Built multi-channel notification engine (`NotificationService`, `NotificationCenter`, `NotificationRepository`, `NotificationPreferences`, `NotificationFormatter`) supporting In-App, Email, SMS, WhatsApp, and Push abstractions.
-* **Background Jobs Queue & Scheduler (`src/platform/jobs/`)**: Created `JobScheduler`, `JobRunner`, `JobQueue`, `RetryPolicy`, and `ScheduledJob` supporting reminder delivery, workflows, AI tasks, and recurring appointments with exponential backoff retries.
-* **User Presence Engine (`src/platform/presence/`)**: Added `PresenceService`, `UserPresence`, and `PresenceChannel` tracking Online, Offline, Away, Last Seen, and typing states.
-* **Centralized Audit Stream (`src/platform/audit/`)**: Built `AuditStream`, `AuditEvent`, and `AuditPublisher` capturing domain audit logs.
-* **AI Copilot Event Integration**: Wired `AIOrchestrator` to subscribe to `TaskCompleted`, `DealWon`, and `AppointmentScheduled` events for automated AI recommendations.
-* **Platform Unit Test Suites**: Created unit tests `realtime.test.ts`, `event-bus.test.ts`, `notification.test.ts`, `jobs.test.ts`, and `presence.test.ts`.
-
----
-
-## [0.6.0] - 2026-07-26
-
-### Added
-* **Calendar & Appointment Management Domain**: Built production-grade `public.appointments`, `public.appointment_attendees`, `public.appointment_reminders`, and `public.appointment_activity` tables backed by live Supabase repository `SupabaseAppointmentRepository`.

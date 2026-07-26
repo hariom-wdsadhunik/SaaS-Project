@@ -10,15 +10,11 @@
 - **v0.5.1:** Engineering Hardening, Database B-Tree Indexing, RLS Audit, System Documentation & ADRs.
 - **v0.6.0:** Calendar & Appointment Management Platform (Appointments, Attendees, Reminders, Activity Log, Month/Week/Day/Agenda Views, AI Appointment Tool).
 - **v0.6.5:** Platform Infrastructure (Supabase Realtime Engine, Domain Event Bus, Notification Engine, Background Job Queue, User Presence, Audit Stream).
+- **v0.7.0:** Omnichannel Communication Platform (WhatsApp, Email, SMS Provider Adapters, Communication Repository, Contact Timeline Auto-Append, AI Communication Tool, API v1 Endpoints).
 
 ---
 
 ## Upcoming Releases
-
-### Release v0.7.0 — Omnichannel Communication Hub
-- WhatsApp Webhook inbox with AI auto-responder.
-- Email sequence automation engine.
-- Call logging & transcription processor.
 
 ### Release v0.8.0 — Property & Portfolio Management
 - Unit listing inventory, photo galleries, virtual tour links.

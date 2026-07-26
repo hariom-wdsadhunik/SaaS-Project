@@ -12,9 +12,9 @@
                     |                   |                   |
                     v                   v                   v
 +-------------------+---+   +-----------+-------+   +-------+---------------+
-|   Supabase Realtime   |   |  Domain Event Bus |   |  Notification Engine  |
-| (RealtimeService/     |   | (DomainEvents/    |   | (NotificationService/ |
-| ChannelManager)       |   | EventDispatcher)  |   | Preferences/Center)   |
+| Omnichannel Platform  |   |  Domain Event Bus |   |  Notification Engine  |
+| (WhatsApp / Email /   |   | (DomainEvents/    |   | (NotificationService/ |
+| SMS ProviderAdapters) |   | EventDispatcher)  |   | Preferences/Center)   |
 +-------------------+---+   +-----------+-------+   +-------+---------------+
                     |                   |                   |
                     +-------------------+-------------------+
@@ -22,17 +22,15 @@
                                         v
                     +-------------------+-------------------+
                     |        Supabase PostgreSQL Backend    |
-                    | (14 Tables, RLS Enabled, B-Tree Ind.)|
+                    | (20 Tables, RLS Enabled, B-Tree Ind.)|
                     +---------------------------------------+
 ```
 
 ---
 
-## 2. Infrastructure Platform Stack (Sprint v0.6.5)
+## 2. Communication & Provider Architecture Stack (Sprint v0.7.0)
 
-- **Supabase Realtime Engine (`src/platform/realtime/`):** Real-time subscription manager, payload mapper, channel pooling, and connection resilience.
-- **Domain Event Bus (`src/platform/events/`):** Asynchronous pub/sub event broker with isolated error dispatching.
-- **Notification Engine (`src/platform/notifications/`):** Multi-channel notification delivery (In-App, Email, SMS, WhatsApp, Push).
-- **Background Jobs Queue (`src/platform/jobs/`):** Job queue, scheduler, and retry policy handler with exponential backoff.
-- **User Presence (`src/platform/presence/`):** Real-time online/offline and typing state tracking.
-- **Audit Stream (`src/platform/audit/`):** Centralized audit logging stream.
+- **Provider Abstractions (`src/platform/providers/communication/`):** Decoupled `CommunicationProvider` interface implemented by `WhatsAppProvider` (Meta WhatsApp), `EmailProvider` (SendGrid), and `SMSProvider` (Twilio). Dynamic factory resolution via `ProviderFactory`.
+- **Communication Repository (`SupabaseCommunicationRepository`):** Executes live messaging queries against Supabase PostgreSQL and automatically appends events to `contact_timeline`.
+- **AI Copilot Tool (`CommunicationTool`):** Registered `communication_intelligence_tool` providing sentiment analysis and suggested auto-replies.
+- **API Versioning (`/api/v1/`):** Public and internal API endpoints (`/api/v1/communications`, `/api/v1/messages`, `/api/v1/templates`, `/api/v1/notifications`).

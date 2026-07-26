@@ -53,8 +53,8 @@ export const communicationService = {
     return initialConversationsDataset.filter((conv) => {
       if (filters.search) {
         const q = filters.search.toLowerCase();
-        const matchesTitle = conv.title.toLowerCase().includes(q);
-        const matchesCustomer = conv.customerName.toLowerCase().includes(q);
+        const matchesTitle = (conv.title || "").toLowerCase().includes(q);
+        const matchesCustomer = (conv.customerName || "").toLowerCase().includes(q);
         if (!matchesTitle && !matchesCustomer) return false;
       }
       if (filters.channel && conv.channel !== filters.channel) return false;

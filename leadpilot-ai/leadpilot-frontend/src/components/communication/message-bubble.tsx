@@ -12,9 +12,9 @@ export function MessageBubble({ message, isCurrentAgent }: MessageBubbleProps) {
   return (
     <div className={`flex flex-col ${isCurrentAgent ? "items-end" : "items-start"} space-y-1`}>
       <div className="flex items-center gap-2 text-[10px] text-zinc-500 font-mono">
-        <span>{message.senderName}</span>
+        <span>{message.senderName || message.sender || "Broker"}</span>
         <span>•</span>
-        <span>{formatDate(message.sentAt)}</span>
+        <span>{formatDate(message.sentAt || message.createdAt || new Date().toISOString())}</span>
       </div>
 
       <div

@@ -1,60 +1,81 @@
-export type CommunicationChannel = "WHATSAPP" | "EMAIL" | "SMS" | "INTERNAL_NOTE";
+export type CommunicationChannel = "WHATSAPP" | "EMAIL" | "SMS" | "IN_APP" | "INTERNAL_NOTE";
 
-export type MessageStatus = "DRAFT" | "SENT" | "DELIVERED" | "READ" | "FAILED" | "SCHEDULED";
+export type MessageDirection = "INBOUND" | "OUTBOUND";
 
-export type ConversationStatus = "ACTIVE" | "PENDING" | "RESOLVED" | "ARCHIVED";
+export type MessageStatus = "QUEUED" | "SENT" | "DELIVERED" | "READ" | "FAILED";
 
-export interface ParticipantEntity {
-  id: string;
-  name: string;
-  avatarUrl?: string;
-  email?: string;
-  phone?: string;
-  role: "AGENT" | "CUSTOMER" | "SYSTEM";
-}
+export type ConversationStatus = "ACTIVE" | "ARCHIVED" | "CLOSED" | "PENDING";
 
-export interface AttachmentEntity {
-  id: string;
-  fileName: string;
-  fileSize: number;
-  mimeType: string;
-  url: string;
-}
-
-export interface MessageEntity {
+export interface Participant {
   id: string;
   conversationId: string;
-  senderId: string;
-  senderName: string;
-  content: string;
-  channel: CommunicationChannel;
-  status: MessageStatus;
-  attachments?: AttachmentEntity[];
-  sentAt: string;
-  readAt?: string;
+  name: string;
+  address: string;
+  role: "CLIENT" | "AGENT" | "SYSTEM";
+  createdAt: string;
 }
 
-export interface ConversationEntity {
+export interface Attachment {
   id: string;
-  title: string;
-  customerName: string;
+  messageId: string;
+  fileName: string;
+  fileType: string;
+  fileSizeBytes: number;
+  fileUrl: string;
+  createdAt: string;
+}
+
+export interface Message {
+  id: string;
+  conversationId: string;
+  sender?: string;
+  receiver?: string;
+  direction?: MessageDirection;
   channel: CommunicationChannel;
+  content: string;
+  status: MessageStatus;
+  provider?: string;
+  providerMessageId?: string;
+  senderId?: string;
+  senderName?: string;
+  sentAt?: string;
+  attachments?: Attachment[];
+  metadata?: Record<string, unknown>;
+  createdAt?: string;
+}
+
+export type MessageEntity = Message;
+
+export interface Conversation {
+  id: string;
+  channel: CommunicationChannel;
+  title?: string;
+  subject?: string;
   status: ConversationStatus;
+  contactId?: string;
+  leadId?: string;
+  dealId?: string;
+  assignedAgentId?: string;
+  assignedAgentName?: string;
   unreadCount: number;
-  lastMessage?: string;
   lastMessageAt: string;
-  isPinned: boolean;
-  isArchived: boolean;
-  isMuted: boolean;
-  assignedAgentName: string;
+  customerName?: string;
+  lastMessage?: string;
+  isPinned?: boolean;
+  isArchived?: boolean;
+  isMuted?: boolean;
+  participants?: Participant[];
+  metadata?: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
 }
 
+export type ConversationEntity = Conversation;
+
 export interface TimelineEventEntity {
   id: string;
   conversationId: string;
-  eventType: "MESSAGE_SENT" | "STATUS_CHANGED" | "NOTE_ADDED" | "CALL_LOGGED";
+  eventType: string;
   description: string;
   actorName: string;
   timestamp: string;
@@ -65,6 +86,37 @@ export interface CommunicationFilterState {
   channel: string;
   status: string;
   assignedAgent: string;
-  isArchived: boolean;
-  isPinned: boolean;
+  isArchived?: boolean;
+  isPinned?: boolean;
+}
+
+export interface MessageTemplate {
+  id: string;
+  name: string;
+  category: "PROSPECTING" | "FOLLOW_UP" | "CLOSING" | "APPOINTMENT_REMINDER" | "GENERAL";
+  channel: CommunicationChannel;
+  subjectTemplate?: string;
+  bodyTemplate: string;
+  variables: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DeliveryReceipt {
+  id: string;
+  messageId: string;
+  status: "DELIVERED" | "READ" | "FAILED";
+  providerStatusCode?: string;
+  timestamp: string;
+  createdAt: string;
+}
+
+export interface ConversationSummary {
+  conversationId: string;
+  totalMessages: number;
+  lastSender: string;
+  lastContent: string;
+  channel: CommunicationChannel;
+  unreadCount: number;
+  sentimentPlaceholder: "POSITIVE" | "NEUTRAL" | "URGENT";
 }
