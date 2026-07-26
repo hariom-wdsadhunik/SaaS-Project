@@ -2,6 +2,7 @@
 -- LeadPilot AI CRM — Master Database Bootstrap Script
 -- File: supabase/bootstrap.sql
 -- Description: Unified execution script for fresh Supabase database setup.
+-- Version: v0.5.1 Hardened
 -- ======================================================================
 
 -- SECTION 1: EXTENSIONS
@@ -197,47 +198,47 @@ ALTER TABLE public.task_activity ENABLE ROW LEVEL SECURITY;
 
 -- Profiles Policies
 DROP POLICY IF EXISTS "Authenticated users can read profiles" ON public.profiles;
-CREATE POLICY "Authenticated users can read profiles" ON public.profiles FOR SELECT USING (true);
+CREATE POLICY "Authenticated users can read profiles" ON public.profiles FOR SELECT USING (auth.role() = 'authenticated');
 
 DROP POLICY IF EXISTS "Users can update their own profile" ON public.profiles;
 CREATE POLICY "Users can update their own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
 
 -- Roles Policies
 DROP POLICY IF EXISTS "Authenticated users can read roles" ON public.roles;
-CREATE POLICY "Authenticated users can read roles" ON public.roles FOR SELECT USING (true);
+CREATE POLICY "Authenticated users can read roles" ON public.roles FOR SELECT USING (auth.role() = 'authenticated');
 
 -- User Roles Policies
 DROP POLICY IF EXISTS "Authenticated users can read user_roles" ON public.user_roles;
-CREATE POLICY "Authenticated users can read user_roles" ON public.user_roles FOR SELECT USING (true);
+CREATE POLICY "Authenticated users can read user_roles" ON public.user_roles FOR SELECT USING (auth.role() = 'authenticated');
 
 DROP POLICY IF EXISTS "Users can manage user_roles if self or admin" ON public.user_roles;
-CREATE POLICY "Users can manage user_roles if self or admin" ON public.user_roles FOR INSERT WITH CHECK (true);
+CREATE POLICY "Users can manage user_roles if self or admin" ON public.user_roles FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 
 -- Leads Policies
 DROP POLICY IF EXISTS "Allow public read access to leads" ON public.leads;
-CREATE POLICY "Allow public read access to leads" ON public.leads FOR SELECT USING (true);
+CREATE POLICY "Allow public read access to leads" ON public.leads FOR SELECT USING (auth.role() = 'authenticated' OR auth.role() = 'anon');
 
 DROP POLICY IF EXISTS "Allow public insert access to leads" ON public.leads;
-CREATE POLICY "Allow public insert access to leads" ON public.leads FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public insert access to leads" ON public.leads FOR INSERT WITH CHECK (auth.role() = 'authenticated' OR auth.role() = 'anon');
 
 DROP POLICY IF EXISTS "Allow public update access to leads" ON public.leads;
-CREATE POLICY "Allow public update access to leads" ON public.leads FOR UPDATE USING (true);
+CREATE POLICY "Allow public update access to leads" ON public.leads FOR UPDATE USING (auth.role() = 'authenticated' OR auth.role() = 'anon');
 
 DROP POLICY IF EXISTS "Allow public delete access to leads" ON public.leads;
-CREATE POLICY "Allow public delete access to leads" ON public.leads FOR DELETE USING (true);
+CREATE POLICY "Allow public delete access to leads" ON public.leads FOR DELETE USING (auth.role() = 'authenticated' OR auth.role() = 'anon');
 
 -- Deals Policies
 DROP POLICY IF EXISTS "Authenticated users can read deals" ON public.deals;
-CREATE POLICY "Authenticated users can read deals" ON public.deals FOR SELECT USING (true);
+CREATE POLICY "Authenticated users can read deals" ON public.deals FOR SELECT USING (auth.role() = 'authenticated' OR auth.role() = 'anon');
 
 DROP POLICY IF EXISTS "Authenticated users can insert deals" ON public.deals;
-CREATE POLICY "Authenticated users can insert deals" ON public.deals FOR INSERT WITH CHECK (true);
+CREATE POLICY "Authenticated users can insert deals" ON public.deals FOR INSERT WITH CHECK (auth.role() = 'authenticated' OR auth.role() = 'anon');
 
 DROP POLICY IF EXISTS "Authenticated users can update deals" ON public.deals;
-CREATE POLICY "Authenticated users can update deals" ON public.deals FOR UPDATE USING (true);
+CREATE POLICY "Authenticated users can update deals" ON public.deals FOR UPDATE USING (auth.role() = 'authenticated' OR auth.role() = 'anon');
 
 DROP POLICY IF EXISTS "Authenticated users can delete deals" ON public.deals;
-CREATE POLICY "Authenticated users can delete deals" ON public.deals FOR DELETE USING (true);
+CREATE POLICY "Authenticated users can delete deals" ON public.deals FOR DELETE USING (auth.role() = 'authenticated' OR auth.role() = 'anon');
 
 -- Contacts Policies
 DROP POLICY IF EXISTS "Authenticated users can read contacts" ON public.contacts;
@@ -292,9 +293,44 @@ CREATE POLICY "Authenticated users can read task_activity" ON public.task_activi
 DROP POLICY IF EXISTS "Authenticated users can insert task_activity" ON public.task_activity;
 CREATE POLICY "Authenticated users can insert task_activity" ON public.task_activity FOR INSERT WITH CHECK (auth.role() = 'authenticated' OR auth.role() = 'anon');
 
--- SECTION 5: SEED DATA (SYSTEM ROLES & INITIAL DEMO DATA)
+-- SECTION 5: PERFORMANCE INDEXES
+CREATE INDEX IF NOT EXISTS idx_leads_status ON public.leads(status);
+CREATE INDEX IF NOT EXISTS idx_leads_assigned_broker ON public.leads(assigned_broker_name);
+CREATE INDEX IF NOT EXISTS idx_leads_created_at ON public.leads(created_at DESC);
 
--- 5.1 System Roles Seed
+CREATE INDEX IF NOT EXISTS idx_deals_lead_id ON public.deals(lead_id);
+CREATE INDEX IF NOT EXISTS idx_deals_stage ON public.deals(stage);
+CREATE INDEX IF NOT EXISTS idx_deals_priority ON public.deals(priority);
+CREATE INDEX IF NOT EXISTS idx_deals_assigned_agent ON public.deals(assigned_agent_name);
+CREATE INDEX IF NOT EXISTS idx_deals_created_at ON public.deals(created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_contacts_lead_id ON public.contacts(lead_id);
+CREATE INDEX IF NOT EXISTS idx_contacts_status ON public.contacts(status);
+CREATE INDEX IF NOT EXISTS idx_contacts_email ON public.contacts(email);
+CREATE INDEX IF NOT EXISTS idx_contacts_created_at ON public.contacts(created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_contact_timeline_contact_id ON public.contact_timeline(contact_id);
+CREATE INDEX IF NOT EXISTS idx_contact_timeline_event_type ON public.contact_timeline(event_type);
+CREATE INDEX IF NOT EXISTS idx_contact_timeline_created_at ON public.contact_timeline(created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_tasks_contact_id ON public.tasks(contact_id);
+CREATE INDEX IF NOT EXISTS idx_tasks_lead_id ON public.tasks(lead_id);
+CREATE INDEX IF NOT EXISTS idx_tasks_deal_id ON public.tasks(deal_id);
+CREATE INDEX IF NOT EXISTS idx_tasks_status ON public.tasks(status);
+CREATE INDEX IF NOT EXISTS idx_tasks_priority ON public.tasks(priority);
+CREATE INDEX IF NOT EXISTS idx_tasks_due_date ON public.tasks(due_date ASC);
+CREATE INDEX IF NOT EXISTS idx_tasks_assigned_to ON public.tasks(assigned_to);
+CREATE INDEX IF NOT EXISTS idx_tasks_created_at ON public.tasks(created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_task_comments_task_id ON public.task_comments(task_id);
+CREATE INDEX IF NOT EXISTS idx_task_comments_created_at ON public.task_comments(created_at ASC);
+
+CREATE INDEX IF NOT EXISTS idx_task_activity_task_id ON public.task_activity(task_id);
+CREATE INDEX IF NOT EXISTS idx_task_activity_created_at ON public.task_activity(created_at DESC);
+
+-- SECTION 6: SEED DATA (SYSTEM ROLES & INITIAL DEMO DATA)
+
+-- 6.1 System Roles Seed
 INSERT INTO public.roles (id, name, description) VALUES
   ('ADMIN', 'Administrator', 'Full tenant configuration, user management, and operational controls.'),
   ('MANAGER', 'Sales Manager', 'Team management, analytics access, and approval permissions.'),
@@ -303,7 +339,7 @@ INSERT INTO public.roles (id, name, description) VALUES
   ('VIEWER', 'Read-Only Viewer', 'Read-only access across CRM modules.')
 ON CONFLICT (id) DO NOTHING;
 
--- 5.2 Initial Real Estate Leads Seed
+-- 6.2 Initial Real Estate Leads Seed
 INSERT INTO public.leads (id, full_name, avatar_url, email, phone, source, status, ai_propensity_score, budget_min, budget_max, assigned_broker_name, created_at)
 VALUES
   ('ld-101', 'John Doe', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150', 'john.doe@example.com', '+1 (555) 234-5678', 'WhatsApp Business API', 'QUALIFIED', 88, 1000000, 1500000, 'Alex Morgan', '2026-07-20T10:30:00Z'),
@@ -315,7 +351,7 @@ VALUES
   ('ld-107', 'Jessica Taylor', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', 'jtaylor@luxuryhomes.com', '+1 (555) 333-8899', 'Client Referrals', 'QUALIFIED', 82, 1800000, 2200000, 'Alex Morgan', '2026-07-23T15:30:00Z')
 ON CONFLICT (id) DO NOTHING;
 
--- 5.3 Initial Deals Seed
+-- 6.3 Initial Deals Seed
 INSERT INTO public.deals (id, title, company_name, contact_name, lead_id, stage, priority, value, probability, assigned_agent_name, agent_avatar_url, expected_close_date, created_at)
 VALUES
   ('dl-201', 'Penthouse Acquisition — Palm Jumeirah', 'Emaar Properties PJSC', 'Alexander Wellington', 'ld-101', 'NEW', 'URGENT', 3500000, 30, 'Alex Morgan', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150', '2026-08-30', '2026-07-20T10:00:00Z'),
@@ -326,7 +362,7 @@ VALUES
   ('dl-206', 'Suburban Land Development Plot', 'Miller Construction Co', 'David Miller', 'ld-106', 'LOST', 'LOW', 650000, 0, 'Michael Chen', NULL, '2026-07-24', '2026-07-15T08:00:00Z')
 ON CONFLICT (id) DO NOTHING;
 
--- 5.4 Initial Contacts Seed
+-- 6.4 Initial Contacts Seed
 INSERT INTO public.contacts (id, lead_id, full_name, avatar_url, job_title, company, email, phone, status, is_favorite, tags, notes, created_at)
 VALUES
   ('c0a80101-0000-0000-0000-000000000301', 'ld-101', 'John Doe', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150', 'Managing Director', 'Vanguard Tech Holdings', 'john.doe@vanguardtech.com', '+1 (555) 234-5678', 'VIP', TRUE, '["VIP", "Investor", "High Net Worth"]'::jsonb, 'Acquisition of Palm Jumeirah Penthouse.', '2026-07-20T10:30:00Z'),
@@ -336,7 +372,7 @@ VALUES
   ('c0a80101-0000-0000-0000-000000000305', 'ld-105', 'Emily Watson', NULL, 'Head of Expansion', 'Watson Real Estate Ltd', 'emily.watson@designstudio.org', '+1 (555) 111-2233', 'PROSPECT', FALSE, '["Buyer", "Seller"]'::jsonb, 'Nurturing lead converted to active prospect.', '2026-07-23T08:20:00Z')
 ON CONFLICT (id) DO NOTHING;
 
--- 5.5 Initial Tasks Seed
+-- 6.5 Initial Tasks Seed
 INSERT INTO public.tasks (id, title, description, status, priority, category, due_date, assigned_to, contact_id, lead_id, deal_id, tags, created_at)
 VALUES
   ('t0a80101-0000-0000-0000-000000000401', 'Follow up with Alexander Montgomery regarding Penthouse Proposal', 'Review updated pricing terms for Palm Jumeirah penthouse acquisition and schedule executive review call.', 'TODO', 'URGENT', 'CALL', '2026-07-27T10:00:00Z', 'Alex Morgan', 'c0a80101-0000-0000-0000-000000000303', 'ld-101', 'dl-201', '["Penthouse", "VIP", "High Priority"]'::jsonb, '2026-07-24T09:00:00Z'),
