@@ -1,35 +1,36 @@
-import * as React from "react";
-import { cva, type VariantProps } from "class-variance-authority";
-import { cn } from "@/lib/utils";
+import React from "react";
 
-const badgeVariants = cva(
-  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:ring-offset-2",
-  {
-    variants: {
-      variant: {
-        default: "border-transparent bg-indigo-500/10 text-indigo-400 border-indigo-500/20",
-        secondary: "border-transparent bg-zinc-800 text-zinc-300 border-zinc-700/50",
-        success: "border-transparent bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-        warning: "border-transparent bg-amber-500/10 text-amber-400 border-amber-500/20",
-        danger: "border-transparent bg-red-500/10 text-red-400 border-red-500/20",
-        ai: "border-transparent bg-violet-500/15 text-violet-300 border-violet-500/30 shadow-sm shadow-violet-500/20",
-        outline: "text-zinc-300 border-zinc-700",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-    },
-  }
-);
-
-export interface BadgeProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof badgeVariants> {}
-
-function Badge({ className, variant, ...props }: BadgeProps) {
-  return (
-    <div className={cn(badgeVariants({ variant }), className)} {...props} />
-  );
+export interface BadgeProps {
+  variant?: "blue" | "emerald" | "amber" | "rose" | "zinc" | "default" | "secondary" | "danger" | "warning" | "success" | "info" | "outline" | "ai" | "destructive";
+  children: React.ReactNode;
+  className?: string;
 }
 
-export { Badge, badgeVariants };
+export const Badge: React.FC<BadgeProps> = ({ variant = "zinc", children, className = "" }) => {
+  const variants = {
+    blue: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+    info: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+    default: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+    emerald: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+    success: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+    secondary: "bg-zinc-800 text-zinc-300 border-zinc-700",
+    amber: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+    warning: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+    rose: "bg-rose-500/10 text-rose-400 border-rose-500/20",
+    danger: "bg-rose-500/10 text-rose-400 border-rose-500/20",
+    destructive: "bg-rose-500/10 text-rose-400 border-rose-500/20",
+    zinc: "bg-zinc-800 text-zinc-300 border-zinc-700",
+    outline: "bg-transparent text-zinc-300 border-zinc-700",
+    ai: "bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-purple-300 border-purple-500/30",
+  };
+
+  const selectedVariant = variants[variant as keyof typeof variants] || variants.zinc;
+
+  return (
+    <span
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium border ${selectedVariant} ${className}`}
+    >
+      {children}
+    </span>
+  );
+};

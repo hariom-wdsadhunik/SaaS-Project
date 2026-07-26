@@ -2,12 +2,12 @@
 
 ---
 
-## 1. Enterprise System Architecture (v1.0.1 Launch Readiness)
+## 1. Enterprise System Architecture (v2.0.0 Brand & Design System)
 
 ```
 +-----------------------------------------------------------------------------------+
 |                                  Next.js 15 Client App                            |
-| (OnboardingWizard, ProductTourOverlay, OfflineBanner, Custom Error Boundaries)    |
+| (AppLayout, Button, Input, Card, Badge, Modal, CommandPalette, Design Tokens)     |
 +-------------------+-------------------+-------------------+-----------------------+
                     |                   |                   |
                     v                   v                   v
@@ -28,9 +28,9 @@
 
 ---
 
-## 2. Key Product Readiness Modules
+## 2. Design System Architecture
 
-- **First Run Experience (`src/components/onboarding/OnboardingWizard.tsx`):** Welcome wizard, organization setup, team invitation, and sample data loader.
-- **Guided Product Tours (`src/platform/tour/ProductTourService.ts`):** Module-specific step tours.
-- **Demo Mode (`src/platform/demo/DemoModeService.ts`):** Interactive demo workspace toggle.
-- **Error Boundaries (`src/app/not-found.tsx`, `src/app/error.tsx`):** Custom 404, 500, and offline network state alerts.
+- **Design Tokens (`src/styles/tokens.css`):** Centralized CSS variables declaring color palettes, typography scales, border radii, elevation shadows, and dark/light themes.
+- **Component Primitives (`src/components/ui/`):** Atomic UI primitives (`Button`, `Input`, `Card`, `Badge`, `Modal`, `CommandPalette`).
+- **Layout Shell (`src/components/layout/AppLayout.tsx`):** Responsive sidebar, top bar navigation, and main content grid.
+- **Design System Guide (`DESIGN.md`):** Complete design specification.

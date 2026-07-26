@@ -15,3 +15,4 @@
 - **v0.9.0:** Analytics & Business Intelligence Platform (11-Metric KPI Engine, TTL Caching, Custom Report Engine with CSV/Excel/PDF Exports, Predictive Forecast Engine, AI Insight Engine, Executive Dashboard, API v1 Endpoints).
 - **v1.0.0 (Enterprise GA):** Enterprise SaaS Platform (AI Workspace, Event-Driven Workflow Automation Engine, RAG Knowledge Base, Multi-Tenant SaaS Isolation, Observability Suite, Security Audit, Production Runbooks).
 - **v1.0.1 (Launch & Product Readiness):** First Run Onboarding Wizard, Guided Product Tours, Interactive Demo Mode, Branded 404/500/Offline Error Experience, Accessibility Hardening, Launch Documentation.
+- **v2.0.0 (Brand Identity & Design System):** Enterprise Design System, CSS Design Tokens, Reusable UI Component Primitives, CRM AppLayout Shell, Brand Guidelines, DESIGN.md.

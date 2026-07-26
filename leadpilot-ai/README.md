@@ -1,13 +1,12 @@
-# LeadPilot AI CRM — Launch & Product Readiness (v1.0.1)
+# LeadPilot AI CRM — Brand Identity & Design System (v2.0.0)
 
 LeadPilot AI CRM is a next-generation autonomous enterprise AI Customer Relationship Management (CRM) platform built for high-performance sales, real estate, and enterprise organizations.
 
 ---
 
-## Launch & Onboarding Features
+## Design System & Visual Identity (v2.0.0)
 
-1. **Onboarding Welcome Wizard:** Step-by-step workspace setup, team member invitation, and sample CRM data seeding.
-2. **Interactive Product Tours:** Guided step tours across Dashboard, Leads, Deals, Calendar, Documents, Communication, Analytics, and AI Workspace.
-3. **Interactive Demo Mode:** Instant demo environment toggle for evaluation and prospective buyers.
-4. **Enhanced Error Experience:** Branded 404, 500 error boundaries, and offline sync notification banners.
-5. **Accessibility Hardening:** ARIA screen reader announcements and keyboard focus trap management.
+1. **Design Tokens (`src/styles/tokens.css`):** Centralized CSS design tokens for Dark and Light themes, color palettes, typography scales, spacing, border radii, and elevation shadows.
+2. **Component Library (`src/components/ui/`):** Atomic UI primitives (`Button`, `Input`, `Card`, `Badge`, `Modal`, `CommandPalette` ⌘K search).
+3. **CRM Layout Shell System (`src/components/layout/AppLayout.tsx`):** Responsive top navigation, collapsible mobile menu, and main view container.
+4. **Design System Specification (`DESIGN.md`):** Complete design specification manual.
