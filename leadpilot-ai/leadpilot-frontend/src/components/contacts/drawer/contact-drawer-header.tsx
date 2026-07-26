@@ -17,6 +17,7 @@ export function ContactDrawerHeader({ contact, onClose }: ContactDrawerHeaderPro
     CLIENT: "success",
     PROSPECT: "warning",
     ACTIVE: "secondary",
+    ARCHIVED: "secondary",
     INACTIVE: "default",
   } as const;
 

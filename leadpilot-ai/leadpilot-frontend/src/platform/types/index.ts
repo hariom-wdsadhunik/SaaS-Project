@@ -40,7 +40,7 @@ export type EntityActionType =
 
 export interface AuditEvent {
   action: EntityActionType;
-  entityType: "LEAD" | "DEAL" | "PROPERTY" | "TASK" | "SYSTEM";
+  entityType: "LEAD" | "DEAL" | "CONTACT" | "PROPERTY" | "TASK" | "SYSTEM";
   entityIds: EntityId[];
   payload?: Record<string, unknown>;
   timestamp: string;

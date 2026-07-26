@@ -1,6 +1,7 @@
 import { AITool } from "./Tool";
 import { LeadTool } from "./LeadTool";
 import { DealTool } from "./DealTool";
+import { ContactTool } from "./ContactTool";
 import { TaskTool } from "./TaskTool";
 import { AppointmentTool } from "./AppointmentTool";
 import { CalendarTool } from "./CalendarTool";
@@ -13,6 +14,7 @@ export class ToolRegistry {
   constructor() {
     this.register(new LeadTool());
     this.register(new DealTool());
+    this.register(new ContactTool());
     this.register(new TaskTool());
     this.register(new AppointmentTool());
     this.register(new CalendarTool());

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Building, Mail, Phone, Clock, MessageSquare, PhoneCall } from "lucide-react";
+import { Building, Mail, Phone, Clock, MessageSquare, PhoneCall, Star } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
@@ -11,26 +11,29 @@ import { toast } from "sonner";
 interface ContactCardProps {
   contact: ContactEntity;
   onSelectContact?: (contact: ContactEntity) => void;
+  onToggleFavorite?: (contact: ContactEntity) => void;
 }
 
 export const ContactCard = React.memo(function ContactCard({
   contact,
   onSelectContact,
+  onToggleFavorite,
 }: ContactCardProps) {
   const statusVariantMap = {
     VIP: "danger",
     CLIENT: "success",
     PROSPECT: "warning",
     ACTIVE: "secondary",
+    ARCHIVED: "secondary",
     INACTIVE: "default",
   } as const;
 
   return (
     <Card
       onClick={() => onSelectContact?.(contact)}
-      className="group rounded-2xl border-zinc-800/80 bg-zinc-900/90 hover:border-zinc-700/90 hover:bg-zinc-900 shadow-md p-4 space-y-3 cursor-pointer flex flex-col justify-between transition-all select-none"
+      className="group rounded-2xl border-zinc-800/80 bg-zinc-900/90 hover:border-zinc-700/90 hover:bg-zinc-900 shadow-md p-4 space-y-3 cursor-pointer flex flex-col justify-between transition-all select-none relative"
     >
-      {/* Top Header: Avatar, Name, Status Badge */}
+      {/* Top Header: Avatar, Name, Status Badge & Star */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <Avatar src={contact.avatarUrl} fallback={contact.fullName[0]} size="md" />
@@ -38,20 +41,39 @@ export const ContactCard = React.memo(function ContactCard({
             <h3 className="text-sm font-bold text-white group-hover:text-indigo-400 transition-colors line-clamp-1">
               {contact.fullName}
             </h3>
-            <span className="text-[11px] text-zinc-400 line-clamp-1">{contact.designation}</span>
+            <span className="text-[11px] text-zinc-400 line-clamp-1">{contact.jobTitle || contact.designation}</span>
           </div>
         </div>
 
-        <Badge variant={statusVariantMap[contact.status]} className="text-[9px] px-2 py-0.5 shrink-0">
-          {contact.status}
-        </Badge>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleFavorite?.(contact);
+            }}
+            className="p-1 rounded text-zinc-400 hover:text-amber-400 transition-colors"
+            title={contact.isFavorite ? "Remove from Favorites" : "Mark as Favorite"}
+          >
+            <Star
+              className={`h-4 w-4 ${
+                contact.isFavorite
+                  ? "fill-amber-400 text-amber-400"
+                  : "text-zinc-500 hover:text-amber-300"
+              }`}
+            />
+          </button>
+          <Badge variant={statusVariantMap[contact.status]} className="text-[9px] px-2 py-0.5">
+            {contact.status}
+          </Badge>
+        </div>
       </div>
 
       {/* Middle Info: Company & Channels */}
       <div className="border-t border-b border-zinc-800/80 py-2.5 space-y-1.5 text-xs text-zinc-300">
         <div className="flex items-center gap-2 text-zinc-400">
           <Building className="h-3.5 w-3.5 text-zinc-500 shrink-0" />
-          <span className="font-semibold text-zinc-200 line-clamp-1">{contact.companyName}</span>
+          <span className="font-semibold text-zinc-200 line-clamp-1">{contact.company || contact.companyName}</span>
         </div>
 
         <div className="flex items-center justify-between text-[11px] font-mono text-zinc-400 pt-0.5">
@@ -82,7 +104,7 @@ export const ContactCard = React.memo(function ContactCard({
       <div className="flex items-center justify-between pt-1 text-xs">
         <div className="flex items-center gap-1.5 text-[11px] font-mono text-zinc-400">
           <Clock className="h-3 w-3 text-zinc-500" />
-          <span>{formatDate(contact.lastActivity)}</span>
+          <span>{formatDate(contact.lastActivity || contact.createdAt)}</span>
         </div>
 
         <div className="flex items-center gap-1">

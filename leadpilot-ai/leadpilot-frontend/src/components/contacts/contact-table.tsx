@@ -74,6 +74,7 @@ export function ContactTable({ data, onSelectContact }: ContactTableProps) {
             CLIENT: "success",
             PROSPECT: "warning",
             ACTIVE: "secondary",
+            ARCHIVED: "secondary",
             INACTIVE: "default",
           } as const;
           return (
@@ -98,7 +99,7 @@ export function ContactTable({ data, onSelectContact }: ContactTableProps) {
         header: "Last Activity",
         cell: ({ row }) => (
           <span className="text-[11px] font-mono text-zinc-400">
-            {formatDate(row.original.lastActivity)}
+            {formatDate(row.original.lastActivity || row.original.createdAt)}
           </span>
         ),
       },

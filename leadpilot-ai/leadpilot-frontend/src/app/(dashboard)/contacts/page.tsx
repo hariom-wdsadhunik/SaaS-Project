@@ -15,8 +15,7 @@ import { ContactDrawer } from "@/components/contacts/drawer/contact-drawer";
 import { ContactModalForm } from "@/components/contacts/forms/contact-modal-form";
 import { ContactConfirmationDialog } from "@/components/contacts/actions/contact-action-dialogs";
 import { ContactStatusAssignModal } from "@/components/contacts/actions/contact-status-assign-modal";
-import { initialContactsDataset, contactMockService } from "@/services/contact-mock-service";
-import { contactActionService } from "@/services/contact-action-service";
+import { supabaseContactRepository } from "@/infrastructure/repositories/SupabaseContactRepository";
 import { ContactEntity, ContactFilterState, ContactStatus } from "@/domain/contact/types";
 import { toast } from "sonner";
 
@@ -26,11 +25,12 @@ const initialFilterState: ContactFilterState = {
   company: "",
   assignedAgent: "",
   tag: "",
+  isFavorite: undefined,
 };
 
 export default function ContactsPage() {
-  const [contactsList, setContactsList] = React.useState<ContactEntity[]>(initialContactsDataset);
-  const [isLoading] = React.useState(false);
+  const [contactsList, setContactsList] = React.useState<ContactEntity[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
   const [isError, setIsError] = React.useState(false);
   const [isRefreshing, setIsRefreshing] = React.useState(false);
 
@@ -62,6 +62,31 @@ export default function ContactsPage() {
 
   const [isActionProcessing, setIsActionProcessing] = React.useState(false);
 
+  // Fetch contacts from Supabase repository
+  React.useEffect(() => {
+    let isMounted = true;
+    supabaseContactRepository
+      .getContacts(filters)
+      .then((data) => {
+        if (isMounted) {
+          setContactsList(data);
+          setIsLoading(false);
+        }
+      })
+      .catch((err: unknown) => {
+        if (isMounted) {
+          setIsError(true);
+          const msg = err instanceof Error ? err.message : "Failed to load contacts";
+          toast.error(msg);
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [filters]);
+
   const handleFilterChange = (newFilters: Partial<ContactFilterState>) => {
     setFilters((prev) => ({ ...prev, ...newFilters }));
   };
@@ -75,11 +100,12 @@ export default function ContactsPage() {
     setIsRefreshing(true);
     toast.info("Refreshing contacts directory...");
     try {
-      const freshData = await contactMockService.getContacts(filters);
+      const freshData = await supabaseContactRepository.getContacts(filters);
       setContactsList(freshData);
       toast.success("Contacts database updated");
-    } catch {
-      toast.error("Failed to refresh contacts.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to refresh contacts";
+      toast.error(msg);
     } finally {
       setIsRefreshing(false);
     }
@@ -99,22 +125,51 @@ export default function ContactsPage() {
     }
   };
 
+  const handleToggleFavorite = async (contact: ContactEntity) => {
+    const nextFavorite = !contact.isFavorite;
+    // Optimistic UI update
+    setContactsList((prev) =>
+      prev.map((c) => (c.id === contact.id ? { ...c, isFavorite: nextFavorite } : c))
+    );
+
+    try {
+      await supabaseContactRepository.favoriteContact(contact.id, nextFavorite);
+      toast.success(
+        nextFavorite
+          ? `Marked ${contact.fullName} as Favorite`
+          : `Removed ${contact.fullName} from Favorites`
+      );
+    } catch (err: unknown) {
+      // Rollback optimistic update
+      setContactsList((prev) =>
+        prev.map((c) => (c.id === contact.id ? { ...c, isFavorite: contact.isFavorite } : c))
+      );
+      const msg = err instanceof Error ? err.message : "Failed to update favorite status";
+      toast.error(msg);
+    }
+  };
+
   const handleConfirmAction = async () => {
     if (!actionDialog.contactId) return;
     setIsActionProcessing(true);
     try {
       if (actionDialog.type === "delete") {
-        await contactActionService.deleteContacts([actionDialog.contactId]);
+        await supabaseContactRepository.deleteContact(actionDialog.contactId);
         setContactsList((prev) => prev.filter((c) => c.id !== actionDialog.contactId));
         toast.success(`Contact record deleted.`);
       } else {
-        await contactActionService.archiveContacts([actionDialog.contactId]);
-        setContactsList((prev) => prev.filter((c) => c.id !== actionDialog.contactId));
+        await supabaseContactRepository.archiveContact(actionDialog.contactId);
+        setContactsList((prev) =>
+          prev.map((c) =>
+            c.id === actionDialog.contactId ? { ...c, status: "ARCHIVED" } : c
+          )
+        );
         toast.success(`Contact record archived.`);
       }
       setActionDialog({ isOpen: false, type: "delete" });
-    } catch {
-      toast.error(`Action failed.`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Action failed";
+      toast.error(msg);
     } finally {
       setIsActionProcessing(false);
     }
@@ -125,27 +180,34 @@ export default function ContactsPage() {
     setIsActionProcessing(true);
     try {
       if (assignModal.mode === "status") {
-        await contactActionService.updateStatus([assignModal.contactId], val as ContactStatus);
-        setContactsList((prev) =>
-          prev.map((c) => (c.id === assignModal.contactId ? { ...c, status: val as ContactStatus } : c))
-        );
-        toast.success(`Contact status updated to ${val}.`);
-      } else {
-        await contactActionService.assignAgent([assignModal.contactId], val);
-        setContactsList((prev) =>
-          prev.map((c) => (c.id === assignModal.contactId ? { ...c, assignedAgentName: val } : c))
-        );
-        toast.success(`Contact assigned to ${val}.`);
+        const contact = contactsList.find((c) => c.id === assignModal.contactId);
+        if (contact) {
+          await supabaseContactRepository.updateContact(contact.id, {
+            firstName: contact.fullName.split(" ")[0] || contact.fullName,
+            lastName: contact.fullName.split(" ").slice(1).join(" ") || "",
+            email: contact.email,
+            phone: contact.phone,
+            status: val as ContactStatus,
+            assignedAgentName: contact.assignedAgentName,
+            companyName: contact.company || contact.companyName,
+            designation: contact.jobTitle || contact.designation,
+          });
+          setContactsList((prev) =>
+            prev.map((c) => (c.id === assignModal.contactId ? { ...c, status: val as ContactStatus } : c))
+          );
+          toast.success(`Contact status updated to ${val}.`);
+        }
       }
       setAssignModal({ isOpen: false, mode: "status" });
-    } catch {
-      toast.error(`Assignment failed.`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Assignment failed";
+      toast.error(msg);
     } finally {
       setIsActionProcessing(false);
     }
   };
 
-  const activeFilterCount = Object.values(filters).filter((val) => val !== "").length;
+  const activeFilterCount = Object.values(filters).filter((val) => val !== "" && val !== undefined).length;
 
   const filteredContacts = React.useMemo(() => {
     return contactsList.filter((cnt) => {
@@ -154,11 +216,13 @@ export default function ContactsPage() {
         const matchesName = cnt.fullName.toLowerCase().includes(query);
         const matchesEmail = cnt.email.toLowerCase().includes(query);
         const matchesPhone = cnt.phone.toLowerCase().includes(query);
-        const matchesCompany = cnt.companyName.toLowerCase().includes(query);
+        const matchesCompany = (cnt.company || cnt.companyName || "").toLowerCase().includes(query);
         if (!matchesName && !matchesEmail && !matchesPhone && !matchesCompany) return false;
       }
       if (filters.status && cnt.status !== filters.status) return false;
       if (filters.assignedAgent && cnt.assignedAgentName !== filters.assignedAgent) return false;
+      if (filters.tag && !cnt.tags.includes(filters.tag)) return false;
+      if (filters.isFavorite !== undefined && cnt.isFavorite !== filters.isFavorite) return false;
       return true;
     });
   }, [contactsList, filters]);
@@ -199,7 +263,7 @@ export default function ContactsPage() {
       {isLoading ? (
         <ContactsLoading />
       ) : isError ? (
-        <ContactsErrorState onRetry={() => setIsError(false)} />
+        <ContactsErrorState onRetry={handleRefresh} />
       ) : filteredContacts.length === 0 ? (
         <ContactsEmptyState onResetFilters={handleResetFilters} />
       ) : viewMode === "grid" ? (
@@ -212,6 +276,7 @@ export default function ContactsPage() {
                 setSelectedContact(c);
                 setIsDrawerOpen(true);
               }}
+              onToggleFavorite={handleToggleFavorite}
             />
           ))}
         </div>

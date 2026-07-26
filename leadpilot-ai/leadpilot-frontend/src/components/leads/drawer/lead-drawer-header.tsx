@@ -1,9 +1,10 @@
 import * as React from "react";
-import { X, MessageSquare, PhoneCall, Mail, Sparkles, Building } from "lucide-react";
+import { X, MessageSquare, PhoneCall, Mail, Sparkles, Building, UserCheck } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { LeadItem } from "../lead-feedback";
+import { supabaseContactRepository } from "@/infrastructure/repositories/SupabaseContactRepository";
 import { toast } from "sonner";
 
 interface LeadDrawerHeaderProps {
@@ -12,6 +13,24 @@ interface LeadDrawerHeaderProps {
 }
 
 export function LeadDrawerHeader({ lead, onClose }: LeadDrawerHeaderProps) {
+  const [isConverting, setIsConverting] = React.useState(false);
+
+  const handleConvertLead = async () => {
+    setIsConverting(true);
+    try {
+      const res = await supabaseContactRepository.convertLeadToContact(lead.id);
+      toast.success(`Lead Converted!`, {
+        description: `Created Contact record for ${res.contact.fullName} with VIP status.`,
+      });
+      onClose();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to convert lead";
+      toast.error("Lead Conversion Failed", { description: msg });
+    } finally {
+      setIsConverting(false);
+    }
+  };
+
   return (
     <div className="border-b border-zinc-800/80 bg-zinc-950 p-6 space-y-4">
       {/* Top Bar: Close Button & Org Badge */}
@@ -75,34 +94,46 @@ export function LeadDrawerHeader({ lead, onClose }: LeadDrawerHeaderProps) {
         </div>
       </div>
 
-      {/* Quick Interaction Buttons */}
-      <div className="flex items-center gap-2 pt-2 border-t border-zinc-800/60">
+      {/* Quick Interaction & Conversion Buttons */}
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-zinc-800/60">
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => toast.info(`Launching WhatsApp chat with ${lead.fullName}`)}
+            className="h-8 text-xs gap-1.5"
+          >
+            <MessageSquare className="h-3.5 w-3.5 text-indigo-400" />
+            <span>WhatsApp</span>
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => toast.info(`Dialing ${lead.phone || lead.fullName}`)}
+            className="h-8 text-xs gap-1.5"
+          >
+            <PhoneCall className="h-3.5 w-3.5 text-emerald-400" />
+            <span>Call</span>
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => toast.info(`Opening Email Composer for ${lead.email}`)}
+            className="h-8 text-xs gap-1.5"
+          >
+            <Mail className="h-3.5 w-3.5 text-amber-400" />
+            <span>Email</span>
+          </Button>
+        </div>
+
         <Button
           size="sm"
-          variant="outline"
-          onClick={() => toast.info(`Launching WhatsApp chat with ${lead.fullName}`)}
-          className="h-8 text-xs gap-1.5"
+          onClick={handleConvertLead}
+          isLoading={isConverting}
+          className="h-8 text-xs gap-1.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-medium"
         >
-          <MessageSquare className="h-3.5 w-3.5 text-indigo-400" />
-          <span>WhatsApp</span>
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => toast.info(`Dialing ${lead.phone || lead.fullName}`)}
-          className="h-8 text-xs gap-1.5"
-        >
-          <PhoneCall className="h-3.5 w-3.5 text-emerald-400" />
-          <span>Call</span>
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => toast.info(`Opening Email Composer for ${lead.email}`)}
-          className="h-8 text-xs gap-1.5"
-        >
-          <Mail className="h-3.5 w-3.5 text-amber-400" />
-          <span>Email</span>
+          <UserCheck className="h-3.5 w-3.5" />
+          <span>Convert to Contact</span>
         </Button>
       </div>
     </div>

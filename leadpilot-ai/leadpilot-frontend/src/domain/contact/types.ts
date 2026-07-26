@@ -1,19 +1,29 @@
-export type ContactStatus = "ACTIVE" | "PROSPECT" | "CLIENT" | "VIP" | "INACTIVE";
+export type ContactStatus = "ACTIVE" | "PROSPECT" | "CLIENT" | "VIP" | "ARCHIVED" | "INACTIVE";
 
 export interface ContactEntity {
   id: string;
+  leadId?: string | null;
   fullName: string;
   avatarUrl?: string;
-  designation: string;
-  companyName: string;
+  jobTitle: string;
+  designation?: string;
+  company: string;
+  companyName?: string;
   email: string;
   phone: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
   status: ContactStatus;
+  isFavorite: boolean;
   tags: string[];
+  notes?: string;
   assignedAgentName: string;
   agentAvatarUrl?: string;
-  lastActivity: string;
+  lastActivity?: string;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface ContactFilterState {
@@ -22,4 +32,27 @@ export interface ContactFilterState {
   company: string;
   assignedAgent: string;
   tag: string;
+  isFavorite?: boolean;
+}
+
+export type TimelineEventType =
+  | "Lead Created"
+  | "Lead Converted"
+  | "Deal Created"
+  | "Deal Updated"
+  | "Appointment"
+  | "Task"
+  | "Email"
+  | "WhatsApp"
+  | "Notes"
+  | "AI Summary";
+
+export interface ContactTimelineEvent {
+  id: string;
+  contactId: string;
+  eventType: TimelineEventType | string;
+  title: string;
+  description?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
 }

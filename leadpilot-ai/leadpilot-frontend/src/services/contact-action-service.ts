@@ -6,7 +6,7 @@ export const contactActionService = {
     await new Promise((res) => setTimeout(res, 300));
     platformAuditLogger.log({
       action: "UPDATE",
-      entityType: "SYSTEM",
+      entityType: "CONTACT",
       entityIds: contactIds,
       payload: { agentName },
       timestamp: new Date().toISOString(),
@@ -18,7 +18,7 @@ export const contactActionService = {
     await new Promise((res) => setTimeout(res, 300));
     platformAuditLogger.log({
       action: "CHANGE_STATUS",
-      entityType: "SYSTEM",
+      entityType: "CONTACT",
       entityIds: contactIds,
       payload: { newStatus: status },
       timestamp: new Date().toISOString(),
@@ -30,7 +30,7 @@ export const contactActionService = {
     await new Promise((res) => setTimeout(res, 350));
     platformAuditLogger.log({
       action: "CHANGE_STATUS",
-      entityType: "SYSTEM",
+      entityType: "CONTACT",
       entityIds: contactIds,
       payload: { count: contactIds.length },
       timestamp: new Date().toISOString(),
@@ -42,7 +42,7 @@ export const contactActionService = {
     await new Promise((res) => setTimeout(res, 400));
     platformAuditLogger.log({
       action: "DELETE",
-      entityType: "SYSTEM",
+      entityType: "CONTACT",
       entityIds: contactIds,
       payload: { count: contactIds.length },
       timestamp: new Date().toISOString(),
@@ -55,7 +55,7 @@ export const contactActionService = {
 
     platformAuditLogger.log({
       action: "UPDATE",
-      entityType: "SYSTEM",
+      entityType: "CONTACT",
       entityIds: [sourceContactId, targetContactId],
       payload: { mergedInto: targetContactId },
       timestamp: new Date().toISOString(),
@@ -64,11 +64,14 @@ export const contactActionService = {
     return {
       id: targetContactId,
       fullName: "Merged Contact Profile",
+      jobTitle: "Executive",
       designation: "Executive",
+      company: "Merged Enterprise",
       companyName: "Merged Enterprise",
       email: "merged@contact.ae",
       phone: "+971 50 999 0000",
       status: "ACTIVE",
+      isFavorite: false,
       tags: ["Merged Record"],
       assignedAgentName: "Alex Morgan",
       lastActivity: new Date().toISOString(),

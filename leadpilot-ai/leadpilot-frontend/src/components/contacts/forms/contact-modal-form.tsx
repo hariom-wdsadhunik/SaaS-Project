@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { X, UserPlus, Edit3, AlertCircle } from "lucide-react";
 
 import { contactFormSchema, ContactFormInput } from "@/lib/validations/contact-form";
-import { contactMockService } from "@/services/contact-mock-service";
+import { supabaseContactRepository } from "@/infrastructure/repositories/SupabaseContactRepository";
 import { ContactEntity } from "@/domain/contact/types";
 import { ContactFormSections } from "./contact-form-sections";
 import { UnsavedChangesDialog } from "@/components/leads/forms/unsaved-changes-dialog";
@@ -43,10 +43,10 @@ export function ContactModalForm({
         phone: initialData.phone,
         status: initialData.status,
         assignedAgentName: initialData.assignedAgentName,
-        companyName: initialData.companyName,
-        designation: initialData.designation,
+        companyName: initialData.companyName || initialData.company,
+        designation: initialData.designation || initialData.jobTitle,
         tags: initialData.tags.join(", "),
-        notes: "",
+        notes: initialData.notes || "",
       };
     }
     return {
@@ -85,11 +85,11 @@ export function ContactModalForm({
     setServerError(null);
     try {
       if (mode === "create") {
-        const createdContact = await contactMockService.createContact(data);
+        const createdContact = await supabaseContactRepository.createContact(data);
         toast.success(`Contact "${createdContact.fullName}" created successfully!`);
         onSuccess(createdContact);
       } else if (mode === "edit" && initialData) {
-        const updatedContact = await contactMockService.updateContact(initialData.id, data);
+        const updatedContact = await supabaseContactRepository.updateContact(initialData.id, data);
         toast.success(`Contact "${updatedContact.fullName}" updated successfully!`);
         onSuccess(updatedContact);
       }

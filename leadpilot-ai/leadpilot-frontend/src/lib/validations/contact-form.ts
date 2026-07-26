@@ -6,7 +6,7 @@ export const contactFormSchema = z
     lastName: z.string().min(1, "Last name is required"),
     email: z.string().email("Invalid email address").or(z.literal("")).optional(),
     phone: z.string().optional(),
-    status: z.enum(["ACTIVE", "PROSPECT", "CLIENT", "VIP", "INACTIVE"], {
+    status: z.enum(["ACTIVE", "PROSPECT", "CLIENT", "VIP", "ARCHIVED", "INACTIVE"], {
       message: "Contact status is required",
     }),
     assignedAgentName: z.string().min(2, "Assigned broker is required"),
