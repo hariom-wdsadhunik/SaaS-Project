@@ -2,28 +2,38 @@
 
 ---
 
-## 1. Enterprise System Architecture (v2.4.0 CI/CD Infrastructure)
+## 1. Enterprise System Architecture (v3.1.0 AI Sales Copilot)
 
 ```
 +-----------------------------------------------------------------------------------+
-|                           GitHub Actions CI/CD Pipeline                           |
-|                       (.github/workflows/ci.yml & quality.yml)                     |
+|                           AI Command Center Dashboard                             |
+|                    (apps/web/src/app/(dashboard)/copilot/page.tsx)                |
 +-------------------+-----------------------------------+---------------------------+
                     |                                   |
                     v                                   v
 +-------------------+-------------------+   +-----------+-----------------------+
-|  Frontend CI Verification Job         |   |  Backend CI Verification Job          |
-|  (working-directory:                  |   |  (working-directory:                  |
-|   leadpilot-ai/leadpilot-frontend)    |   |   leadpilot-ai)                       |
-|  (cache-dependency-path:              |   |  (cache-dependency-path:              |
-|   leadpilot-frontend/package-lock)    |   |   leadpilot-ai/package-lock)          |
-+---------------------------------------+   +---------------------------------------+
+|  AI Copilot Platform Engines          |   |  API v1 Copilot Endpoints             |
+|  - LeadSummaryEngine                  |   |  - /api/v1/copilot/lead-summary       |
+|  - EmailCopilotService                |   |  - /api/v1/copilot/email-assistant    |
+|  - WhatsAppCopilotService             |   |  - /api/v1/copilot/whatsapp-assistant |
+|  - MeetingPrepEngine                  |   |  - /api/v1/copilot/meeting-prep       |
+|  - DailyBriefEngine                   |   |  - /api/v1/copilot/daily-brief        |
+|  - DealHealthEngine                   |   |  - /api/v1/copilot/deal-health        |
++-------------------+-------------------+   +-----------+-----------------------+
+                    |                                   |
+                    +-----------------+-----------------+
+                                      |
+                                      v
++-------------------------------------+---------------------------------------------+
+|                          Domain & Infrastructure Services                         |
+|                    (Leads, Deals, Tasks, Communications, Supabase)                |
++-----------------------------------------------------------------------------------+
 ```
 
 ---
 
-## 2. CI/CD Infrastructure Architecture
+## 2. AI Sales Copilot Architecture
 
-- **Subfolder Lockfile Caching:** Resolved `setup-node` missing lockfile error by passing explicit `cache-dependency-path`.
-- **Working Directory Isolation:** Configured `defaults.run.working-directory` for frontend and backend jobs.
-- **Pipeline Controls:** Concurrency groups (`cancel-in-progress: true`), 15-minute timeouts, and Next.js build artifact uploads (`actions/upload-artifact@v4`).
+- **Proactive Intelligence Layer:** Daily Brief Engine aggregates priority leads, deal risks, and tasks automatically.
+- **Multi-Channel Assistant:** Email and WhatsApp Copilot services handle message drafting, rewriting, and thread summarization.
+- **Predictive Deal Analytics:** Deal Health Engine predicts 0-100 closing probability, health grade, and flags missing documentation.

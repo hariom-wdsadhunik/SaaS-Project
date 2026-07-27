@@ -14,9 +14,11 @@
 - **v0.8.0:** Intelligent Document Management Platform (Supabase Storage Abstraction, Versioning, SHA-256 Checksum Validation, AI OCR Pipeline, Contact Timeline Integration, API v1 Endpoints).
 - **v0.9.0:** Analytics & Business Intelligence Platform (11-Metric KPI Engine, TTL Caching, Custom Report Engine with CSV/Excel/PDF Exports, Predictive Forecast Engine, AI Insight Engine, Executive Dashboard, API v1 Endpoints).
 - **v1.0.0 (Enterprise GA):** Enterprise SaaS Platform (AI Workspace, Event-Driven Workflow Automation Engine, RAG Knowledge Base, Multi-Tenant SaaS Isolation, Observability Suite, Security Audit, Production Runbooks).
-- **v1.0.1 (Launch & Product Readiness):** First Run Onboarding Wizard, Guided Product Tours, Interactive Demo Mode, Branded 404/500/Offline Error Experience, Accessibility Hardening, Launch Documentation.
+- **v1.0.1 (Launch & Product Readiness):** First Run Onboarding Wizard, Guided Product Tours, Interactive Demo Mode, Branded Error Experience, Accessibility Hardening, Launch Documentation.
 - **v2.0.0 (Brand Identity & Design System):** Enterprise Design System, CSS Design Tokens, Reusable UI Component Primitives, CRM AppLayout Shell, Brand Guidelines, DESIGN.md.
 - **v2.1.0 (Marketing Website & Public Presence):** SaaS Marketing Site, Home Landing Page, Features Matrix, Pricing Tiers, Sitemap XML, robots.txt, Open Graph Metadata.
 - **v2.2.0 (Billing & Subscription Platform):** Stripe Billing Provider Abstraction, Idempotent Webhook Engine, Usage Metering Engine, Database Migrations, API v1 Endpoints, Billing Dashboard UI.
 - **v2.3.0 (Customer Success Platform):** Help Center Knowledge Base, Support Ticket Lifecycle Engine, 0-100 Customer Health Score Engine, In-App Feedback, API v1 Endpoints, Support & Health Dashboards.
-- **v2.4.0 (CI/CD Pipeline Hardening):** GitHub Actions Fixes (`cache-dependency-path`), Working Directory Standardization, Concurrency Cancellation, Step Timeouts, Artifact Uploads.
+- **v2.4.0 – v2.4.3 (CI/CD Hardening & Build Stabilization):** GitHub Actions Fixes, Subfolder Lockfile Caching, Top-Level Supabase Initialization Fix, Route Dynamic Export Enforcement.
+- **v3.0.0 (Monorepo Modernization):** Monorepo Restructuring (`apps/web`, `apps/api`, `packages/shared`, `packages/config`, `docs/`), Root Governance Specifications.
+- **v3.1.0 (AI Sales Copilot Platform):** AI Lead Summary, AI Email Assistant, AI WhatsApp Assistant, Meeting Preparation Engine, Daily Morning AI Brief, Deal Health Predictor, AI Command Center Dashboard, API v1 Endpoints.
