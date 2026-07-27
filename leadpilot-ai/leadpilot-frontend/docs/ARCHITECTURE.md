@@ -2,19 +2,19 @@
 
 ---
 
-## 1. Enterprise System Architecture (v2.2.0 Billing & Subscription Platform)
+## 1. Enterprise System Architecture (v2.3.0 Customer Success Platform)
 
 ```
 +-----------------------------------------------------------------------------------+
 |                                  Next.js 15 Client App                            |
-|          (Billing Dashboard, Usage Metering, Checkout & Customer Portal)          |
+|          (Help Center, Ticket Management, Customer Health Telemetry UI)           |
 +-------------------+-------------------+-------------------+-----------------------+
                     |                   |                   |
                     v                   v                   v
 +-------------------+---+   +-----------+-------+   +-------+---------------+
-|   BillingProvider |   | UsageLimitEngine  |   |   WebhookHandler      |
-| (StripeBilling    |   | (Seat/Lead/Storage|   | (Idempotency & HMAC   |
-| Provider Adapter) |   | Metering Engine)  |   | Signature Validator)  |
+| HelpCenterService |   |   TicketService       |   | HealthScoreEngine     |
+| (Search Index &   |   | (Ticket Lifecycle |   | (0-100 Composite      |
+| Article Viewer)   |   | & Escalations)    |   | Health Index)         |
 +-------------------+---+   +-----------+-------+   +-------+---------------+
                     |                   |                   |
                     +-------------------+-------------------+
@@ -22,15 +22,14 @@
                                         v
                     +-------------------+-------------------+
                     |        Supabase PostgreSQL Backend    |
-                    | (Subscriptions, Invoices, RLS)        |
+                    | (Articles, Tickets, Health Telemetry) |
                     +---------------------------------------+
 ```
 
 ---
 
-## 2. Billing & Subscription Architecture
+## 2. Customer Success Architecture
 
-- **Abstraction Interface:** `BillingProvider.ts` decoupling business logic from payment vendors.
-- **Provider Implementation:** `StripeBillingProvider.ts`.
-- **Idempotency & Security:** `WebhookHandler.ts` signature validation and duplicate event rejection.
-- **Usage Limits:** `UsageLimitEngine.ts` enforces seat quotas, lead capacities, AI queries, and document storage limits per plan tier.
+- **Help Center Engine:** `HelpCenterService.ts` for searching and indexing knowledge base articles.
+- **Support Ticket Engine:** `TicketService.ts` managing ticket states (`open`, `pending`, `resolved`, `closed`) and priority escalation.
+- **Customer Health Engine:** `HealthScoreEngine.ts` calculating 0-100 composite health index from login cadence, feature adoption, AI queries, and support ticket history.

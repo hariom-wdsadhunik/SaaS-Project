@@ -18,3 +18,4 @@
 - **v2.0.0 (Brand Identity & Design System):** Enterprise Design System, CSS Design Tokens, Reusable UI Component Primitives, CRM AppLayout Shell, Brand Guidelines, DESIGN.md.
 - **v2.1.0 (Marketing Website & Public Presence):** SaaS Marketing Site, Home Landing Page, Features Matrix, Pricing Tiers, Sitemap XML, robots.txt, Open Graph Metadata.
 - **v2.2.0 (Billing & Subscription Platform):** Stripe Billing Provider Abstraction, Idempotent Webhook Engine, Usage Metering Engine, Database Migrations, API v1 Endpoints, Billing Dashboard UI.
+- **v2.3.0 (Customer Success Platform):** Help Center Knowledge Base, Support Ticket Lifecycle Engine, 0-100 Customer Health Score Engine, In-App Feedback, API v1 Endpoints, Support & Health Dashboards.

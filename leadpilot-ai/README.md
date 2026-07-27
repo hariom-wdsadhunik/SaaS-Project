@@ -1,12 +1,12 @@
-# LeadPilot AI CRM — Billing Platform & Enterprise SaaS (v2.2.0)
+# LeadPilot AI CRM — Customer Success & Enterprise SaaS (v2.3.0)
 
 LeadPilot AI CRM is a next-generation autonomous enterprise AI Customer Relationship Management (CRM) platform built for high-performance sales, real estate, and enterprise organizations.
 
 ---
 
-## Billing Platform & Subscriptions (v2.2.0)
+## Customer Success Platform (v2.3.0)
 
-1. **BillingProvider Abstraction (`src/platform/billing/`):** Clean interface isolating core business logic from Stripe or alternative payment providers.
-2. **Idempotent Webhook Engine:** HMAC signature verification, replay protection, and duplicate event filtering (`WebhookHandler.ts`).
-3. **Usage Metering Engine (`UsageLimitEngine.ts`):** Evaluates seat quotas, lead limits, AI query caps, and storage thresholds across Starter, Professional, and Enterprise plans.
-4. **Billing Dashboard UI (`/billing`):** Plan tier management, seat utilization progress, metered consumption counters, and invoice history.
+1. **Knowledge Base Help Center (`HelpCenterService.ts`):** Article categorization, search indexing, and self-serve viewer.
+2. **Support Ticket Engine (`TicketService.ts`):** Full ticket lifecycle management (`open`, `pending`, `resolved`, `closed`), priority escalation (`low`, `medium`, `high`, `urgent`), and agent assignment.
+3. **Customer Health Score Engine (`HealthScoreEngine.ts`):** Composite 0-100 telemetry score calculating login frequency, feature adoption, AI queries, workflow automation, and support history.
+4. **Customer Success Dashboards:** Support & Help Center (`/support`) and Health Telemetry (`/health`).
