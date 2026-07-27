@@ -40,6 +40,7 @@ describe('Email Controller Contract Tests (controllers/emailController.js)', () 
       jest.spyOn(repository, 'getLeadById').mockResolvedValue(lead);
       jest.spyOn(repository, 'createEmailLog').mockResolvedValue({});
       jest.spyOn(repository, 'createNote').mockResolvedValue({});
+      jest.spyOn(emailController.instance, 'parseEmailConfig').mockReturnValue({ configured: true, service: 'SMTP' });
       jest.spyOn(emailController, 'parseEmailConfig').mockReturnValue({ configured: true, service: 'SMTP' });
       jest.spyOn(emailController.transporter, 'sendMail').mockResolvedValue({ messageId: 'msg-101' });
 

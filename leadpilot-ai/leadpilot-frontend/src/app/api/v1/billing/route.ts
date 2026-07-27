@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { StripeBillingProvider } from "@/platform/billing/StripeBillingProvider";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const provider = new StripeBillingProvider();
   const invoices = await provider.getInvoices("org_default");

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { TicketService } from "@/platform/support/TicketService";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const service = new TicketService();
   const tickets = service.getTickets("org_default");

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { WebhookHandler } from "@/platform/billing/WebhookHandler";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(request: Request) {
   const rawBody = await request.text();
   const signature = request.headers.get("stripe-signature") || "mock_sig_123";

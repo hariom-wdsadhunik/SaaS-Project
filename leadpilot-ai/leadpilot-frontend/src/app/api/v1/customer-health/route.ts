@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { HealthScoreEngine } from "@/platform/support/HealthScoreEngine";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const engine = new HealthScoreEngine();
   const health = engine.calculateScore({
