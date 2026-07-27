@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { DashboardService } from "@/platform/analytics/DashboardService";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const dashboard = await DashboardService.getExecutiveDashboard();
   return NextResponse.json({ version: "v1", success: true, data: dashboard });

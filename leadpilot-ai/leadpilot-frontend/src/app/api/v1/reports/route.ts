@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { ReportEngine } from "@/platform/analytics/reports/ReportEngine";
 import { ExportFormat } from "@/platform/analytics/reports/ReportExporter";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const reportId = searchParams.get("id") || "rpt-default";

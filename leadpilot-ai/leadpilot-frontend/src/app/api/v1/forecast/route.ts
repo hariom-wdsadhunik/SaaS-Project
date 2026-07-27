@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { ForecastEngine } from "@/platform/analytics/forecast/ForecastEngine";
 import { MetricCategory } from "@/domain/analytics/types";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const category = (searchParams.get("category") as MetricCategory) || "REVENUE";
