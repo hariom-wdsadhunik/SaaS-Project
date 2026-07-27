@@ -6,13 +6,46 @@ on:
   workflow_dispatch:
 
 jobs:
-  audit:
+  audit-frontend:
+    name: Frontend Security Audit
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: leadpilot-ai/leadpilot-frontend
+
     steps:
-      - uses: actions/checkout@v4
-      - name: Setup Node.js
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js v20
         uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Security Audit
+          cache: 'npm'
+          cache-dependency-path: leadpilot-ai/leadpilot-frontend/package-lock.json
+
+      - name: Run npm audit
+        run: npm audit --audit-level=high || true
+
+  audit-backend:
+    name: Backend Security Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: leadpilot-ai
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js v20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: leadpilot-ai/package-lock.json
+
+      - name: Run npm audit
         run: npm audit --audit-level=high || true

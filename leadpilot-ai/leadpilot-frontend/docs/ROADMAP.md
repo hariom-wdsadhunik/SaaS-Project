@@ -19,3 +19,4 @@
 - **v2.1.0 (Marketing Website & Public Presence):** SaaS Marketing Site, Home Landing Page, Features Matrix, Pricing Tiers, Sitemap XML, robots.txt, Open Graph Metadata.
 - **v2.2.0 (Billing & Subscription Platform):** Stripe Billing Provider Abstraction, Idempotent Webhook Engine, Usage Metering Engine, Database Migrations, API v1 Endpoints, Billing Dashboard UI.
 - **v2.3.0 (Customer Success Platform):** Help Center Knowledge Base, Support Ticket Lifecycle Engine, 0-100 Customer Health Score Engine, In-App Feedback, API v1 Endpoints, Support & Health Dashboards.
+- **v2.4.0 (CI/CD Pipeline Hardening):** GitHub Actions Fixes (`cache-dependency-path`), Working Directory Standardization, Concurrency Cancellation, Step Timeouts, Artifact Uploads.

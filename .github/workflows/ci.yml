@@ -1,4 +1,4 @@
-name: LeadPilot AI CRM CI Pipeline
+name: LeadPilot AI CRM Production CI/CD Pipeline
 
 on:
   push:
@@ -6,23 +6,69 @@ on:
   pull_request:
     branches: [ main, develop ]
 
-jobs:
-  build-and-verify:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
-      - name: Setup Node.js
+jobs:
+  frontend-build-and-verify:
+    name: Build & Verify Frontend (Next.js 15)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: leadpilot-ai/leadpilot-frontend
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js v20
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
+          cache-dependency-path: leadpilot-ai/leadpilot-frontend/package-lock.json
 
-      - name: Install Dependencies
-        run: npm ci --prefix leadpilot-ai/leadpilot-frontend
+      - name: Install Frontend Dependencies
+        run: npm ci
 
-      - name: Run ESLint
-        run: npm run lint --prefix leadpilot-ai/leadpilot-frontend
+      - name: Run ESLint Quality Check
+        run: npm run lint
 
-      - name: Run Next.js Build
-        run: npm run build --prefix leadpilot-ai/leadpilot-frontend
+      - name: Next.js Production Build
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nextjs-build-artifact
+          path: leadpilot-ai/leadpilot-frontend/.next
+          retention-days: 7
+
+  backend-build-and-verify:
+    name: Build & Verify Backend (Express.js)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: leadpilot-ai
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js v20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: leadpilot-ai/package-lock.json
+
+      - name: Install Backend Dependencies
+        run: npm ci
+
+      - name: Run Backend Tests
+        run: npm test --if-present

@@ -2,34 +2,28 @@
 
 ---
 
-## 1. Enterprise System Architecture (v2.3.0 Customer Success Platform)
+## 1. Enterprise System Architecture (v2.4.0 CI/CD Infrastructure)
 
 ```
 +-----------------------------------------------------------------------------------+
-|                                  Next.js 15 Client App                            |
-|          (Help Center, Ticket Management, Customer Health Telemetry UI)           |
-+-------------------+-------------------+-------------------+-----------------------+
-                    |                   |                   |
-                    v                   v                   v
-+-------------------+---+   +-----------+-------+   +-------+---------------+
-| HelpCenterService |   |   TicketService       |   | HealthScoreEngine     |
-| (Search Index &   |   | (Ticket Lifecycle |   | (0-100 Composite      |
-| Article Viewer)   |   | & Escalations)    |   | Health Index)         |
-+-------------------+---+   +-----------+-------+   +-------+---------------+
-                    |                   |                   |
-                    +-------------------+-------------------+
-                                        |
-                                        v
-                    +-------------------+-------------------+
-                    |        Supabase PostgreSQL Backend    |
-                    | (Articles, Tickets, Health Telemetry) |
-                    +---------------------------------------+
+|                           GitHub Actions CI/CD Pipeline                           |
+|                       (.github/workflows/ci.yml & quality.yml)                     |
++-------------------+-----------------------------------+---------------------------+
+                    |                                   |
+                    v                                   v
++-------------------+-------------------+   +-----------+-----------------------+
+|  Frontend CI Verification Job         |   |  Backend CI Verification Job          |
+|  (working-directory:                  |   |  (working-directory:                  |
+|   leadpilot-ai/leadpilot-frontend)    |   |   leadpilot-ai)                       |
+|  (cache-dependency-path:              |   |  (cache-dependency-path:              |
+|   leadpilot-frontend/package-lock)    |   |   leadpilot-ai/package-lock)          |
++---------------------------------------+   +---------------------------------------+
 ```
 
 ---
 
-## 2. Customer Success Architecture
+## 2. CI/CD Infrastructure Architecture
 
-- **Help Center Engine:** `HelpCenterService.ts` for searching and indexing knowledge base articles.
-- **Support Ticket Engine:** `TicketService.ts` managing ticket states (`open`, `pending`, `resolved`, `closed`) and priority escalation.
-- **Customer Health Engine:** `HealthScoreEngine.ts` calculating 0-100 composite health index from login cadence, feature adoption, AI queries, and support ticket history.
+- **Subfolder Lockfile Caching:** Resolved `setup-node` missing lockfile error by passing explicit `cache-dependency-path`.
+- **Working Directory Isolation:** Configured `defaults.run.working-directory` for frontend and backend jobs.
+- **Pipeline Controls:** Concurrency groups (`cancel-in-progress: true`), 15-minute timeouts, and Next.js build artifact uploads (`actions/upload-artifact@v4`).
