@@ -12,7 +12,7 @@ jobs:
     timeout-minutes: 10
     defaults:
       run:
-        working-directory: leadpilot-ai/leadpilot-frontend
+        working-directory: apps/web
 
     steps:
       - name: Checkout Repository
@@ -23,7 +23,7 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
-          cache-dependency-path: leadpilot-ai/leadpilot-frontend/package-lock.json
+          cache-dependency-path: apps/web/package-lock.json
 
       - name: Run npm audit
         run: npm audit --audit-level=high || true
@@ -34,7 +34,7 @@ jobs:
     timeout-minutes: 10
     defaults:
       run:
-        working-directory: leadpilot-ai
+        working-directory: apps/api
 
     steps:
       - name: Checkout Repository
@@ -45,7 +45,7 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
-          cache-dependency-path: leadpilot-ai/package-lock.json
+          cache-dependency-path: apps/api/package-lock.json
 
       - name: Run npm audit
         run: npm audit --audit-level=high || true
