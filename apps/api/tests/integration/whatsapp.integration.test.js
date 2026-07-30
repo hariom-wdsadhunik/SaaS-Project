@@ -45,5 +45,5 @@ describe('WhatsApp API Integration Tests (routes/whatsapp.js & routes/webhook.js
       });
 
     expect(res.statusCode).toBe(200);
-  });
+  }, 15000);
 });

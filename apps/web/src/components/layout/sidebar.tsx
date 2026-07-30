@@ -21,6 +21,8 @@ import {
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/store/use-ui-store";
 
+import { WorkspaceSwitcher } from "./workspace-switcher";
+
 export function Sidebar() {
   const pathname = usePathname();
   const { isSidebarCollapsed, toggleSidebar } = useUIStore();
@@ -74,6 +76,13 @@ export function Sidebar() {
           )}
         </button>
       </div>
+
+      {/* Workspace Switcher */}
+      {!isSidebarCollapsed && (
+        <div className="p-2 border-b border-zinc-800/80">
+          <WorkspaceSwitcher />
+        </div>
+      )}
 
       {/* Navigation List */}
       <nav className="flex-1 space-y-1 p-2 overflow-y-auto">
