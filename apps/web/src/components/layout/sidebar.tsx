@@ -19,6 +19,7 @@ import {
   Sparkles,
   Zap,
   Layers,
+  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/store/use-ui-store";
@@ -43,6 +44,7 @@ export function Sidebar() {
     { name: "Reports & BI", href: "/reports", icon: BarChart3 },
     { name: "Billing", href: "/billing", icon: FileText },
     { name: "Support", href: "/support", icon: MessageSquare },
+    { name: "Platform Admin", href: "/admin", icon: ShieldCheck },
     { name: "Settings", href: "/settings", icon: Settings },
   ];
 

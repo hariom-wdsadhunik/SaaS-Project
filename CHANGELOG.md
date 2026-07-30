@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.8.0] - 2026-07-30
+
+### Added
+* **Global Administration Console (`AdminService.ts`)**: Centralized multi-tenant organization provisioning, global user directory management, and license seat controls.
+* **Centralized Feature Flags Studio (`/admin/feature-flags`)**: Environment-scoped feature toggles, percentage rollout sliders (0-100%), and organization-targeted overrides.
+* **Infrastructure Telemetry Dashboard (`/admin/monitoring`)**: Live cluster health monitoring for CPU, memory, API latency, database connection pools, and AI inference engines.
+* **Background Jobs & Retry Queue Manager (`/admin/jobs`)**: BullMQ worker monitoring, failed task retries, and job execution logs.
+* **Security Operations Center (SOC) (`/admin/audit`)**: Real-time security incident alerts, failed login tracking, role elevation logs, and tamper-proof audit exports.
+* **System Operations & Backup Recovery (`/admin/system`)**: Database snapshot history, retention policies, and SHA-256 integrity checksum verification.
+* **Admin UI Sub-App (`/admin/*`)**: Created 8 admin operational pages (`/admin`, `/admin/system`, `/admin/organizations`, `/admin/users`, `/admin/jobs`, `/admin/monitoring`, `/admin/feature-flags`, `/admin/audit`).
+* **Unit Tests & Documentation**: Added `admin-service.test.ts` unit test suite and system documentation (`admin-console.md`, `monitoring.md`, `feature-flags.md`, `operations.md`, `security-operations.md`).
+
+---
+
 ## [3.7.0] - 2026-07-30
 
 ### Added
@@ -17,17 +31,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **Explainable AI (XAI)**: Transparent reasoning breakdowns showing positive and negative feature drivers.
 * **AI Platform UI Sub-App (`/ai/*`)**: Created 5 AI intelligence pages (`/ai`, `/ai/insights`, `/ai/forecast`, `/ai/leads`, `/ai/recommendations`).
 * **Unit Tests & Documentation**: Added `ai-intelligence-engine.test.ts` unit test suite and system documentation (`ai-engine.md`, `lead-scoring.md`, `forecasting.md`, `recommendation-engine.md`, `next-best-action.md`).
-
----
-
-## [3.6.0] - 2026-07-30
-
-### Added
-* **Centralized Reporting Engine (`ReportingEngine.ts`)**: BI aggregation engine compiling metrics across all CRM data stores.
-* **16-Metric Enterprise KPI Library**: Revenue, Pipeline Value, Deals Won/Lost, Lead Conversion, Sales Velocity, Task Completion, Appointment Success, Response Time, Workflow Success, MRR, ARR, Churn, and Net Retention.
-* **5 Role-Tailored Executive Dashboards**: Executive Leadership, Sales Performance, Financial Intelligence, Operations, and Agent performance views.
-* **Custom Dashboard Builder (`custom/page.tsx`)**: Drag-and-drop widget studio supporting 10 chart types and layout sharing.
-* **Automated Report Scheduler (`scheduled/page.tsx`)**: Daily, weekly, monthly, and quarterly email delivery with PDF/CSV attachments.
-* **Multi-Format Data Exporter**: Filtered CSV, Excel, PDF, and JSON data export compiler.
-* **Reporting UI Sub-App (`/reports/*`)**: Created 6 reporting pages (`/reports`, `/reports/executive`, `/reports/sales`, `/reports/finance`, `/reports/custom`, `/reports/scheduled`).
-* **Unit Tests & Documentation**: Added `reporting-engine.test.ts` unit test suite and system documentation (`reporting-engine.md`, `dashboard-builder.md`, `kpi-library.md`, `report-export.md`).
