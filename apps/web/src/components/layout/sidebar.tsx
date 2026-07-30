@@ -40,7 +40,7 @@ export function Sidebar() {
     { name: "Omnichannel", href: "/communication", icon: MessageSquare },
     { name: "Automation", href: "/automation", icon: Zap },
     { name: "Integrations", href: "/integrations", icon: Layers },
-    { name: "Analytics", href: "/analytics", icon: BarChart3 },
+    { name: "Reports & BI", href: "/reports", icon: BarChart3 },
     { name: "Billing", href: "/billing", icon: FileText },
     { name: "Support", href: "/support", icon: MessageSquare },
     { name: "Settings", href: "/settings", icon: Settings },

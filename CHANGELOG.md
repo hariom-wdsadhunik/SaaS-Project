@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.6.0] - 2026-07-30
+
+### Added
+* **Centralized Reporting Engine (`ReportingEngine.ts`)**: BI aggregation engine compiling metrics across all CRM data stores.
+* **16-Metric Enterprise KPI Library**: Revenue, Pipeline Value, Deals Won/Lost, Lead Conversion, Sales Velocity, Task Completion, Appointment Success, Response Time, Workflow Success, MRR, ARR, Churn, and Net Retention.
+* **5 Role-Tailored Executive Dashboards**: Executive Leadership, Sales Performance, Financial Intelligence, Operations, and Agent performance views.
+* **Custom Dashboard Builder (`custom/page.tsx`)**: Drag-and-drop widget studio supporting 10 chart types and layout sharing.
+* **Automated Report Scheduler (`scheduled/page.tsx`)**: Daily, weekly, monthly, and quarterly email delivery with PDF/CSV attachments.
+* **Multi-Format Data Exporter**: Filtered CSV, Excel, PDF, and JSON data export compiler.
+* **Reporting UI Sub-App (`/reports/*`)**: Created 6 reporting pages (`/reports`, `/reports/executive`, `/reports/sales`, `/reports/finance`, `/reports/custom`, `/reports/scheduled`).
+* **Unit Tests & Documentation**: Added `reporting-engine.test.ts` unit test suite and system documentation (`reporting-engine.md`, `dashboard-builder.md`, `kpi-library.md`, `report-export.md`).
+
+---
+
 ## [3.5.0] - 2026-07-30
 
 ### Added
@@ -18,14 +32,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **Scoped API Keys (`api-keys/page.tsx`)**: Scoped token generation, key rotation, and audit logs.
 * **Integrations UI Sub-App (`/integrations/*`)**: Created 7 integration pages (`/integrations`, `/integrations/google`, `/integrations/microsoft`, `/integrations/communication`, `/integrations/payments`, `/integrations/webhooks`, `/integrations/api-keys`).
 * **Unit Tests & Documentation**: Added `integration-framework.test.ts` unit test suite and system documentation (`integration-architecture.md`, `connector-framework.md`, `oauth-design.md`, `webhook-design.md`, `api-key-management.md`).
-
----
-
-## [3.4.0] - 2026-07-30
-
-### Added
-* **Workflow Automation Engine (`WorkflowEngine.ts`)**: Event-driven automation engine supporting 14 triggers, AND/OR condition tree evaluation, and 13 action handlers.
-* **7 Pre-Built Automation Templates**: Out-of-the-box workflows for lead follow-up, assignment, deal won celebration, deal lost recovery, appointment reminders, payment reminders, and cold lead re-engagement.
-* **Execution Audit Log (`history/page.tsx`)**: Real-time execution logger recording execution latency, retries, status, and error tracebacks.
-* **Automation UI Sub-App (`/automation/*`)**: Created 4 automation pages (`/automation`, `/automation/workflows`, `/automation/templates`, `/automation/history`).
-* **Unit Tests & Documentation**: Added `workflow-engine.test.ts` unit test suite and system documentation (`workflow-engine.md`, `automation-architecture.md`, `workflow-api.md`).
