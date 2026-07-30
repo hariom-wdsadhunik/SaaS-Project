@@ -18,6 +18,7 @@ import {
   ChevronRight,
   Sparkles,
   Zap,
+  Layers,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/store/use-ui-store";
@@ -38,6 +39,7 @@ export function Sidebar() {
     { name: "Tasks", href: "/tasks", icon: CheckSquare },
     { name: "Omnichannel", href: "/communication", icon: MessageSquare },
     { name: "Automation", href: "/automation", icon: Zap },
+    { name: "Integrations", href: "/integrations", icon: Layers },
     { name: "Analytics", href: "/analytics", icon: BarChart3 },
     { name: "Billing", href: "/billing", icon: FileText },
     { name: "Support", href: "/support", icon: MessageSquare },

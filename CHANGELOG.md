@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.5.0] - 2026-07-30
+
+### Added
+* **Modular Integration Framework (`ConnectorRegistry.ts`)**: Centralized connector manager supporting health checks, sync schedules, and provider credentials.
+* **Google Workspace & Microsoft 365 Connectors**: OAuth 2.0 sync for Google Calendar, Gmail, Google Contacts, Outlook Calendar, Outlook Mail, and Microsoft Contacts.
+* **Unified Messaging Abstraction**: Support for WhatsApp Business Cloud API, Twilio SMS, SendGrid Email, and Nodemailer SMTP.
+* **Stripe Payments Extension**: Real-time webhook verification, subscription status, and payment logs.
+* **Webhooks Engine (`webhooks/page.tsx`)**: Incoming and outgoing HTTP webhooks with HMAC SHA-256 signatures, retry queue, and ping testing.
+* **Scoped API Keys (`api-keys/page.tsx`)**: Scoped token generation, key rotation, and audit logs.
+* **Integrations UI Sub-App (`/integrations/*`)**: Created 7 integration pages (`/integrations`, `/integrations/google`, `/integrations/microsoft`, `/integrations/communication`, `/integrations/payments`, `/integrations/webhooks`, `/integrations/api-keys`).
+* **Unit Tests & Documentation**: Added `integration-framework.test.ts` unit test suite and system documentation (`integration-architecture.md`, `connector-framework.md`, `oauth-design.md`, `webhook-design.md`, `api-key-management.md`).
+
+---
+
 ## [3.4.0] - 2026-07-30
 
 ### Added
@@ -15,16 +29,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **Execution Audit Log (`history/page.tsx`)**: Real-time execution logger recording execution latency, retries, status, and error tracebacks.
 * **Automation UI Sub-App (`/automation/*`)**: Created 4 automation pages (`/automation`, `/automation/workflows`, `/automation/templates`, `/automation/history`).
 * **Unit Tests & Documentation**: Added `workflow-engine.test.ts` unit test suite and system documentation (`workflow-engine.md`, `automation-architecture.md`, `workflow-api.md`).
-
----
-
-## [3.3.0] - 2026-07-30
-
-### Added
-* **Organization & Multi-Tenant Model (`OrganizationTypes.ts`)**: Implemented organization boundary isolation.
-* **Centralized RBAC Engine (`RBACEngine.ts`)**: 5 roles (`Owner`, `Admin`, `Manager`, `Agent`, `Viewer`) evaluating 6 actions across 9 resource domains.
-* **Workspace Switcher (`workspace-switcher.tsx`)**: Multi-org switcher component in sidebar.
-* **Activity Logger (`ActivityLogger.ts`)**: Organization-wide real-time activity stream timeline.
-* **Audit Logger (`AuditLogger.ts`)**: Immutable security audit ledger.
-* **Team UI Sub-App (`/team/*`)**: Created 6 team pages (`/team`, `/team/members`, `/team/invitations`, `/team/activity`, `/team/roles`, `/team/audit`).
-* **Unit Tests & Documentation**: Added `team-rbac.test.ts` test suite and architectural documentation.
