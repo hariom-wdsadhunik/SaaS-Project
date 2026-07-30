@@ -25,3 +25,4 @@
 - **v3.1.1 (Product Cleanup & Repository Audit):** Repository Audit, Settings Route Creation, Navigation Route Integrity Fixes, Dark Mode Theme Hydration Bug Repair.
 - **v3.2.0 (Final QA & UX Polish):** Enterprise QA Audit, UX Review, UI Improvements Documentation, Final Production Release Certification.
 - **v3.3.0 (Enterprise Team Management):** Multi-Tenant Organizations, Team Management, Centralized RBAC Engine, Workspace Switcher, Activity Stream, Security Audit Logs, Team Dashboard UI (`/team`, `/team/members`, `/team/invitations`, `/team/activity`, `/team/roles`, `/team/audit`).
+- **v3.4.0 (Workflow Automation Engine):** Event-driven automation rule engine supporting 14 triggers, AND/OR condition logic, 13 action handlers, 7 pre-configured templates, execution history audit log, and `/automation` UI sub-app (`/automation`, `/automation/workflows`, `/automation/templates`, `/automation/history`).

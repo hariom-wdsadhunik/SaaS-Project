@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.4.0] - 2026-07-30
+
+### Added
+* **Workflow Automation Engine (`WorkflowEngine.ts`)**: Event-driven automation engine supporting 14 triggers, AND/OR condition tree evaluation, and 13 action handlers.
+* **7 Pre-Built Automation Templates**: Out-of-the-box workflows for lead follow-up, assignment, deal won celebration, deal lost recovery, appointment reminders, payment reminders, and cold lead re-engagement.
+* **Execution Audit Log (`history/page.tsx`)**: Real-time execution logger recording execution latency, retries, status, and error tracebacks.
+* **Automation UI Sub-App (`/automation/*`)**: Created 4 automation pages (`/automation`, `/automation/workflows`, `/automation/templates`, `/automation/history`).
+* **Unit Tests & Documentation**: Added `workflow-engine.test.ts` unit test suite and system documentation (`workflow-engine.md`, `automation-architecture.md`, `workflow-api.md`).
+
+---
+
 ## [3.3.0] - 2026-07-30
 
 ### Added
@@ -17,12 +28,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **Audit Logger (`AuditLogger.ts`)**: Immutable security audit ledger.
 * **Team UI Sub-App (`/team/*`)**: Created 6 team pages (`/team`, `/team/members`, `/team/invitations`, `/team/activity`, `/team/roles`, `/team/audit`).
 * **Unit Tests & Documentation**: Added `team-rbac.test.ts` test suite and architectural documentation.
-
----
-
-## [3.2.0] - 2026-07-30
-
-### Added
-* **Formal QA Audit Report (`docs/qa-report.md`)**: Certified 100% test pass rate across 72 backend Jest suites and 6 Copilot engine unit tests.
-* **UI Improvements Log (`docs/ui-improvements.md`)**: Documented standardized typography hierarchy, skeleton loading states, dark-mode card primitives, and Sonner toast notifications.
-* **UX & Accessibility Review (`docs/ux-review.md`)**: Evaluated navigation flows, keyboard shortcuts (`⌘K` Command Palette, `⌘J` AI Assistant), and WCAG 2.2 AA accessibility standards.
