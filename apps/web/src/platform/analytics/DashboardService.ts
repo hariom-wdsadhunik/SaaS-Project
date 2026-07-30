@@ -98,6 +98,6 @@ export class DashboardService {
   public static async refreshDashboard(isExecutive: boolean = true): Promise<Dashboard> {
     KPIEngine.invalidateAllCache();
     await InsightEngine.generateInsights();
-    return this.getExecutiveDashboard();
+    return isExecutive ? this.getExecutiveDashboard() : this.getExecutiveDashboard();
   }
 }
