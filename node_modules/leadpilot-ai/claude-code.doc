@@ -1,0 +1,170 @@
+🚀 Build Animated Websites
+with Claude Code
+The complete step-by-step setup guide
+
+
+Websites with professional animations that used to cost ₹3–4 lakhs can now be built using Claude Code + a few free tools. Follow these four steps and you're ready to generate production-quality animated UIs through natural language.
+
+💡 What you need before starting: A Claude Pro or Max account ($20/month at claude.ai) and a basic terminal on your computer.
+
+
+
+
+STEP 1  Install Claude Code
+
+
+What is Claude Code?
+Claude Code is Anthropic's AI coding agent that runs directly in your terminal. It reads your codebase, writes files, and handles complex multi-file edits — all through plain English instructions.
+
+Installation
+Run the command below in your terminal based on your operating system:
+
+Mac / Linux / WSL:
+curl -fsSL https://claude.ai/install.sh | bash
+
+Windows (PowerShell):
+irm https://claude.ai/install.ps1 | iex
+
+Verify Installation
+claude --version
+
+First-time Setup
+Run claude in your terminal. It will open your browser to log in with your Anthropic account.
+
+⚠️  You need a Claude Pro ($20/month) or Max plan. The free Claude.ai plan does NOT include Claude Code access.
+
+
+🔗 Official docs: https://claude.ai
+
+
+
+STEP 2  Install Framer Motion
+
+
+What is Framer Motion?
+Framer Motion is the industry-standard animation library for React. It handles all the scroll-triggered animations, page transitions, hover effects, and micro-interactions that make websites feel premium.
+
+Option A — Create a new React project (recommended)
+npx create-react-app my-website
+cd my-website
+npm install framer-motion
+
+Option B — Add to an existing project
+npm install framer-motion
+
+Verify it works
+npm start
+
+💡 Framer Motion works with React, Next.js, and Remix. If you're building with Next.js, the same install command applies.
+
+
+🔗 Framer Motion docs: https://www.framer.com/motion
+
+
+
+STEP 3  Download the UI/UX Pro Skills Package
+
+
+What is the Skills Package?
+This is a custom CLAUDE.md configuration file that gives Claude Code deep UI/UX context at the start of every session. Without it, Claude generates average-looking UI. With it, Claude follows design principles, component structure, and your code style automatically — consistently producing better output.
+
+How to set it up
+Go to the GitHub repository link shared in the reel/DM
+Download or clone the repository to your computer
+Copy the CLAUDE.md file into the root folder of your project
+
+# Example
+cp CLAUDE.md /your-project-folder/CLAUDE.md
+
+How it works
+Claude Code automatically reads the CLAUDE.md file when it starts in any project folder. Every session begins with the same design context — it's like giving Claude a permanent brief about how to build your UI.
+
+💡 Commit the CLAUDE.md file to your Git repo so your entire team benefits from the same design system instructions every time they use Claude Code.
+
+
+
+
+STEP 4  Add the 21st.dev Magic MCP
+
+
+What is 21st.dev Magic?
+21st.dev Magic is like having v0.dev (Vercel's AI design tool) built directly into your terminal. It's an MCP (Model Context Protocol) server that lets Claude generate polished, production-ready UI components from natural language — just type "/ui create a hero section with gradient background" and it writes the files for you.
+
+Step 4a — Get your free API key
+Visit https://21st.dev/magic
+Create a free account
+Copy your API key from the dashboard
+
+Step 4b — Add the MCP to Claude Code
+Run this in your terminal:
+claude mcp add @21st-dev/magic
+
+Or add it manually to your Claude Code config file:
+{
+  "mcpServers": {
+    "@21st-dev/magic": {
+      "command": "npx",
+      "args": ["-y", "@21st-dev/magic@latest"],
+      "env": {
+        "API_KEY": "your-21st-dev-api-key"
+      }
+    }
+  }
+}
+
+How to use it
+Inside Claude Code, describe the UI you want:
+
+/ui create a modern navigation bar with responsive mobile menu
+/ui build a pricing section with 3 tiers and toggle for monthly/annual
+/ui make a hero section with a floating card and gradient background
+
+💡 21st.dev generates components following your project's existing code style and structure. All generated code is fully editable TypeScript/React.
+
+
+🔗 21st.dev Magic: https://21st.dev/magic
+
+
+
+Quick Reference
+
+Step
+Tool
+Link
+1 — Install
+Claude Code (Anthropic)
+https://claude.ai
+2 — Animate
+Framer Motion
+https://www.framer.com/motion
+3 — Design
+UI/UX Skills Package (GitHub)
+See reel link
+4 — Components
+21st.dev Magic MCP
+https://21st.dev/magic
+
+
+
+
+What to Do After Setup
+
+Once all four steps are done, here is how to start building:
+
+Navigate to your project folder in the terminal
+cd /path/to/your/project
+
+Start Claude Code
+claude
+
+Describe the website you want to build
+> Build me an animated landing page for a SaaS product.
+> Use Framer Motion for scroll animations.
+> Include a hero, features section, pricing, and footer.
+
+🎯 Pro Tip: The more specific you are in your prompt, the better the output. Describe the vibe, the sections you need, and any specific animations or interactions you have in mind.
+
+
+
+
+Guide by kartikeysinggh  •  F n Instagramfor more workflows

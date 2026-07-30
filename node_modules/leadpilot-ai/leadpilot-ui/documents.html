@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documents - LeadPilot AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        .file-icon { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 8px; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="flex">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white border-r border-gray-200 min-h-screen fixed left-0 top-0">
+            <div class="p-6 border-b border-gray-200">
+                <a href="/dashboard" class="flex items-center gap-2">
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-rocket text-white"></i>
+                    </div>
+                    <span class="text-xl font-bold">LeadPilot</span>
+                </a>
+            </div>
+            <nav class="p-4 space-y-1">
+                <a href="/dashboard" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl transition">
+                    <i class="fas fa-home w-5"></i> Dashboard
+                </a>
+                <a href="/calendar" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl transition">
+                    <i class="fas fa-calendar w-5"></i> Calendar
+                </a>
+                <a href="/tasks" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl transition">
+                    <i class="fas fa-tasks w-5"></i> Tasks
+                </a>
+                <a href="/deals" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl transition">
+                    <i class="fas fa-handshake w-5"></i> Deals
+                </a>
+                <a href="/documents" class="flex items-center gap-3 px-4 py-3 bg-blue-50 text-blue-600 rounded-xl font-medium">
+                    <i class="fas fa-file-alt w-5"></i> Documents
+                </a>
+                <a href="/settings" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl transition">
+                    <i class="fas fa-cog w-5"></i> Settings
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 ml-64 p-8">
+            <div class="max-w-6xl mx-auto">
+                <!-- Header -->
+                <div class="flex items-center justify-between mb-8">
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-900">Documents</h1>
+                        <p class="text-gray-500 mt-1">Manage your files and documents</p>
+                    </div>
+                    <button onclick="document.getElementById('file-input').click()" class="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl font-medium hover:opacity-90 transition">
+                        <i class="fas fa-upload mr-2"></i>Upload File
+                    </button>
+                    <input type="file" id="file-input" class="hidden" onchange="handleFileUpload(event)" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+                </div>
+
+                <!-- Stats -->
+                <div class="grid grid-cols-4 gap-4 mb-6">
+                    <div class="bg-white rounded-xl p-4 shadow-sm">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-file text-blue-600"></i>
+                            </div>
+                            <div>
+                                <p class="text-2xl font-bold text-gray-900" id="stat-total">0</p>
+                                <p class="text-sm text-gray-500">Total Files</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl p-4 shadow-sm">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-image text-green-600"></i>
+                            </div>
+                            <div>
+                                <p class="text-2xl font-bold text-gray-900" id="stat-images">0</p>
+                                <p class="text-sm text-gray-500">Images</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl p-4 shadow-sm">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-file-pdf text-red-600"></i>
+                            </div>
+                            <div>
+                                <p class="text-2xl font-bold text-gray-900" id="stat-pdfs">0</p>
+                                <p class="text-sm text-gray-500">PDFs</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl p-4 shadow-sm">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-database text-purple-600"></i>
+                            </div>
+                            <div>
+                                <p class="text-2xl font-bold text-gray-900" id="stat-size">0 MB</p>
+                                <p class="text-sm text-gray-500">Storage Used</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="flex items-center gap-4 mb-6 bg-white rounded-xl p-4 shadow-sm">
+                    <div class="flex-1">
+                        <input type="text" id="search-input" placeholder="Search documents..." class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500" oninput="filterDocuments()">
+                    </div>
+                    <select id="filter-type" onchange="filterDocuments()" class="px-4 py-2 border border-gray-200 rounded-lg">
+                        <option value="">All Types</option>
+                        <option value="ID Proof">ID Proof</option>
+                        <option value="Address Proof">Address Proof</option>
+                        <option value="Agreement">Agreement</option>
+                        <option value="Contract">Contract</option>
+                        <option value="Payment Receipt">Payment Receipt</option>
+                        <option value="Property Document">Property Document</option>
+                        <option value="Loan Document">Loan Document</option>
+                    </select>
+                    <select id="filter-lead" onchange="filterDocuments()" class="px-4 py-2 border border-gray-200 rounded-lg">
+                        <option value="">All Leads</option>
+                    </select>
+                </div>
+
+                <!-- Documents Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" id="documents-grid">
+                    <!-- Documents will be loaded here -->
+                </div>
+                <div id="documents-empty" class="hidden text-center py-12 bg-white rounded-xl shadow-sm">
+                    <i class="fas fa-folder-open text-6xl text-gray-300 mb-4"></i>
+                    <p class="text-gray-500">No documents found</p>
+                    <button onclick="document.getElementById('file-input').click()" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+                        Upload your first file
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Upload Modal -->
+    <div id="upload-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-bold">Upload Document</h2>
+                    <button onclick="closeUploadModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            <form id="upload-form" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Document Type</label>
+                    <select id="upload-type" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500">
+                        <option value="Other">Other</option>
+                        <option value="ID Proof">ID Proof</option>
+                        <option value="Address Proof">Address Proof</option>
+                        <option value="Agreement">Agreement</option>
+                        <option value="Contract">Contract</option>
+                        <option value="Payment Receipt">Payment Receipt</option>
+                        <option value="Property Document">Property Document</option>
+                        <option value="Loan Document">Loan Document</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Related Lead (Optional)</label>
+                    <select id="upload-lead" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500">
+                        <option value="">No lead</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">File</label>
+                    <div id="upload-file-preview" class="p-4 bg-gray-50 rounded-xl text-center">
+                        <i class="fas fa-file text-4xl text-gray-400 mb-2"></i>
+                        <p id="upload-filename" class="text-sm text-gray-500">No file selected</p>
+                    </div>
+                </div>
+                <input type="hidden" id="upload-file-data">
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="closeUploadModal()" class="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl font-medium hover:opacity-90">
+                        <i class="fas fa-upload mr-2"></i>Upload
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+        let token = localStorage.getItem('token');
+        let documents = [];
+        let leads = [];
+
+        if (!token) {
+            window.location.href = '/login';
+        }
+
+        async function loadDocuments() {
+            try {
+                const res = await fetch(`${API_BASE}/documents`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    documents = await res.json();
+                    if (!Array.isArray(documents)) documents = [];
+                    renderDocuments();
+                    updateStats();
+                }
+            } catch (err) {
+                console.error('Load documents error:', err);
+                documents = [];
+            }
+        }
+
+        async function loadLeads() {
+            try {
+                const res = await fetch(`${API_BASE}/leads?limit=100`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    leads = Array.isArray(data) ? data : (data.leads || []);
+                    populateLeadFilters();
+                }
+            } catch (err) {
+                console.error('Load leads error:', err);
+            }
+        }
+
+        function populateLeadFilters() {
+            const options = leads.map(l => `<option value="${l.id}">${l.name || l.phone}</option>`).join('');
+            document.getElementById('filter-lead').innerHTML = '<option value="">All Leads</option>' + options;
+            document.getElementById('upload-lead').innerHTML = '<option value="">No lead</option>' + options;
+        }
+
+        function getFileIcon(mimeType) {
+            if (mimeType?.startsWith('image/')) return { icon: 'fa-image', color: 'bg-green-100 text-green-600' };
+            if (mimeType?.includes('pdf')) return { icon: 'fa-file-pdf', color: 'bg-red-100 text-red-600' };
+            if (mimeType?.includes('word') || mimeType?.includes('document')) return { icon: 'fa-file-word', color: 'bg-blue-100 text-blue-600' };
+            if (mimeType?.includes('sheet') || mimeType?.includes('excel')) return { icon: 'fa-file-excel', color: 'bg-green-100 text-green-600' };
+            return { icon: 'fa-file-alt', color: 'bg-gray-100 text-gray-600' };
+        }
+
+        function formatFileSize(bytes) {
+            if (!bytes) return '0 B';
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        function renderDocuments() {
+            const search = document.getElementById('search-input').value.toLowerCase();
+            const typeFilter = document.getElementById('filter-type').value;
+            const leadFilter = document.getElementById('filter-lead').value;
+
+            let filtered = documents;
+            if (search) filtered = filtered.filter(d => d.document_name?.toLowerCase().includes(search));
+            if (typeFilter) filtered = filtered.filter(d => d.document_type === typeFilter);
+            if (leadFilter) filtered = filtered.filter(d => d.lead_id === leadFilter);
+
+            const grid = document.getElementById('documents-grid');
+            const empty = document.getElementById('documents-empty');
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '';
+                empty.classList.remove('hidden');
+            } else {
+                empty.classList.add('hidden');
+                grid.innerHTML = filtered.map(doc => {
+                    const fileInfo = getFileIcon(doc.mime_type);
+                    return `
+                        <div class="bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition cursor-pointer" onclick="viewDocument('${doc.id}')">
+                            <div class="flex items-start justify-between mb-3">
+                                <div class="file-icon ${fileInfo.color}">
+                                    <i class="fas ${fileInfo.icon}"></i>
+                                </div>
+                                <button onclick="event.stopPropagation(); deleteDocument('${doc.id}')" class="text-gray-400 hover:text-red-600">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                            <h4 class="font-medium text-gray-900 text-sm mb-1 truncate">${doc.document_name}</h4>
+                            <p class="text-xs text-gray-500 mb-2">${doc.document_type}</p>
+                            <div class="flex items-center justify-between text-xs text-gray-400">
+                                <span>${formatFileSize(doc.file_size)}</span>
+                                <span>${new Date(doc.created_at).toLocaleDateString()}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        function filterDocuments() {
+            renderDocuments();
+        }
+
+        function updateStats() {
+            const total = documents.length;
+            const images = documents.filter(d => d.mime_type?.startsWith('image/')).length;
+            const pdfs = documents.filter(d => d.mime_type?.includes('pdf')).length;
+            const totalSize = documents.reduce((sum, d) => sum + (d.file_size || 0), 0);
+
+            document.getElementById('stat-total').textContent = total;
+            document.getElementById('stat-images').textContent = images;
+            document.getElementById('stat-pdfs').textContent = pdfs;
+            document.getElementById('stat-size').textContent = formatFileSize(totalSize);
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('upload-file-data').value = e.target.result;
+                document.getElementById('upload-filename').textContent = file.name;
+            };
+            reader.readAsDataURL(file);
+
+            // Auto-detect document type
+            const name = file.name.toLowerCase();
+            let type = 'Other';
+            if (name.includes('aadhar') || name.includes('pan') || name.includes('id')) type = 'ID Proof';
+            else if (name.includes('address')) type = 'Address Proof';
+            else if (name.includes('agreement')) type = 'Agreement';
+            else if (name.includes('contract')) type = 'Contract';
+            else if (name.includes('receipt') || name.includes('payment')) type = 'Payment Receipt';
+            else if (name.includes('property')) type = 'Property Document';
+            else if (name.includes('loan')) type = 'Loan Document';
+            
+            document.getElementById('upload-type').value = type;
+            document.getElementById('upload-modal').classList.remove('hidden');
+        }
+
+        function closeUploadModal() {
+            document.getElementById('upload-modal').classList.add('hidden');
+            document.getElementById('file-input').value = '';
+        }
+
+        function viewDocument(id) {
+            const doc = documents.find(d => d.id === id);
+            if (doc?.file_url) {
+                window.open(doc.file_url, '_blank');
+            }
+        }
+
+        async function deleteDocument(id) {
+            if (!confirm('Are you sure you want to delete this document?')) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/documents/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (res.ok) {
+                    await loadDocuments();
+                } else {
+                    const err = await res.json();
+                    alert('Error: ' + err.error);
+                }
+            } catch (err) {
+                console.error('Delete document error:', err);
+            }
+        }
+
+        document.getElementById('upload-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const fileData = document.getElementById('upload-file-data').value;
+            const fileName = document.getElementById('upload-filename').textContent;
+            
+            if (!fileData) {
+                alert('Please select a file');
+                return;
+            }
+
+            // Extract base64 data
+            const matches = fileData.match(/^data:([^;]+);base64,(.+)$/);
+            if (!matches) {
+                alert('Invalid file data');
+                return;
+            }
+
+            const mimeType = matches[1];
+            const base64Data = matches[2];
+
+            const formData = new FormData();
+            formData.append('file', base64ToBlob(base64Data, mimeType), fileName);
+            formData.append('document_name', fileName);
+            formData.append('document_type', document.getElementById('upload-type').value);
+            formData.append('lead_id', document.getElementById('upload-lead').value || '');
+
+            try {
+                const res = await fetch(`${API_BASE}/documents`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+
+                if (res.ok) {
+                    closeUploadModal();
+                    await loadDocuments();
+                } else {
+                    const err = await res.json();
+                    alert('Error: ' + err.error);
+                }
+            } catch (err) {
+                console.error('Upload error:', err);
+                alert('Failed to upload document');
+            }
+        });
+
+        function base64ToBlob(base64, mimeType) {
+            const byteCharacters = atob(base64);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            return new Blob([byteArray], { type: mimeType });
+        }
+
+        loadDocuments();
+        loadLeads();
+    </script>
+</body>
+</html>

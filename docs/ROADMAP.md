@@ -22,3 +22,4 @@
 - **v2.4.0 – v2.4.3 (CI/CD Hardening & Build Stabilization):** GitHub Actions Fixes, Subfolder Lockfile Caching, Top-Level Supabase Initialization Fix, Route Dynamic Export Enforcement.
 - **v3.0.0 (Monorepo Modernization):** Monorepo Restructuring (`apps/web`, `apps/api`, `packages/shared`, `packages/config`, `docs/`), Root Governance Specifications.
 - **v3.1.0 (AI Sales Copilot Platform):** AI Lead Summary, AI Email Assistant, AI WhatsApp Assistant, Meeting Preparation Engine, Daily Morning AI Brief, Deal Health Predictor, AI Command Center Dashboard, API v1 Endpoints.
+- **v3.1.1 (Product Cleanup & Repository Audit):** Repository Audit, Settings Route Creation, Navigation Route Integrity Fixes, Dark Mode Theme Hydration Bug Repair.

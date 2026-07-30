@@ -1,0 +1,17 @@
+{
+  "name": "leadpilot-ai-crm-monorepo",
+  "version": "3.1.0",
+  "private": true,
+  "description": "LeadPilot AI CRM Enterprise Monorepo Workspace",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run start --prefix apps/api",
+    "dev:web": "npm run dev --prefix apps/web",
+    "build:web": "npm run build --prefix apps/web",
+    "test:api": "npm test --prefix apps/api",
+    "lint:web": "npm run lint --prefix apps/web"
+  }
+}

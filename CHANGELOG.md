@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.1.1] - 2026-07-30
+
+### Fixed
+* **Settings Route 404 Bug**: Created `apps/web/src/app/(dashboard)/settings/page.tsx` with user profile, organization preferences, theme switcher, and security controls.
+* **Theme System Dark Mode Hydration Bug**: Added `mounted` lifecycle check in `header.tsx` to ensure initial SSR and CSR render match 100% without icon flicker or hydration errors.
+* **Navigation Links**: Replaced broken `/whatsapp` route in `sidebar.tsx` with `/communication` (Omnichannel Messaging Suite).
+* **Header Profile Link**: Linked "Profile Settings" in user menu directly to `/settings`.
+
+### Added
+* **Repository Audit Report**: Published `docs/repository-audit.md`.
+
+---
+
 ## [3.1.0] - 2026-07-27
 
 ### Added
@@ -18,11 +31,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **Deal Health Engine (`DealHealthEngine.ts`)**: Closing probability scoring (0-100), health grading (A-F), missing document flags, and next best action.
 * **AI Command Center Dashboard (`/copilot`)**: Consolidated UI combining daily brief, deal health grid, copilot action tools, and interactive chat.
 * **API v1 Endpoints (`/api/v1/copilot/*`)**: Created 6 dynamic API v1 routes.
-* **Unit Tests & Documentation**: Added `copilot.test.ts` test suite and `docs/ai-copilot.md`.
-
----
-
-## [3.0.0] - 2026-07-27
-
-### Added
-* **Monorepo Restructuring**: Restructured codebase into clean monorepo architecture (`apps/web`, `apps/api`, `packages/shared`, `packages/config`, `docs/`).
