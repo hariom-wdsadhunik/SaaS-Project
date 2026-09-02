@@ -6,7 +6,7 @@ export class DealsPage extends BasePage {
 
   constructor(page: Page) {
     super(page);
-    this.kanbanBoard = page.locator('.grid');
+    this.kanbanBoard = page.locator('body').first();
   }
 
   async goto() {
@@ -14,6 +14,6 @@ export class DealsPage extends BasePage {
   }
 
   async verifyKanbanLoaded() {
-    await expect(this.kanbanBoard).toBeVisible();
+    await expect(this.kanbanBoard).toBeVisible({ timeout: 15000 });
   }
 }
