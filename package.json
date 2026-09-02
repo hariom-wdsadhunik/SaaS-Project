@@ -10,10 +10,6 @@
   "engines": {
     "node": ">=22.0.0 <25.0.0"
   },
-  "allowScripts": {
-    "sharp": true,
-    "unrs-resolver": true
-  },
   "scripts": {
     "build": "npm run build --prefix apps/web",
     "dev:api": "npm run start --prefix apps/api",
